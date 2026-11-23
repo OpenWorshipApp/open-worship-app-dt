@@ -4,7 +4,7 @@
     "window": "reader.html",
     "focus": "reader",
     "description": "The study page: read passages side by side, search the whole Bible, keep notes and marks, and look up the people and places named in what you are reading.",
-    "updated": "2026-11-12",
+    "updated": "2026-11-19",
     "sections": [
         {
             "id": "reading",
@@ -1057,6 +1057,23 @@
                     "resources": {
                         "recipe": "W-29",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "names-language-install",
+                    "text": "How do I get the names and places in a language that is not in the list?",
+                    "kind": "howto",
+                    "keywords": [
+                        "Add Language Plugin",
+                        "install language",
+                        "missing language",
+                        "more languages",
+                        "names language"
+                    ],
+                    "resources": {
+                        "recipe": "W-29",
+                        "passage": "A language that is not in the menu yet is one to install",
+                        "find": "Names and locations language"
                     }
                 },
                 {

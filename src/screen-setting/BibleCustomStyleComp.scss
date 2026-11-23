@@ -107,12 +107,60 @@
   -webkit-text-stroke: 0.01em greenyellow;
 }
 
+// Folded to its last line: the stage's own background kept, so the switch
+// still reads, and only as much of it as that line needs.
+.bible-style-stage-folded {
+  padding: 4px 8px;
+}
+
+// The stage's last line: its fold at the start, the switch at the end.
+.bible-style-stage-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+// The fold, in the stage's ink as the switch is: it sits on the same
+// background, whichever side that is.
+.bible-style-stage-fold {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 1px 6px;
+  font-size: var(--app-text-sm);
+  line-height: 1.6;
+  color: var(--bible-stage-ink);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  opacity: 0.8;
+
+  > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    background: var(--bible-stage-chip);
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
 // Which side is on is shown by inversion -- the chosen one is a chip in the
 // stage's own ink -- so the switch reads on either background without a
 // colour of its own.
 .bible-style-backdrop {
   display: inline-flex;
-  align-self: flex-end;
+  flex: none;
   padding: 2px;
   background: var(--bible-stage-chip);
   border-radius: 999px;

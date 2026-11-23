@@ -12,6 +12,7 @@ import type PresentingFlowItem from './PresentingFlowItem';
 import { PRESENTING_FLOW_ITEM_UUID_ATTR } from './presentingFlowCcHelpers';
 import { handleError } from '../helper/errorHelpers';
 import { revealVirtualElement } from '../virtual-list/virtualRevealHelpers';
+import { VARY_SLIDE_FILE_PATH_ATTR } from '../app-document-presenter/items/varySlideDomAttrs';
 
 function toElementGetter(selector: string) {
     return () => {
@@ -23,9 +24,17 @@ function toElementGetter(selector: string) {
  * The slide's card in the previewer. Only present while that document is the
  * one being previewed; `notifyElementHighlight` gives up by itself when it is
  * not.
+ *
+ * Matched by its DOCUMENT as well as its id: slide ids restart at 0 in every
+ * document, so by id alone a run-sheet slide of one document flashed whichever
+ * card of another document happened to be in the previewer with the same id
+ * (F-21 of robot run 20261120-2021).
  */
-function toVarySlideElementGetter(id: number) {
-    return toElementGetter(`[data-vary-app-document-item-id="${id}"]`);
+function toVarySlideElementGetter(id: number, filePath: string) {
+    return toElementGetter(
+        `[${VARY_SLIDE_FILE_PATH_ATTR}="${escapeSelectorValue(filePath)}"]` +
+            `[data-vary-app-document-item-id="${id}"]`,
+    );
 }
 
 function toFileItemElementGetter(src: string) {
@@ -75,7 +84,13 @@ function toOriginElementGetter(
         );
     }
     if (presentingFlowItem.isSlide) {
-        return toVarySlideElementGetter(presentingFlowItem.id);
+        if (!presentingFlowItem.itemFilePath) {
+            return null;
+        }
+        return toVarySlideElementGetter(
+            presentingFlowItem.id,
+            presentingFlowItem.itemFilePath,
+        );
     }
     if (presentingFlowItem.isBibleItem) {
         const { filePath, id } = presentingFlowItem.data ?? {};
@@ -114,9 +129,12 @@ function toBackgroundSrc(presentingFlowItem: PresentingFlowItem) {
 
 /** Scroll a slide's card in the previewer into view and flash it. */
 export function notifyVarySlideOrigin(varySlide: VarySlideType) {
-    notifyElementHighlight(toVarySlideElementGetter(varySlide.id), {
-        moveToView: bringDomToTopView,
-    });
+    notifyElementHighlight(
+        toVarySlideElementGetter(varySlide.id, varySlide.filePath),
+        {
+            moveToView: bringDomToTopView,
+        },
+    );
 }
 
 /**

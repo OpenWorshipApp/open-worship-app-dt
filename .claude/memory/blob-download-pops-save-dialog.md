@@ -9,10 +9,10 @@ metadata:
 ---
 
 Browser-style downloads do **not** work silently in this app. `electron/` has no
-`session.on('will-download')` handler on the app's own session (the four in
+`session.on('will-download')` handler on the app's own session (the five in
 `webPageHelpers.ts` / `webCaptureHelpers.ts` / `customLlmRelayHelpers.ts` /
-`documentCaptureHelpers.ts` only cancel downloads in their private read / capture /
-relay / document-capture sessions), so Chromium falls back to its
+`documentCaptureHelpers.ts` / `animationCaptureHelpers.ts` only cancel downloads in their private read / capture /
+relay / document-capture / animation-capture sessions), so Chromium falls back to its
 default: a native **Save As** dialog (`#32770` window titled with the `blob:`
 URL) for every `<a download>` click. Until it is answered the bytes sit in
 `~/Downloads/<uuid>.tmp` and no named file ever appears.

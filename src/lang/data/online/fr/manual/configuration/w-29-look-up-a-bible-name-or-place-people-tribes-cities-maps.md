@@ -3,7 +3,7 @@ id: W-29
 title: "Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)"
 section: "Configuration"
 lang: fr
-translatedFrom: 463ae437149182b8
+translatedFrom: 92fd06c9aa566acc
 ---
 # W-29 — Chercher un nom ou un lieu de la Bible (personnes, tribus, villes, cartes)
 
@@ -27,7 +27,11 @@ votre lecture de la Bible.
    langue dans laquelle les noms sont disponibles — une langue installée depuis
    Paramètres → **[en:tran:Languages]** (W-55), comme `km - Khmer
 (ភាសាខ្មែរ)` — et la liste de recherche et le panneau « dans votre lecture » passent aussitôt à
-   cette langue, sans rien recharger. Les fenêtres de personnes et de lieux déjà ouvertes gardent leur
+   cette langue, sans rien recharger.
+   Une langue qui n'est pas encore dans le menu est une langue à installer : la dernière ligne du menu,
+   **[en:tran:Add Language Plugin]**, ouvre directement Paramètres → **[en:tran:Languages]** (W-55),
+   et la langue rejoint le menu une fois installée.
+   Les fenêtres de personnes et de lieux déjà ouvertes gardent leur
    propre langue. Le choix est retenu pour la prochaine fois, et il est **indépendant** de la langue de
    l'application elle-même (**W-16**) : des menus en anglais avec des noms en khmer, c'est une
    combinaison tout à fait normale. Les références de versets qu'une fiche cite sont relues dans **la

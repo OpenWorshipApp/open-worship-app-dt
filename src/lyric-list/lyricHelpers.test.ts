@@ -59,7 +59,13 @@ vi.mock('./LyricAppDocumentStage4', () => ({ default: mocks.stage4 }));
 vi.mock('./LyricAppDocumentStage5', () => ({ default: mocks.stage5 }));
 vi.mock('../lang/langHelpers', () => ({
     genOpenLyricFontFaces: vi.fn(),
+    // A made-up app language: the labels follow it, not the song.
+    getCurrentLocale: vi.fn(() => 'xx-XX'),
     initAllLangCss: mocks.initAllLangCssMock,
+    tran: (text: string) => `tran:${text}`,
+}));
+vi.mock('./lyricPptxDocumentHelpers', () => ({
+    savePptxInDocuments: vi.fn(async () => 'Saved: Song.pptx'),
 }));
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
     appLocalStorage: {
@@ -72,10 +78,11 @@ vi.mock('../others/themeHelpers', () => ({
     checkIsDarkMode: vi.fn(() => false),
 }));
 vi.mock('./lyricPrintHelpers', () => ({
-    installOpenLyricPrintPopupHandler: vi.fn(),
+    printOpenLyricPage: vi.fn(),
 }));
 
 import {
+    addSavePptxInDocumentsAction,
     applyOpenLyricTheme,
     checkIsValidLyricStage,
     DEFAULT_OPEN_LYRIC_FONT_SIZE,
@@ -88,6 +95,8 @@ import { checkIsDarkMode } from '../others/themeHelpers';
 import { appLocalStorage } from '../setting/directory-setting/appLocalStorage';
 import FileSource from '../helper/FileSource';
 import { genOpenLyricFontFaces } from '../lang/langHelpers';
+import { savePptxInDocuments } from './lyricPptxDocumentHelpers';
+import { printOpenLyricPage } from './lyricPrintHelpers';
 
 const FILE_PATH = '/songs/aa3.owl';
 
@@ -208,10 +217,32 @@ describe('initOpenLyric', () => {
         expect(mocks.initAllLangCssMock).toHaveBeenCalledTimes(1);
         expect(isRegistered).toBe(true);
         expect(openLyricPreviewer).toBeDefined();
+        // Print is open-lyric's own; the app only shows the page.
+        expect(openLyricPreviewer.onPrint).toBe(printOpenLyricPage);
         expect(mocks.addPluginMock).toHaveBeenCalledExactlyOnceWith(
             'player',
             expect.any(OpenLyricPluginPlayer),
         );
+    });
+});
+
+describe('addSavePptxInDocumentsAction', () => {
+    test('adds a PowerPoint button that hands the deck to Documents', async () => {
+        const addExportAction = vi.fn();
+        addSavePptxInDocumentsAction({ addExportAction } as any);
+
+        const [action] = addExportAction.mock.calls[0];
+        expect(action.id).toBe('save-pptx-in-documents');
+        // The .pptx only: not the image dialog, nor the HTML page.
+        expect(action.kinds).toEqual(['powerpoint']);
+        // Translated when the dialog asks, in the app's language.
+        expect(action.label()).toBe('tran:Save in PPTX in Documents');
+
+        const blob = new Blob(['deck']);
+        await expect(
+            action.run({ kind: 'powerpoint', blob, fileName: 'Song.pptx' }),
+        ).resolves.toBe('Saved: Song.pptx');
+        expect(savePptxInDocuments).toHaveBeenCalledWith(blob, 'Song.pptx');
     });
 });
 
@@ -318,5 +349,14 @@ describe('initOpenLyric wiring', () => {
         langPlugins.mockClear();
         await initOpenLyric(FILE_PATH, true);
         expect(langPlugins).not.toHaveBeenCalled();
+    });
+
+    test('the labels round a song are in the app language, not the song’s', async () => {
+        mocks.initAllLangCssMock.mockResolvedValue([]);
+        const previewer: any = await initOpenLyric(FILE_PATH);
+        expect(previewer.labelLocale).toBe('xx-XX');
+        // No language plugged in, no label language set: open-lyric's own.
+        const plain: any = await initOpenLyric(FILE_PATH, true);
+        expect('labelLocale' in plain).toBe(false);
     });
 });

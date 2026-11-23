@@ -592,6 +592,14 @@ export type EditedLyricType = {
      * and **Show it in the list** read.
      */
     shownName?: string;
+    /**
+     * Every document ONE answer changed, oldest first, when it is more than
+     * one (2026-11-21, EC-787: a deck handed over and the chat's earlier
+     * deck both got a SmartArt box, and **Undo this change** put back the
+     * second alone). `name` stays the newest, the row **Show it in the
+     * list** rings.
+     */
+    undoNames?: string[];
 };
 
 export type ForegroundUndoPartType = { name: string; isMade: boolean };
@@ -634,15 +642,20 @@ export const LYRIC_UNDO_TOOL_NAME = 'lyric-undo';
 export const LYRIC_UNDO_LABEL = 'Undo this change';
 
 /**
- * `next` remembered on top of what the same answer changed before: the same
- * document keeps every undo id, oldest first; another document starts over.
+ * `next` remembered on top of what the same answer changed before: every
+ * undo id, oldest first, of this document and any other the answer changed
+ * -- one press puts all of it back -- and the documents' names.
  */
 export function mergeEditedDocument(
     previous: EditedLyricType | null,
     next: EditedLyricType,
 ): EditedLyricType {
-    if (previous === null || previous.name !== next.name) {
+    if (previous === null) {
         return next;
+    }
+    const undoNames = [...(previous.undoNames ?? [previous.name])];
+    if (!undoNames.includes(next.name)) {
+        undoNames.push(next.name);
     }
     const undoIdList = [
         ...(previous.undoIdList ??
@@ -653,6 +666,7 @@ export function mergeEditedDocument(
         ...next,
         undoId: next.undoId ?? previous.undoId,
         ...(undoIdList.length > 1 ? { undoIdList } : {}),
+        ...(undoNames.length > 1 ? { undoNames } : {}),
     };
 }
 
@@ -672,6 +686,9 @@ export function genLyricUndoAction(edited: EditedLyricType) {
                   ...(edited.undoParts === undefined
                       ? {}
                       : { parts: edited.undoParts }),
+                  ...(edited.undoNames === undefined
+                      ? {}
+                      : { names: edited.undoNames }),
               },
           };
 }

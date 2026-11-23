@@ -33,9 +33,11 @@ describe('a reference being typed', () => {
     });
 
     test('matches books exactly first, then every name that starts so', () => {
-        expect(matchBibleBooks('យ៉ូ', BOOK_LIST).map((b) => b.bookKey)).toEqual(
-            ['JHN', 'JOB', 'JOL'],
-        );
+        expect(matchBibleBooks('យ៉ូ', BOOK_LIST).map((b) => b.bookKey)).toEqual([
+            'JHN',
+            'JOB',
+            'JOL',
+        ]);
     });
 
     test('reads the language’s own colon between chapter and verse', () => {

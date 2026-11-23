@@ -421,13 +421,16 @@ describe('appHelpers', () => {
         const module = await loadModule();
         const renameToMock = vi.fn(async () => undefined);
         const trashMock = vi.fn(async () => undefined);
-        // Three side files per document: `.bg.json`, `.preview.bg.json` and
-        // `.transition.json`, asked in that order by each of the two calls.
+        // Four side files per document: `.bg.json`, `.preview.bg.json`,
+        // `.transition.json` and a deck's `.build.json`, asked in that order
+        // by each of the two calls.
         fsCheckFileExistMock
             .mockResolvedValueOnce(true)
             .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(false)
+            .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(true)
+            .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(false)
             .mockResolvedValueOnce(false);
         fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
@@ -456,12 +459,18 @@ describe('appHelpers', () => {
 
         expect(renameToMock).toHaveBeenCalledWith('New Song');
         expect(trashMock).toHaveBeenCalledTimes(1);
-        // A document's own transitions go with it too.
-        expect(
-            fsCheckFileExistMock.mock.calls.some(([filePath]) => {
-                return String(filePath).endsWith('Old Song.transition.json');
-            }),
-        ).toBe(true);
+        // A document's own transitions go with it too, and a deck's build
+        // choices.
+        for (const sideFileName of [
+            'Old Song.transition.json',
+            'Old Song.build.json',
+        ]) {
+            expect(
+                fsCheckFileExistMock.mock.calls.some(([filePath]) => {
+                    return String(filePath).endsWith(sideFileName);
+                }),
+            ).toBe(true);
+        }
     });
 
     test('downloads images and reports each failure mode', async () => {
@@ -615,6 +624,15 @@ describe('appHelpers', () => {
                 'mp3',
             ]),
         );
+        // A video is capped at 1080p and steered off AV1, H.264 first; an
+        // audio run keeps yt-dlp's own pick of the best audio stream.
+        const videoArgs: string[] = execMock.mock.calls[0][0];
+        expect(videoArgs[videoArgs.indexOf('-f') + 1]).toBe(
+            'bv*[height<=?1080][vcodec^=avc1]+ba[ext=m4a]' +
+                '/bv*[height<=?1080][vcodec!^=av01]+ba' +
+                '/b[height<=?1080]/bv*+ba/b',
+        );
+        expect(execMock.mock.calls[1][0]).not.toContain('-f');
         expect(showProgressBarMessageMock).toHaveBeenCalledWith(
             'Process id:',
             77,
@@ -729,12 +747,21 @@ describe('appHelpers', () => {
         ).rejects.toThrow('yt-dlp returned no playable stream URL');
     });
 
-    test('reuses existing downloads on error and rejects when no file path is available', async () => {
+    test('fails a run that exits with an error even when it already named a file', async () => {
         const module = await loadModule();
         vi.spyOn(Date, 'now').mockReturnValue(333);
+        // The picture stream timed out after the audio stream had landed: the
+        // last path read is that audio stream's, and it is on disk.
         const first = createYtEmitter(async (handlers) => {
-            handlers.ytDlpEvent('download', 'Destination: /out/temp-333.mp4');
-            await handlers.error(new Error('disk full'));
+            handlers.ytDlpEvent(
+                'download',
+                'Destination: /out/temp-333.f401.mp4',
+            );
+            handlers.ytDlpEvent(
+                'download',
+                'Destination: /out/temp-333.f251.webm',
+            );
+            await handlers.error(new Error('Read timed out'));
         });
         const second = createYtEmitter((handlers) => {
             handlers.close();
@@ -745,10 +772,13 @@ describe('appHelpers', () => {
                 .mockReturnValueOnce(first)
                 .mockReturnValueOnce(second),
         });
-        fileSourceGetInstanceMock.mockImplementation((filePath: string) => ({
-            dotExtension: filePath.endsWith('.mp4') ? '.mp4' : '.bin',
-        }));
         fsCheckFileExistMock.mockResolvedValue(true);
+        const { fsListFiles, fsDeleteFile } = await import('./fileHelpers');
+        vi.mocked(fsListFiles).mockResolvedValueOnce([
+            'temp-333.f401.mp4.part',
+            'temp-333.f251.webm',
+            'Earlier Song.mp4',
+        ]);
         vi.stubGlobal(
             'fetch',
             vi.fn(() => {
@@ -756,32 +786,23 @@ describe('appHelpers', () => {
             }),
         );
 
-        const recoveredPromise = module.downloadVideoOrAudio(
-            'https://download',
-            '/out',
-            true,
-        );
-
-        await expect(recoveredPromise).resolves.toEqual({
-            filePath: '/out/temp-333.mp4',
-            fileFullName: 'temp-333.mp4',
-        });
+        await expect(
+            module.downloadVideoOrAudio('https://download', '/out', true),
+        ).rejects.toThrow('Download failed: Read timed out');
         expect(logErrorMock).toHaveBeenCalledWith(
             'Error fetching page:',
             expect.any(Error),
         );
         expect(handleErrorMock).toHaveBeenCalledWith(expect.any(Error));
+        // Both staging files go, the person's own file stays.
+        expect(vi.mocked(fsDeleteFile).mock.calls).toEqual([
+            ['/out/temp-333.f401.mp4.part'],
+            ['/out/temp-333.f251.webm'],
+        ]);
 
-        fsCheckFileExistMock.mockResolvedValue(false);
-        const rejectedPromise = module.downloadVideoOrAudio(
-            'https://download',
-            '/out',
-            true,
-        );
-
-        await expect(rejectedPromise).rejects.toThrow(
-            'Unable to determine file path',
-        );
+        await expect(
+            module.downloadVideoOrAudio('https://download', '/out', true),
+        ).rejects.toThrow('Unable to determine file path');
     });
 
     test('reads clipboard images and text helpers', async () => {

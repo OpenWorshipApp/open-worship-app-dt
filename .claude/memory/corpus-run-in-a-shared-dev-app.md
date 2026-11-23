@@ -204,7 +204,9 @@ user's dev app and a second session's live test on the same machine.
   asked on the final state, one was wrong -- _Where is the button for
   Clear All_, four rounds of reading the guide and the wrong place -- and
   it was the row that had been made a fill-in that same day. Pick each in
-  the list (`--templates --pick-templates`), press nothing under the
+  the list (the kept `corpus-run.mjs --templates` TYPES each with a sample
+  filled in -- no `--pick-templates` was ever kept -- so a pick is by
+  hand), press nothing under the
   answers, and keep the row that would present for the end, with the
   screen locked.
 - **Rounds asked outside the pass file are not in the driver's count.**

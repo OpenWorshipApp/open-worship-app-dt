@@ -151,11 +151,10 @@ npm run lang:pack -- --pack=km,fr
 
 Then open **Settings → Languages**, find the language and press **Install**.
 
-**Every time you change a language's data** (its `dictionary.json` or
-`index.ts`, `assistant.json`, `questions.json`, `manual/`, fonts, Bible data…):
+**Every time you change a language's data** (its `dictionary.json`,
+`assistant.json`, `questions.json`, `manual/`, fonts, Bible data…):
 
-1. Raise `version` in that language's `meta.json` (and in its `index.ts` when
-   it repeats the version).
+1. Raise `version` in that language's `meta.json`.
 2. Pack it again: `npm run lang:pack -- --pack=<code>`, or `npm run lang:pack`
    when many languages changed (a new label touches all of them).
 3. In **Settings → Languages**, press **Refresh**, then **Update to**. The app
@@ -329,7 +328,7 @@ This project is open-source and actively growing. Whether you're a developer, de
 3. **📦 Install** dependencies:
 
    ```bash
-   npm install --allow-git=all
+   npm install
    ```
 
 4. **🌿 Create a branch** for your feature:

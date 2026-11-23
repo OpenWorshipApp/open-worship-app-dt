@@ -199,6 +199,42 @@ export class OfficeZipWriter {
         this.entryList.push(entry);
     }
 
+    // An entry copied from another package exactly as that package stored it
+    // (`officeZipReadHelpers.ts`): a deck changed by the help window keeps
+    // every part it did not touch -- its pictures above all -- byte for byte,
+    // with nothing inflated or deflated again.
+    async addStoredEntry(
+        fileName: string,
+        stored: {
+            bytes: Uint8Array;
+            crc: number;
+            originalSize: number;
+            isDeflated: boolean;
+        },
+    ) {
+        if (this.entryList.length >= MAX_ZIP_ENTRY_COUNT) {
+            throw new Error('Too many entries for a ZIP package');
+        }
+        const entry: ZipEntryType = {
+            fileNameBytes: toBytes(fileName),
+            storedSize: stored.bytes.length,
+            originalSize: stored.originalSize,
+            crc: stored.crc,
+            isDeflated: stored.isDeflated,
+            localHeaderOffset: this.offset,
+        };
+        const localHeader = toLocalFileHeader(entry);
+        if (
+            this.offset + localHeader.length + stored.bytes.length >
+            MAX_ZIP_OFFSET
+        ) {
+            throw new Error('The package is too large for a ZIP file');
+        }
+        await this.write(localHeader);
+        await this.write(stored.bytes);
+        this.entryList.push(entry);
+    }
+
     async finish() {
         const centralDirectoryOffset = this.offset;
         for (const entry of this.entryList) {

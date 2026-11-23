@@ -3,7 +3,7 @@ id: W-06
 title: "Rechercher et présenter un verset biblique"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 68b974fe48fa10db
+translatedFrom: e5b77f92f8663b41
 ---
 # W-06 — Rechercher et présenter un verset biblique
 
@@ -47,7 +47,8 @@ translatedFrom: 68b974fe48fa10db
    appuyez sur **Ctrl+→** (ou **Alt+→**) : l'écran avance d'autant de versets qu'il en affiche —
    John 3:16 devient 3:17, John 3:16-18 devient 3:19-21 — et passe au chapitre suivant quand le
    chapitre se termine, et **Ctrl+←** revient en arrière. Cela ne fonctionne que si la fenêtre principale est sur le
-   Présentateur : depuis le Lecteur biblique, appuyez d'abord sur **[en:tran:Go Back to Presenter]**. Rien
+   Présentateur : depuis le Lecteur biblique, appuyez d'abord sur **[en:tran:Go Back to Presenter]**, puis
+   encore une fois dans la question qu'il pose (W-02). Rien
    sur la carte de l'écran miniature ne fait avancer le verset ; depuis le Présentateur lui-même, présentez le
    passage suivant de la même façon que celui-ci.
    **Une autre version à l'écran.** Si aucun passage n'est encore à l'écran, appuyez sur **Ctrl+B**,

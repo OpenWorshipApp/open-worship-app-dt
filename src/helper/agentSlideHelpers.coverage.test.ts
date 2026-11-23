@@ -319,13 +319,14 @@ describe('what `slides` says', () => {
                     {
                         ...genTextBox(2),
                         type: 'audio',
-                        filePath: 'file:///C:/Users/racky/My%20Hymn.mp3?t=1#x',
+                        filePath:
+                            'file:///C:/Users/username/My%20Hymn.mp3?t=1#x',
                     },
                     {
                         ...genTextBox(3),
                         type: 'video',
                         // A broken escape is shown as it was written.
-                        filePath: 'file:///C:/Users/racky/Bad%E0%A4%A.mp4',
+                        filePath: 'file:///C:/Users/username/Bad%E0%A4%A.mp4',
                     },
                     { ...genTextBox(4), type: 'website', url: '' },
                 ]),
@@ -344,7 +345,7 @@ describe('what `slides` says', () => {
         expect(audio).toMatchObject({ file: 'My Hymn.mp3' });
         expect(video).toMatchObject({ file: 'Bad%E0%A4%A.mp4' });
         expect(website).not.toHaveProperty('url');
-        expect(JSON.stringify(read)).not.toContain('racky');
+        expect(JSON.stringify(read)).not.toContain('username');
     });
 
     test('a long text is never cut through the middle of a character', () => {

@@ -40,7 +40,7 @@ export type DeckSongPlanType =
  * The Documents folder and the names in it, or null when it could not be
  * read (no folder chosen, no tool host): the ask then goes on as before.
  */
-async function readDocumentList(): Promise<{
+export async function readDocumentList(): Promise<{
     folder: string;
     names: string[];
 } | null> {

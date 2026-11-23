@@ -75,6 +75,14 @@ const MODEL_HIDDEN_TOOL_GROUP_LIST = [
     nameList: ['owa_highlight_selector'],
   },
   {
+    // The developer's read of the page by selector (`AD-40`): a volunteer's
+    // question is about a control by its words, never about a selector.
+    reason:
+      'Read the window with owa_list_ui or owa_find_ui, which find the ' +
+      'controls by the words on them. This one reads by a selector.',
+    nameList: ['owa_inspect'],
+  },
+  {
     // These aim by a uid out of a snapshot, so the destructive-label
     // interlock has nothing to read (`MC-02`). The firewall now recovers
     // the label from the snapshot that minted the uid, but the model has
@@ -315,6 +323,13 @@ export const MODEL_ON_ASK_TOOL_MAP = {
   // The window names the attached file in `file` itself
   // (`src/chatbot/flowChatHelpers.ts`).
   owa_presenting_flow_edit: 'flow',
+  // A conversation about an ATTACHED PowerPoint or Word file (2026-11-20,
+  // the Documents row's **Open in Chatbot** on a .pptx / .docx): its words
+  // changed, corrected or translated, lines and speaker notes written,
+  // slides moved, copied or taken out -- the file itself, every change
+  // undoable. The window names the attached file in `file` itself
+  // (`src/chatbot/officeChatHelpers.ts`).
+  owa_office_edit: 'office',
   // A conversation about a FOREGROUND component (2026-11-09, a session of
   // an open panel attached to the chat, a panel's own 🤖, or a question
   // naming a component): its words and look changed, live on the wall,
@@ -329,6 +344,12 @@ export const MODEL_ON_ASK_TOOL_MAP = {
   // (`src/chatbot/screenChatHelpers.ts`); the ordinary list stayed at its
   // ratchet.
   owa_screen_edit: 'screen',
+  // A conversation about an ANIMATION in Customize (2026-11-19, the 🤖 in
+  // Customize or in the Shader Code or CSS Code panel; the user: _let
+  // chatbot control editor_): its effect, colours, speed, density or
+  // quality, opacity and blend, and its code typed into its Edit Code panel
+  // and checked there (`src/chatbot/animationChatHelpers.ts`).
+  owa_animation_edit: 'animation',
 };
 
 /**
@@ -416,16 +437,19 @@ export const MODEL_ASK_SHARED_TOOL_MAP = {
   // slide", the document made by the window): quoted from the installed
   // Bible, never from the model's memory, which the slide prompt forbids.
   slide: ['owa_find_verse'],
+  // A PowerPoint or Word file's conversation the same way (2026-11-20,
+  // EC-761): its prompt says a verse named is read before it is written,
+  // and with no verse finder offered, a verse asked for could only come
+  // from the model's memory.
+  office: ['owa_find_verse'],
   // A screen conversation (2026-11-13): a verse put up in the versions
   // asked for, the last change taken back when asked ("undo that" -- the
   // ask names its id), the main window brought to the Presenter, where the
   // screens are, and how a control works from the guide.
-  screen: [
-    'owa_present_bible',
-    'owa_undo',
-    'owa_goto_page',
-    'owa_help_search',
-  ],
+  screen: ['owa_present_bible', 'owa_undo', 'owa_goto_page', 'owa_help_search'],
+  // An animation conversation: the main window taken to the Presenter,
+  // where the editors are, and how a panel works from the guide.
+  animation: ['owa_goto_page', 'owa_help_search'],
 };
 
 /** Whether the tool is offered only for one kind of ask. */

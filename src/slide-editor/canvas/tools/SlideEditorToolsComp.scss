@@ -5,6 +5,33 @@
     height: $header-height;
   }
 
+  // The open tab keeps its words; the other shrinks to its icon and an
+  // ellipsis rather than slide behind the strip's scroll edge (F-12). Any
+  // language: nothing here assumes how long a label is.
+  .tools-tabs {
+    min-width: 0;
+
+    .nav-item {
+      min-width: 2.75em;
+      flex: 0 1 auto;
+
+      &:has(> .nav-link.active) {
+        flex-shrink: 0;
+      }
+    }
+
+    .nav-link {
+      max-width: 100%;
+    }
+
+    .tools-tab-title {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
   .tools-body {
     overflow: hidden;
 

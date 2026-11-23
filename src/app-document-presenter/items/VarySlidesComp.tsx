@@ -18,7 +18,7 @@ import SlideAutoPlayComp, {
 } from '../../slide-auto-play/SlideAutoPlayComp';
 import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpers';
 import { DEFAULT_THUMBNAIL_SIZE_FACTOR } from '../../app-document-list/appDocumentTypeHelpers';
-import { useCallback, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo } from 'react';
 import VirtualGridComp from '../../virtual-list/VirtualGridComp';
 import {
     genSlideHeightGetter,
@@ -38,6 +38,7 @@ import { removeDocxHtmlsPreview } from '../../server/docxHelpers';
 import MissingFontFamilyBannerComp, {
     type DocumentMenuRoomType,
 } from './MissingFontFamilyBannerComp';
+import PptxOmitBackgroundCheckboxComp from './PptxOmitBackgroundCheckboxComp';
 import { genTimeoutAttempt } from '../../helper/timeoutHelpers';
 import { useFollowPresentedSlide } from './useFollowPresentedSlide';
 import {
@@ -225,6 +226,47 @@ function NoSlidesToDisplayComp({
     );
 }
 
+// What the banner is handed inside the strip row below: the row has already
+// moved up into the menu button's strip, so the banner keeps its in-strip
+// layout without moving a second time.
+const IN_STRIP_ROW_MENU_ROOM: DocumentMenuRoomType = { height: 0, width: 0 };
+
+/**
+ * The strip above a PowerPoint file's slides: its Omit Background choice, then
+ * its missing fonts, on the one line the previewer left free for the
+ * document's menu button (`VarySlidesPreviewerComp`). At least the strip tall,
+ * so the cards below stay where they were with nothing but the checkbox in it.
+ */
+function PptxSlidesStripRowComp({
+    filePath,
+    menuRoom,
+    children,
+}: Readonly<{
+    filePath: string;
+    menuRoom: DocumentMenuRoomType | null;
+    children: ReactNode;
+}>) {
+    return (
+        <div
+            className="d-flex align-items-start gap-1"
+            style={
+                menuRoom === null
+                    ? undefined
+                    : {
+                          marginTop: -menuRoom.height,
+                          marginRight: menuRoom.width,
+                          minHeight: menuRoom.height,
+                      }
+            }
+        >
+            <PptxOmitBackgroundCheckboxComp filePath={filePath} />
+            <div className="flex-grow-1" style={{ minWidth: 0 }}>
+                {children}
+            </div>
+        </div>
+    );
+}
+
 function LoadingSlidesComp({
     pdfFilePath,
 }: Readonly<{ pdfFilePath: string | null }>) {
@@ -365,13 +407,29 @@ export default function VarySlidesComp({
             onRefresh: refreshDocxSlides,
         };
     }
+    // A Stage Previewer pane of stage 1 or up shows the same deck again; the
+    // choice is made once, on stage 0.
+    const isPptxStripRow = isPptxAppDocument && slideStage === 0;
+    const missingFontFamilyBanner = (
+        <MissingFontFamilyBannerComp
+            missingFontFamilyList={missingFontFamilyList ?? []}
+            menuRoom={
+                isPptxStripRow && menuRoom !== null
+                    ? IN_STRIP_ROW_MENU_ROOM
+                    : menuRoom
+            }
+            {...fontRefreshProps}
+        />
+    );
     return (
         <div className="w-100 slide-auto-play-host">
-            <MissingFontFamilyBannerComp
-                missingFontFamilyList={missingFontFamilyList ?? []}
-                menuRoom={menuRoom}
-                {...fontRefreshProps}
-            />
+            {isPptxStripRow ? (
+                <PptxSlidesStripRowComp filePath={filePath} menuRoom={menuRoom}>
+                    {missingFontFamilyBanner}
+                </PptxSlidesStripRowComp>
+            ) : (
+                missingFontFamilyBanner
+            )}
             {/* Only the rows on screen are mounted. Every slide card carries a
                 shadow root with a React root of its own, so a document of a
                 thousand slides used to build a thousand of them before the

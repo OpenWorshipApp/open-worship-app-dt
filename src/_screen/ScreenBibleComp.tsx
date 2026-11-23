@@ -23,6 +23,7 @@ import {
     SCREEN_BIBLE_COLUMN_CLASSNAME,
 } from './screenBibleColumnHelpers';
 import { SCREEN_LONG_TEXT_CLASSNAME } from './screenLongTextTypeHelpers';
+import { genScreenTextScaleCss } from './screenTextScaleHelpers';
 
 function getStyleText(textColor?: string) {
     const { colorPart, invertColorPart } = getColorParts(textColor);
@@ -230,6 +231,8 @@ export default function ScreenBibleComp() {
         screenLongTextManagerRef.current.render();
     });
     useScreenLongTextManagerEvents(['text-style']);
+    // This screen's own scale only: another screen's leaves this one alone.
+    useScreenLongTextManagerEvents(['text-scale'], screenLongTextManager);
     // Re-render when this screen's foreground changes, so a top marquee
     // pushes the passage down (and releases it when it comes off).
     const { screenForegroundManager } = screenManager;
@@ -264,7 +267,11 @@ export default function ScreenBibleComp() {
             <style>
                 {`#bible-screen-view tr {
                     ${ScreenLongTextManager.textStyleText}
-                }`}
+                }
+                ${genScreenTextScaleCss(
+                    ScreenLongTextManager.textStyleTextFontSize,
+                    screenLongTextManager.textScale,
+                )}`}
             </style>
             <div
                 id="bible-screen-view"

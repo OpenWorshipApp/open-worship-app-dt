@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-    CSS_ANIMATION_SAMPLE_LIST,
-    GLSL_ANIMATION_SAMPLE_LIST,
-} from './animationBuiltInHelpers';
+import { listAnimationCategorySrcs } from './animationBuiltInHelpers';
+import { parseAnimation, toAnimationSrc } from './animationValueHelpers';
 import {
     FILL_BUILT_IN_GRADIENT_MAP,
     FILL_BUILT_IN_PATTERN_MAP,
@@ -19,8 +17,8 @@ const NONE = { isNext: true, step: 1, repeatKind: 'none' } as const;
 
 const DARK_GRADIENTS = FILL_BUILT_IN_GRADIENT_MAP.dark;
 const LIGHT_PATTERNS = FILL_BUILT_IN_PATTERN_MAP.light;
-const CSS_SRC_LIST = CSS_ANIMATION_SAMPLE_LIST.map((sample) => sample.src);
-const GLSL_SRC_LIST = GLSL_ANIMATION_SAMPLE_LIST.map((sample) => sample.src);
+const CSS_SRC_LIST = listAnimationCategorySrcs('christmas', 'css');
+const GLSL_SRC_LIST = listAnimationCategorySrcs('christmas', 'glsl');
 
 describe('the row a fill show walks', () => {
     it('is the row of tiles the fill up is in, on its own side of the switch', () => {
@@ -85,13 +83,55 @@ describe('the row a fill show walks', () => {
 });
 
 describe('the row an animation show walks', () => {
-    it('is the CSS animations or the shaders, whichever the one up is', () => {
+    it("is its category's CSS animations or shaders, whichever the one up is", () => {
         expect(findPaintShowRow('animation', CSS_SRC_LIST[2], [])).toEqual(
             CSS_SRC_LIST,
         );
         expect(
             findNextPaintShowSrc('animation', GLSL_SRC_LIST[0], [], ALL),
         ).toBe(GLSL_SRC_LIST[1]);
+        // Whichever category the one up is of.
+        const thanksgiving = listAnimationCategorySrcs('thanksgiving', 'css');
+        expect(findPaintShowRow('animation', thanksgiving[1], [])).toEqual(
+            thanksgiving,
+        );
+    });
+
+    it('is the side of the Dark / Light switch the one up is on', () => {
+        const light = listAnimationCategorySrcs('christmas', 'glsl', 'light');
+        expect(light).not.toEqual(GLSL_SRC_LIST);
+        expect(findPaintShowRow('animation', light[3], [])).toEqual(light);
+        expect(findNextPaintShowSrc('animation', light.at(-1)!, [], ALL)).toBe(
+            light[0],
+        );
+    });
+
+    it('is the saved row, then the pinned, then the category', () => {
+        const pinned = [GLSL_SRC_LIST[4], CSS_SRC_LIST[0]];
+        expect(findPaintShowRow('animation', CSS_SRC_LIST[0], [], pinned)).toBe(
+            pinned,
+        );
+        expect(
+            findNextPaintShowSrc('animation', CSS_SRC_LIST[0], [], ALL, pinned),
+        ).toBe(GLSL_SRC_LIST[4]);
+        const saved = [CSS_SRC_LIST[0], CSS_SRC_LIST[5]];
+        expect(
+            findPaintShowRow('animation', CSS_SRC_LIST[0], saved, pinned),
+        ).toBe(saved);
+        // Not pinned: its category's row.
+        expect(
+            findPaintShowRow('animation', CSS_SRC_LIST[3], [], pinned),
+        ).toEqual(CSS_SRC_LIST);
+    });
+
+    it('is none for an animation changed in Customize', () => {
+        const changed = parseAnimation(CSS_SRC_LIST[0])!;
+        const fast = toAnimationSrc({ ...changed, speed: 'fast' });
+        expect(findPaintShowRow('animation', fast, [])).toEqual([]);
+        expect(findNextPaintShowSrc('animation', fast, [], ALL)).toBe(null);
+        expect(findPaintShowRow('animation', 'not an animation', [])).toEqual(
+            [],
+        );
     });
 
     it('compares as an animation, in any order of its parts', () => {

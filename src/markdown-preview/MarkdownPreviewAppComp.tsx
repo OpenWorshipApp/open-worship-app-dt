@@ -31,6 +31,11 @@ import {
     renderMermaidDiagrams,
     takeDrawnDiagrams,
 } from './markdownMermaidHelpers';
+import type { MermaidViewLabelsType } from './markdownMermaidViewHelpers';
+import {
+    attachMermaidViewControls,
+    removeMermaidViewControls,
+} from './markdownMermaidViewHelpers';
 import {
     addPassageFolds,
     findPassageToggle,
@@ -221,6 +226,15 @@ function genPrintAppendixLabels(): PrintAppendixLabelsType {
 
 function genPassageFoldLabels(): PassageFoldLabelsType {
     return { collapse: tran('Collapse'), expand: tran('Expand') };
+}
+
+function genMermaidViewLabels(): MermaidViewLabelsType {
+    return {
+        pan: tran('Drag to move'),
+        zoomOut: tran('Zoom Out'),
+        zoomIn: tran('Zoom In'),
+        reset: tran('Reset'),
+    };
 }
 
 /** `promise`, or `milliseconds` -- whichever is first; never a throw. */
@@ -580,6 +594,8 @@ export default function MarkdownPreviewAppComp() {
         // faces, is kept rather than drawn again: the page beside the editor
         // is rendered again on every pause in the typing.
         const drawnDiagrams = drawnDiagramsRef.current;
+        // A diagram's buttons are not part of its picture.
+        removeMermaidViewControls(articleElement);
         const drawnMap =
             drawnDiagrams !== null &&
             drawnDiagrams.isDark === isDark &&
@@ -649,6 +665,17 @@ export default function MarkdownPreviewAppComp() {
         diagramPassWaitRef.current?.();
         return markStale;
     }, [loadResult, theme, langFontFamilies, foldedPassageKeySet]);
+
+    // A drawn diagram's move and zoom buttons (`markdownMermaidViewHelpers`):
+    // one set of listeners on the page, for as long as there is a page.
+    const isPageReady = loadResult.status === 'ready';
+    useAppEffect(() => {
+        const articleElement = articleRef.current;
+        if (articleElement === null) {
+            return;
+        }
+        return attachMermaidViewControls(articleElement, genMermaidViewLabels);
+    }, [isPageReady]);
 
     // Printing: main asks this page to get ready before every print of the
     // window -- File > Print, and the Print below, which gets it ready itself

@@ -192,9 +192,7 @@ describe('toGuideRescueAnswer', () => {
         expect(cut.endsWith('…')).toBe(true);
         const kept = cut.slice(0, -1);
         expect(kept.endsWith('\u17D2')).toBe(false);
-        expect('ព្រះគម្ពីរ'.repeat(40).slice(kept.length)).not.toMatch(
-            /^\p{M}/u,
-        );
+        expect('ព្រះគម្ពីរ'.repeat(40).slice(kept.length)).not.toMatch(/^\p{M}/u);
     });
 });
 
@@ -583,10 +581,7 @@ describe('the answer is in their language', () => {
         expect(nudge).not.toContain('លោកុប្បត្តិ');
         // Every verse it names was found: nothing to say.
         expect(
-            findUnreadVerseNudge(
-                '**Genesis 49:24** and លោកុប្បត្តិ ៤៩:២៤',
-                watch,
-            ),
+            findUnreadVerseNudge('**Genesis 49:24** and លោកុប្បត្តិ ៤៩:២៤', watch),
         ).toBeNull();
         // Once.
         watch.isVerseNudged = true;
@@ -598,8 +593,7 @@ describe('the answer is in their language', () => {
     // wrong month; the record held neither the verse nor its words.
     test('a lookup answer quoting words nothing gave goes back once', () => {
         const watch = genToolWatch();
-        const madeUp =
-            'លោកុប្បត្តិ ៨:៤ ថា «ហើយទូកនោះក៏ចតនៅលើភ្នំអារ៉ារ៉ាត ក្នុងខែទីប្រាំបី»';
+        const madeUp = 'លោកុប្បត្តិ ៨:៤ ថា «ហើយទូកនោះក៏ចតនៅលើភ្នំអារ៉ារ៉ាត ក្នុងខែទីប្រាំបី»';
         // Not a lookup conversation: nothing to check.
         expect(findMisquoteNudge(madeUp, watch)).toBeNull();
         watch.quoteSources = [
@@ -662,8 +656,7 @@ describe('the answer is in their language', () => {
     // answered "the passage does not state it" in one round, nothing read.
     test('"the Bible does not say", with nothing read, goes back once', () => {
         const watch = genToolWatch();
-        const khmer =
-            'យោងតាមអត្ថបទគម្ពីរ មិនបានបញ្ជាក់ពីចំនួនថ្ងៃសរុបដែលណូអេនៅក្នុងទូកទេ';
+        const khmer = 'យោងតាមអត្ថបទគម្ពីរ មិនបានបញ្ជាក់ពីចំនួនថ្ងៃសរុបដែលណូអេនៅក្នុងទូកទេ';
         // Not a lookup conversation.
         expect(findNotStatedNudge(khmer, watch)).toBeNull();
         watch.quoteSources = [toQuoteKey('Record: {"bible":"ពគប"}')];

@@ -7,7 +7,7 @@ metadata:
 
 A blanket kill by Electron image name is **not** "restart the app" — the user
 runs other Electron projects from source on this machine, notably `open-lyric`
-at `/Users/raksa/Desktop/dev/open-lyric` (its own dev app, CDP on port **9224**;
+in a sibling checkout, `../open-lyric` (its own dev app, CDP on port **9224**;
 this repo no longer has a fixed one — see [[agent-access-mcp-chatbot]]). Its processes carry the same image names, so a blanket
 kill takes it down too. Doing this on 2026-08-09 (on the old Windows box, with
 `taskkill //IM electron.exe //F`) killed their open-lyric session mid-work.

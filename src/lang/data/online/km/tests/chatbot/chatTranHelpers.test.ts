@@ -43,9 +43,7 @@ describe('a Bible short name', () => {
     test('is named by the language the BIBLE is in', () => {
         expect(getChatBibleKeyName('KJV', 'en-US')).toBe('King James Version');
         expect(getChatBibleKeyName('kjv', 'en-US')).toBe('King James Version');
-        expect(getChatBibleKeyName('ពគប', 'km-KH')).toBe(
-            'ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤',
-        );
+        expect(getChatBibleKeyName('ពគប', 'km-KH')).toBe('ព្រះគម្ពីរបរិសុទ្ធ ១៩៥៤');
         // An imported file's own short name means nothing outside that file,
         // and a language the app holds no names for has none to give.
         expect(getChatBibleKeyName('KM2005', 'km-KH')).toBeNull();

@@ -16,6 +16,7 @@ const state = vi.hoisted(() => ({
         isUntilMediaEnd: false,
     } as any,
     saved: [] as string[],
+    pinned: [] as string[],
     savedSuffixes: [] as string[],
     put: [] as [number, string, any][],
     applied: [] as {
@@ -91,6 +92,9 @@ vi.mock('../background/paintShowSavedHelpers', () => ({
         state.savedSuffixes.push(suffix);
         return state.saved;
     },
+    readPaintPinnedSrcList: (kind: string) => {
+        return kind === 'animation' ? state.pinned : [];
+    },
 }));
 
 import {
@@ -100,10 +104,10 @@ import {
     tickForegroundPaint,
 } from './foregroundPaintAutoPlayHelpers';
 import { FILL_BUILT_IN_PATTERN_MAP } from '../background/fillBuiltInHelpers';
-import { CSS_ANIMATION_SAMPLE_LIST } from '../background/animationBuiltInHelpers';
+import { listAnimationCategorySrcs } from '../background/animationBuiltInHelpers';
 
 const PATTERNS = FILL_BUILT_IN_PATTERN_MAP.dark;
-const CSS_SRC_LIST = CSS_ANIMATION_SAMPLE_LIST.map((sample) => sample.src);
+const CSS_SRC_LIST = listAnimationCategorySrcs('sunday-worship', 'css');
 
 beforeEach(() => {
     vi.useFakeTimers();
@@ -119,6 +123,7 @@ beforeEach(() => {
         isUntilMediaEnd: false,
     };
     state.saved = [];
+    state.pinned = [];
     state.savedSuffixes = [];
     state.put = [];
     state.applied = [];
@@ -162,12 +167,21 @@ describe('one step of a Fill Show or Animation Show', () => {
         expect(state.put).toHaveLength(2);
     });
 
-    it('walks the animation list, and back when asked', () => {
+    it("walks the animation's category row, and back when asked", () => {
         state.showing = [[0, { src: CSS_SRC_LIST[1] }]];
         expect(tickForegroundPaint('animation', '', false)).toBe(true);
         expect(state.listKeys).toEqual(['animationDataList']);
         vi.advanceTimersByTime(0);
         expect(state.put[0][2].src).toBe(CSS_SRC_LIST[0]);
+    });
+
+    it('walks the pinned animations when one of them is up', () => {
+        state.pinned = [CSS_SRC_LIST[3], CSS_SRC_LIST[7]];
+        state.showing = [[0, { src: CSS_SRC_LIST[7] }]];
+        expect(tickForegroundPaint('animation', '')).toBe(true);
+        vi.advanceTimersByTime(0);
+        // Round to the first pin, not on to the category's next.
+        expect(state.put[0][2].src).toBe(CSS_SRC_LIST[3]);
     });
 
     it('answers false with nothing up, or nothing in a row', () => {

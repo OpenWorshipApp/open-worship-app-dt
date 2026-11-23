@@ -3,7 +3,7 @@ id: W-37
 title: "Garder vos propres fichiers à côté du verset (Ressources)"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 91841ab03e7eb0ec
+translatedFrom: 6e593ac908601cec
 ---
 # W-37 — Garder vos propres fichiers à côté du verset (Ressources)
 
@@ -127,6 +127,11 @@ comptent tous aussi au niveau du livre.
      sont retirés. Si un fichier affiche `#` et `**` au lieu d'un titre et de texte en gras, c'est que le fichier lui-même
      a été enregistré avec ces signes échappés (`\#`, `\*\*`), ce que fait la vue mise en forme de certains éditeurs
      quand on y colle du texte ; l'aperçu montre ce qui est écrit.
+     Un passage biblique cité comme l'application en cite un dans une étude — une citation qui commence par
+     sa référence en gras et sa Bible, `> **John 3:1-21** (KJV)`, avec les versets en dessous —
+     a un chevron devant la référence, **[en:tran:Collapse]** : appuyez dessus et le passage se
+     replie sur cette ligne ; appuyez de nouveau (**[en:tran:Expand]**) pour le rouvrir. Le repli ne vaut
+     qu'à l'écran.
      **Les personnes, les lieux, les versets et les autres fichiers nommés dans la page sont aussi des liens**,
      dessinés dans la couleur des liens et soulignés en pointillé, comme les noms dans un verset du Lecteur
      biblique : une personne ou un lieu du chapitre dont le fichier porte le nom (un fichier `JHN.3.…` lie

@@ -40,7 +40,8 @@ on top of [[scratch-dev-instance-beside-user-app]]:
 - Accessible names carry Bootstrap icon glyphs (U+F504 and the like) before a
   button's or dialog's words: match `Switch"`, never `"Switch"` -- a panel's
   `generic ".?Documents"` and an `alertdialog ".?Create the KJV Bible` too.
-- `owa_list_ui` stops at 100 rows, so an open context menu is read off a
+- `owa_list_ui` stops at 100 rows unless given a `limit` (200 at most), so an
+  open context menu is read off a
   snapshot (`menuitem` lines). `owa_find_ui` takes `text`, not `find`.
 - **Dropping on a path row** (`owa_drop_files`, paths under `test-results/`
   or the temp folder only): Settings' Parent Directory row answers to the

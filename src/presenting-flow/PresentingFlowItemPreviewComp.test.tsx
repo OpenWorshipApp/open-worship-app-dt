@@ -375,6 +375,33 @@ describe('presenting flow item preview', () => {
         expect(
             container.querySelector('.app-presenting-flow-preview-item-body'),
         ).not.toBeNull();
+
+        // The chevron is a control, as the tree's is (F-34): named by what it
+        // does, a tab stop, and folded by Enter without the key reaching the
+        // preview, whose own Enter and Space step the run.
+        const chevron = find('.app-presenting-flow-preview-item-chevron');
+        expect(chevron.getAttribute('role')).toBe('button');
+        expect(chevron.getAttribute('tabindex')).toBe('0');
+        expect(chevron.getAttribute('aria-label')).toBe('Collapse');
+        expect(chevron.getAttribute('aria-expanded')).toBe('true');
+        const outerKeys = vi.fn();
+        // Above the React root, where the preview's own key handling sits.
+        document.body.addEventListener('keydown', outerKeys);
+        await act(async () =>
+            chevron.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            ),
+        );
+        document.body.removeEventListener('keydown', outerKeys);
+        expect(outerKeys).not.toHaveBeenCalled();
+        expect(
+            container.querySelector('.app-presenting-flow-preview-item-body'),
+        ).toBeNull();
+        expect(
+            find('.app-presenting-flow-preview-item-chevron').getAttribute(
+                'aria-label',
+            ),
+        ).toBe('Expand');
     });
 
     it('sends active action buttons to screens but keeps parked actions inert', async () => {

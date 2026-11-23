@@ -1166,6 +1166,36 @@ describe('owa_find_ui', () => {
     ]);
   });
 
+  it("retries a scope with the panel's English name kept", async () => {
+    // A floating panel answers to its stamped English name only, so both
+    // halves translated miss, and its name with the control translated hits.
+    const kept = `Bible Lookup > ${xx('More Options')}`;
+    routeApp('xx', (expression) => {
+      return needleOf(expression) === kept
+        ? { matches: [{ label: xx('More Options'), inPanel: 'Bible Lookup' }] }
+        : { matches: [], nearMisses: ['Bible Lookup'] };
+    });
+    expect(
+      jsonOf(
+        await call('owa_find_ui', {
+          text: 'Bible Lookup > More Options',
+          page: 'presenter.html',
+        }),
+      ),
+    ).toEqual({
+      matches: [{ label: xx('More Options'), inPanel: 'Bible Lookup' }],
+      foundAs: kept,
+      note: `On their screen this control reads "${kept}" -- call it that.`,
+    });
+    expect(
+      callsOf(isFindUi).map(([expression]) => needleOf(expression)),
+    ).toEqual([
+      'Bible Lookup > More Options',
+      `${xx('Bible Lookup')} > ${xx('More Options')}`,
+      kept,
+    ]);
+  });
+
   it('keeps the first answer when the translation misses too', async () => {
     routeApp('xx', () => ({ matches: [], nearMisses: ['Documents'] }));
     expect(jsonOf(await call('owa_find_ui', { text: 'More Options' }))).toEqual(

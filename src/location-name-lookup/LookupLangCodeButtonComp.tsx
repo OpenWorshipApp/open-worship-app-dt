@@ -1,10 +1,13 @@
+import { elementDivider } from '../context-menu/AppContextMenuComp';
 import { showAppContextMenu } from '../context-menu/appContextMenuHelpers';
+import { genContextMenuItemIcon } from '../context-menu/contextMenuIconHelpers';
 import {
     type LocaleType,
     getLangCode,
     getLanguageTitle,
     tran,
 } from '../lang/langHelpers';
+import { openLanguagesSetting } from '../setting/settingHelpers';
 import {
     getLookupLangCodeListAsync,
     setSelectedLookupLangCode,
@@ -21,6 +24,10 @@ import {
  * The list of choices is resolved ON CLICK, never on mount: answering it imports
  * every shipped language module, and this button is in the bible lookup header,
  * which mounts far more often than anyone opens this menu.
+ *
+ * The menu ends with Add Language Plugin, which opens Settings > Languages: a
+ * language's names and locations come in its plugin, so a language missing from
+ * the list is one to install there.
  *
  * Given the locale of the bible being read, the code is green while it names
  * that bible's language and red while it does not — a bible in another language beside `en`
@@ -67,9 +74,8 @@ export default function LookupLangCodeButtonComp({
             onClick={async (event) => {
                 const nativeEvent = event.nativeEvent;
                 const langCodeList = await getLookupLangCodeListAsync();
-                showAppContextMenu(
-                    nativeEvent,
-                    langCodeList.map((itemLangCode) => {
+                showAppContextMenu(nativeEvent, [
+                    ...langCodeList.map((itemLangCode) => {
                         return {
                             id: itemLangCode,
                             // Not `tran(...)`: the picker has to stay legible to
@@ -89,7 +95,24 @@ export default function LookupLangCodeButtonComp({
                             },
                         };
                     }),
-                );
+                    { menuElement: elementDivider },
+                    {
+                        childBefore: genContextMenuItemIcon('plus-lg'),
+                        menuElement: (
+                            <span
+                                style={{
+                                    fontWeight: 'bold',
+                                    color: 'var(--bs-info-text-emphasis)',
+                                }}
+                            >
+                                {tran('Add Language Plugin')}
+                            </span>
+                        ),
+                        onSelect: () => {
+                            openLanguagesSetting();
+                        },
+                    },
+                ]);
             }}
         >
             {langCode}

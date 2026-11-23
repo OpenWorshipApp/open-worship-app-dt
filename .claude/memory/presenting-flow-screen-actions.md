@@ -12,8 +12,8 @@ A presenting flow element can be an ACTION (added 2026-08-04, branch refactor23)
 content. The registry is `src/presenting-flow/presentingFlowActionHelpers.ts` — id, label, badge,
 icon, color, and a `target` discriminant that splits it into TWO families:
 
-- `target: 'screen'` → `apply(screenManager, presentingFlowItem)`. Twenty ship: the five
-  that mirror the mini screen's clear bar, plus one per foreground widget — twelve today
+- `target: 'screen'` → `apply(screenManager, presentingFlowItem)`. Twenty-two ship: the five
+  that mirror the mini screen's clear bar, plus one per foreground widget — fourteen today
   (`clear-foreground-<ForegroundDragTargetType>`) built from `foregroundClearMap`, which
   is keyed by that type so a NEW foreground widget without a clear is a compile error.
   The Foreground panel's old **Background Images Slide Show** never had one — it drove
@@ -33,8 +33,8 @@ icon, color, and a `target` discriminant that splits it into TWO families:
 
 **The `Add Action` menu is FOUR levels now** (2026-08-08): everything that erases folds behind
 one `Clear Screen` row — the five whole-layer clears, and inside them the per-widget FG
-clears (eight that day, twelve today) behind `Other Clear FG Items` again. Seventeen of the
-twenty-five actions today (20 screen + 5 run — count `presentingFlowActionList`; thirteen
+clears (eight that day, fourteen today) behind `Other Clear FG Items` again. Nineteen of the
+twenty-seven actions today (22 screen + 5 run — count `presentingFlowActionList`; thirteen
 of twenty-one that day) clear something, so
 inline they WERE the menu. `presentingFlowActionMenuList` is the menu's SHAPE (a flat action or a
 `{label, iconName, color, actionList}` group, told apart by `checkIsPresentingFlowActionGroup`);

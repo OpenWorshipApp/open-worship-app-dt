@@ -328,6 +328,13 @@ function moduleContainmentPlugin(srcDir) {
                     if (moduleId.startsWith('\0')) {
                         continue;
                     }
+                    // Vite's empty stand-in for a Node built-in a library
+                    // asks for only off the browser (typo-js's `require("fs")`
+                    // under `typeof require !== 'undefined'`): no app code
+                    // and no Node, so nothing this rule keeps out.
+                    if (/^__vite-browser-external(?::|$)/.test(moduleId)) {
+                        continue;
+                    }
                     const filePath = path.resolve(moduleId.split('?', 1)[0]);
                     const isAllowed =
                         allowedDirs.some((dir) => {
@@ -553,8 +560,10 @@ export function genLangEntrySource({ code, srcDir }) {
         fieldList.push(`fontUrls: { ${urlEntryList.join(', ')} }`);
     }
     if (checkHas('openLyricPlugin.ts')) {
-        importList.push("import OpenLyricPlugin from './openLyricPlugin';");
-        fieldList.push('OpenLyricPlugin');
+        importList.push(
+            "import OpenLyricPlugin, * as openLyricPluginModule from './openLyricPlugin';",
+        );
+        fieldList.push('OpenLyricPlugin', 'openLyricPluginModule');
     }
     return (
         importList.join('\n') +
@@ -626,9 +635,17 @@ async function viteBuildEntry({
                 // the `new URL('assets/...', import.meta.url)` it recognizes:
                 // a CJS output would make it `{}.url`, and `new URL(x,
                 // "undefined")` throws. The plugin's own address instead.
+                // `__dirname` / `__filename` are no plugin's: a library that
+                // probes for Node (`typeof __dirname !== 'undefined'`, typo-js
+                // looking for its dictionaries folder) is answered "not Node"
+                // here, so the envelope finds nothing reaching for it. Typo-js
+                // came in unbundled with a language's song plugin on
+                // 2026-11-21 and took the build down on that one line.
                 transform: {
                     define: {
                         'import.meta.url': `${LANG_PLUGIN_HOST_NAME}.assetUrl("index.js")`,
+                        __dirname: 'undefined',
+                        __filename: 'undefined',
                     },
                 },
                 output: {

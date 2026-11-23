@@ -3,7 +3,7 @@ id: W-53
 title: "Afficher un chant en plusieurs langues pour que tout le monde chante (Affichage de texte long)"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 82a8aa956954f909
+translatedFrom: 5ff7f9ae2f513f89
 ---
 # W-53 — Afficher un chant en plusieurs langues pour que tout le monde chante (Affichage de texte long)
 
@@ -65,8 +65,8 @@ plus besoin se suppriment depuis le menu de leur onglet.
    ralentissant, si bien qu'une assemblée qui lit en même temps ne s'y perd pas — le verset
    sélectionné d'un passage biblique se déplace de la même façon.
 
-   **Chaque ligne du texte sur sa propre ligne à l'écran.** Appuyez sur **[en:tran:Atom Mode]**, à côté
-   du livre et de l'engrenage en haut du panneau, et chaque LIGNE d'une partie a sa propre carte, son
+   **Chaque ligne du texte sur sa propre ligne à l'écran.** Appuyez sur **[en:tran:Atom Mode]**, le premier des
+   trois boutons avant le livre et l'engrenage en haut du panneau, et chaque LIGNE d'une partie a sa propre carte, son
    propre bouton et sa propre ligne à l'écran, numérotés à la suite sur tout le chant : un couplet de
    quatre lignes va de `1 Verse 1` à `4 Verse 1`, et le refrain qui le suit commence à `5 Chorus`. Une
    ligne vide dans un texte tapé est gardée comme une ligne vide à l'écran. Les boutons, la lumière et

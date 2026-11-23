@@ -171,6 +171,47 @@ describe('loadChatSessions', () => {
         ]);
     });
 
+    // The 🤖 in Customize opens a tab whose every line is about the
+    // animation: a reload keeps it so, on an answer alone.
+    test('an animation answer keeps its conversation marker', () => {
+        settingMap.set(
+            SETTING_NAME,
+            JSON.stringify({
+                sessions: [
+                    {
+                        id: 'one',
+                        messages: [
+                            {
+                                id: 1,
+                                author: 'bot',
+                                text: 'opened',
+                                isAnimationAnswer: true,
+                            },
+                            {
+                                id: 2,
+                                author: 'you',
+                                text: 'slower',
+                                isAnimationAnswer: true,
+                            },
+                        ],
+                    },
+                ],
+            }),
+        );
+
+        const state = loadChatSessions('presenter', null, '');
+
+        expect(state.sessions[0].messages).toEqual([
+            {
+                id: 1,
+                author: 'bot',
+                text: 'opened',
+                isAnimationAnswer: true,
+            },
+            { id: 2, author: 'you', text: 'slower' },
+        ]);
+    });
+
     // A stored link opens a page at a press: only web addresses survive a
     // load, only on an answer, and only a few.
     test('a link is kept only as a web address on an answer', () => {
@@ -450,6 +491,29 @@ describe('a tab keeps what waits in its box', () => {
         expect(readStored().sessions[0].boxFiles).toEqual([STUDY, PDF]);
         const loaded = loadChatSessions('presenter', null, '');
         expect(loaded.sessions[0].boxFiles).toEqual([STUDY, PDF]);
+    });
+
+    // 2026-11-21: a video or a sound waits for a PowerPoint's slide.
+    test('a video waiting in the box is kept with its path, never its bytes', () => {
+        const VIDEO: ChatAttachmentType = {
+            id: 'box-video',
+            kind: 'media',
+            name: 'Intro.mp4',
+            mimeType: 'video/*',
+            byteSize: 4_000_000,
+            filePath: '/church/Videos/Intro.mp4',
+            summary: 'The user attached a video called "Intro.mp4".',
+            number: 5,
+        };
+        const session = genSession({ id: 'tab' });
+        saveChatSessions(
+            { sessions: [session], activeId: 'tab' },
+            { tab: [VIDEO] },
+        );
+        expect(readStored().sessions[0].boxFiles).toEqual([VIDEO]);
+        expect(
+            loadChatSessions('presenter', null, '').sessions[0].boxFiles,
+        ).toEqual([VIDEO]);
     });
 
     test('a picture of the app and a pointed-at control are not kept; a foreground session is', () => {

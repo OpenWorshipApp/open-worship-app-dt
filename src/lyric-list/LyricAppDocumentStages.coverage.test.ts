@@ -426,6 +426,9 @@ describe('stage documents', () => {
         expect(options).toMatchObject({
             type: 'html',
             isShowingIndex: false,
+            // Said outright: open-lyric draws a song's `// comment` lines on
+            // the audience slide when the flag is absent.
+            isShowingCommentText: false,
             // The previewer's 20px plus the stage's default +45.
             fontSize: 65,
             width: 1882,
@@ -464,7 +467,10 @@ describe('stage documents', () => {
             type: 'image',
             link: 'https://example.com/chart.png',
         });
-        // Notes are kept on this stage.
+        // Notes are kept on this stage, and so are the comments.
+        expect(openLyric.getElementMap.mock.calls[0][0]).toMatchObject({
+            isShowingCommentText: true,
+        });
         const dataMap = await doc.getElementMap(doc.allOpenLyricOptions);
         expect(dataMap).toHaveProperty('Note1');
 

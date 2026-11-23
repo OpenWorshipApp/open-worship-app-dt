@@ -199,6 +199,29 @@ import {
     type SlideAskFileType,
 } from './slideChatHelpers';
 import {
+    OFFICE_ASK_KIND,
+    OFFICE_CLAIM_NUDGE,
+    OFFICE_CLAIM_PATTERN,
+    OFFICE_EDIT_TOOL_NAME,
+    OFFICE_MAX_TOOL_ROUNDS,
+    OFFICE_SYSTEM_PROMPT,
+    resolveOfficeEditFile,
+    findOfficeMisplacedBox,
+    findOfficeUnwrittenEverywhere,
+    genOfficeMisplacedBoxReason,
+    genOfficeUnwrittenEverywhereReason,
+    liftOfficeNestedReplaces,
+    resolveOfficePictures,
+    type OfficeAskFileType,
+} from './officeChatHelpers';
+import {
+    OFFICE_LINK_NOT_TYPED_REASON,
+    checkIsOfficeLinkValue,
+    readTypedLinks,
+    toFreeLinkFileName,
+    toLinkKey,
+} from './officeLinkMediaHelpers';
+import {
     FLOW_ASK_KIND,
     FLOW_EDIT_TOOL_NAME,
     FLOW_LIST_NAME,
@@ -363,6 +386,16 @@ import {
     mergeEditedScreen,
     readEditedScreen,
 } from './screenChatHelpers';
+import {
+    ANIMATION_ASK_KIND,
+    ANIMATION_EDIT_TOOL_NAME,
+    ANIMATION_MAX_TOOL_ROUNDS,
+    ANIMATION_SYSTEM_PROMPT,
+    checkIsAnimationEdited,
+    genAnimationUndoAction,
+    mergeEditedAnimation,
+    readEditedAnimation,
+} from './animationChatHelpers';
 import {
     type ForegroundAskType,
     checkIsSameForegroundAsk,
@@ -538,6 +571,7 @@ import {
 import {
     describeToolStep,
     genProgressReporter,
+    toSiteName,
     type BotProgressCallbackType,
 } from './progressHelpers';
 import {
@@ -2603,6 +2637,47 @@ type ToolWatchType = {
      */
     slideFiles: SlideAskFileType[] | null;
     /**
+     * The PowerPoint and Word files attached to the tab, when this is a
+     * question about them -- what a `file` the model gives
+     * `owa_office_edit` is turned into (`resolveOfficeEditFile`). Null
+     * outside such a question, where that tool is not the model's at all.
+     */
+    officeFiles: OfficeAskFileType[] | null;
+    // the pictures from disk attached to that conversation, by name: what
+    // a change's `picture` may name (EC-770)
+    officePictures: OfficeAskFileType[];
+    /**
+     * How many `owa_office_edit` edits of this ask were refused or failed
+     * (2026-11-21, `EC-776`): with none gone through, an answer saying the
+     * file changed is no change in ANY language -- a French answer saying,
+     * in the passive, that the word "has been replaced", over three refused
+     * edits, had been read by no claim words, which are first person
+     * (`checkClaimsUnmadeOfficeChange`).
+     */
+    officeEditFailCount: number;
+    /**
+     * How many of those refusals told the model to ASK the person first --
+     * a SmartArt's colour needs it turned into shapes, which it then no
+     * longer is (2026-11-21): an answer that does so, asking, is no claim
+     * of a change, and is not marked as one.
+     */
+    officeAskFirstCount: number;
+    /**
+     * Words a change sent to every place that the person's line did not
+     * write, sent back once (`findOfficeUnwrittenEverywhere`, `EC-786`).
+     */
+    officeEverywhereSentBack: string[];
+    // a SmartArt box's place sent back once (EC-787)
+    isOfficePlaceSentBack: boolean;
+    /**
+     * The links the person TYPED in this ask and the tab's earlier turns
+     * (`readTypedLinks`): the only ones a change's `picture` or `media`
+     * may download (2026-11-21, `EC-777`).
+     */
+    officeTypedLinks: string[];
+    // what this ask downloaded from them, so a link given twice is one file
+    officeLinkFiles: { url: string; name: string; filePath: string }[];
+    /**
      * The presenting flows attached to the tab, when this is a question
      * about them -- what a `file` the model gives `owa_presenting_flow_edit`
      * is turned into (`resolveFlowEditFile`). Null outside such a question,
@@ -2643,6 +2718,12 @@ type ToolWatchType = {
      * call did goes back once (`checkClaimsUnmadeScreenChange`).
      */
     isScreenAsk: boolean;
+    /**
+     * An `owa_undo` this ask made went through (a refused one never reaches
+     * the watch): "I've put it back" is then no claim of a change nothing
+     * made (`checkClaimsUnmadeOfficeChange`).
+     */
+    isUndoMade: boolean;
     /**
      * The Bible notes attached to the tab, when this is a question about
      * them -- what a `note` the model gives `owa_note_edit` is turned into
@@ -3080,10 +3161,19 @@ export function genToolWatch(): ToolWatchType {
         createdNote: null,
         lyricFiles: null,
         slideFiles: null,
+        officeFiles: null,
+        officePictures: [],
+        officeEditFailCount: 0,
+        officeAskFirstCount: 0,
+        officeEverywhereSentBack: [],
+        isOfficePlaceSentBack: false,
+        officeTypedLinks: [],
+        officeLinkFiles: [],
         flowFiles: null,
         foregroundAsks: null,
         heldForeground: [],
         isOtherCallMade: false,
+        isUndoMade: false,
         isNonStudyCallMade: false,
         isForegroundCurrentOnly: false,
         isScreenAsk: false,
@@ -3459,6 +3549,9 @@ export function findAnswerShapeNudge(
     if (checkClaimsUnmadeScreenChange(words, watch)) {
         return { nudge: SCREEN_CLAIM_NUDGE, kept: text };
     }
+    if (checkClaimsUnmadeOfficeChange(words, watch)) {
+        return { nudge: OFFICE_CLAIM_NUDGE, kept: text };
+    }
     if (watch.isLessonReview && parseAnswerFrames(text).options.length === 0) {
         return { nudge: NOTE_REVIEW_OPTIONS_NUDGE, kept: text };
     }
@@ -3595,6 +3688,7 @@ const FOREGROUND_CLAIM_READ_TOOL_SET = new Set([
     FOREGROUND_EDIT_TOOL_NAME,
     // Its result says whether it changed anything, as theirs do.
     SCREEN_EDIT_TOOL_NAME,
+    ANIMATION_EDIT_TOOL_NAME,
     'owa_list_screens',
     'owa_app_state',
     'owa_help_search',
@@ -3664,6 +3758,7 @@ function checkIsOrdinaryForegroundClaim(words: string, watch: ToolWatchType) {
         watch.noteFiles === null &&
         watch.lyricFiles === null &&
         watch.slideFiles === null &&
+        watch.officeFiles === null &&
         watch.flowFiles === null &&
         watch.openStudyFiles.length === 0 &&
         watch.createdNote === null &&
@@ -3735,9 +3830,45 @@ export function checkClaimsUnmadeChange(words: string, watch: ToolWatchType) {
         checkClaimsUnmadeStudyChange(words, watch) ||
         checkClaimsUnmadeHeldStudyChange(words, watch) ||
         checkClaimsUnmadeForegroundChange(words, watch) ||
-        checkClaimsUnmadeScreenChange(words, watch)
+        checkClaimsUnmadeScreenChange(words, watch) ||
+        checkClaimsUnmadeOfficeChange(words, watch)
     );
 }
+
+/**
+ * Whether an answer about an attached PowerPoint or Word file says it
+ * changed the file while no `owa_office_edit` edit of this ask did
+ * (2026-11-20, `EC-770`: every edit refused, the answer "I've added a fade
+ * transition to every slide" with no Undo under it). A change claimed in
+ * the note's words, the answer language's, or the office's own verbs;
+ * believed after an undo that went through. Handed back once, and marked
+ * over a finished answer (`checkClaimsUnmadeChange`).
+ */
+export function checkClaimsUnmadeOfficeChange(
+    words: string,
+    watch: ToolWatchType,
+) {
+    return (
+        watch.officeFiles !== null &&
+        !watch.isActedOn &&
+        !watch.isUndoMade &&
+        watch.editedLyric === null &&
+        (checkHasChangeClaim(words, watch.changeClaimWords, false) ||
+            OFFICE_CLAIM_PATTERN.test(words.replace(/[‘’]/g, "'")) ||
+            // every edit tried was refused: whatever the words, in whatever
+            // language, the file is as it was (EC-776) -- but a refusal
+            // that said to ask first, answered with a question, is that
+            // question (2026-11-21)
+            (watch.officeEditFailCount > 0 &&
+                !(
+                    watch.officeAskFirstCount === watch.officeEditFailCount &&
+                    /[?？؟]/.test(words)
+                )))
+    );
+}
+
+// what a refusal says when the person is to be asked before it is done
+const OFFICE_ASK_FIRST_PATTERN = /\bSay so and ask\b/;
 
 // The claim's words and the report written into a study live in a leaf of
 // their own (`changeClaimHelpers.ts`); the report is read from here too.
@@ -4036,10 +4167,13 @@ export function genChangedWithoutAnswer(
     if (edited === null) {
         return null;
     }
-    const isScreens = checkIsScreenEdited(edited);
-    const undoAction = isScreens
-        ? genScreenUndoAction(edited)
-        : genLyricUndoAction(edited);
+    const isAnimation = checkIsAnimationEdited(edited);
+    const isScreens = checkIsScreenEdited(edited) || isAnimation;
+    const undoAction = isAnimation
+        ? genAnimationUndoAction(edited)
+        : checkIsScreenEdited(edited)
+          ? genScreenUndoAction(edited)
+          : genLyricUndoAction(edited);
     // A foreground change put up while every screen was off: the projector
     // shows nothing of it yet, so the window says so and offers the press
     // (EC-599, the `/countdown` command's own button; a press by the person).
@@ -4200,6 +4334,9 @@ export function applyToolWatch(
     text: string,
 ) {
     watch.toolCallCount += 1;
+    if (name === 'owa_undo') {
+        watch.isUndoMade = true;
+    }
     if (!FOREGROUND_CLAIM_READ_TOOL_SET.has(name)) {
         watch.isOtherCallMade = true;
     }
@@ -4394,6 +4531,15 @@ export function applyToolWatch(
             watch.editedLyric = mergeEditedScreen(watch.editedLyric, edited);
         }
     }
+    // An animation changed carries `undoId` the same way: **Undo this
+    // change** under the answer, every change of it under the one press.
+    if (name === ANIMATION_EDIT_TOOL_NAME) {
+        const edited = readEditedAnimation(text);
+        if (edited !== null) {
+            watch.isActedOn = true;
+            watch.editedLyric = mergeEditedAnimation(watch.editedLyric, edited);
+        }
+    }
     learnPageTitles(watch.pageTitles, name, args, text);
     if (name === 'owa_lyric_validate') {
         // One per source: the same page or title drafted again wins, like
@@ -4502,6 +4648,16 @@ export function applyToolWatch(
             watch.isActedOn = true;
         }
     }
+    if (name === OFFICE_EDIT_TOOL_NAME && args?.action === 'edit') {
+        // A PowerPoint or Word file the same way (EC-761): its answer carries
+        // `name`, `isChanged` and `undoId`, and the answer the same two
+        // buttons -- Undo this change, Show it in the list.
+        const edited = readEditedLyric(text);
+        if (edited !== null) {
+            watch.editedLyric = mergeEditedDocument(watch.editedLyric, edited);
+            watch.isActedOn = true;
+        }
+    }
     if (name === SLIDE_EDIT_TOOL_NAME && args?.action !== 'slides') {
         // The same for a slide document: its answer carries `name`,
         // `isChanged` and `undoId` in the song edit's own shape, and the
@@ -4560,7 +4716,24 @@ async function runMcpTool(
     try {
         // A list the model wrote as JSON text is read as the list
         // (`toListArgsRead`): refused, it was sent the same way again.
-        return await runMcpToolCall(name, toListArgsRead(args), watch, signal);
+        const text = await runMcpToolCall(
+            name,
+            toListArgsRead(args),
+            watch,
+            signal,
+        );
+        if (
+            name === OFFICE_EDIT_TOOL_NAME &&
+            args?.action !== 'read' &&
+            typeof text === 'string' &&
+            /^Tool (?:refused|error)\b/.test(text)
+        ) {
+            watch.officeEditFailCount += 1;
+            if (OFFICE_ASK_FIRST_PATTERN.test(text)) {
+                watch.officeAskFirstCount += 1;
+            }
+        }
+        return text;
     } finally {
         finishStep?.();
     }
@@ -6146,6 +6319,92 @@ function withVerseReadEntry(text: string, entry: VerseReadEntryType) {
     }
 }
 
+/**
+ * A change's `picture` or `media` given as a LINK (2026-11-21, `EC-777`):
+ * put in only when the person typed that link in this chat
+ * (`watch.officeTypedLinks`), downloaded by the window
+ * (`officeLinkMediaDownload.ts`, loaded only then), added to the ask's
+ * attached pictures and named by its file's name, so the attached-name
+ * step puts its path in. A link given twice in an ask is one download.
+ */
+async function fetchOfficeLinkMedia(
+    changes: unknown,
+    watch: ToolWatchType,
+    signal?: AbortSignal | null,
+): Promise<{ changes: unknown } | { reason: string }> {
+    if (!Array.isArray(changes)) {
+        return { changes };
+    }
+    const out: unknown[] = [];
+    for (const change of changes) {
+        if (typeof change !== 'object' || change === null) {
+            out.push(change);
+            continue;
+        }
+        let next = change as Record<string, unknown>;
+        for (const key of ['picture', 'media'] as const) {
+            const value = next[key];
+            if (!checkIsOfficeLinkValue(value)) {
+                continue;
+            }
+            const url = toLinkKey(value);
+            if (url === null || !watch.officeTypedLinks.includes(url)) {
+                return { reason: OFFICE_LINK_NOT_TYPED_REASON };
+            }
+            let file = watch.officeLinkFiles.find((one) => {
+                return one.url === url;
+            });
+            if (file === undefined) {
+                const finishStep = genProgressReporter(
+                    watch.onProgress ?? undefined,
+                )(
+                    fillWords(tran('Reading {site}'), {
+                        site: toSiteName(url) ?? url,
+                    }),
+                );
+                try {
+                    const { downloadOfficeLinkMedia } =
+                        await import('./officeLinkMediaDownload');
+                    const downloaded = await downloadOfficeLinkMedia(
+                        url,
+                        key === 'picture' ? 'picture' : 'media',
+                        signal,
+                    );
+                    if ('reason' in downloaded) {
+                        throwIfCancelled(signal);
+                        return { reason: downloaded.reason };
+                    }
+                    const name = toFreeLinkFileName(
+                        downloaded.name,
+                        watch.officePictures.map((one) => {
+                            return one.name;
+                        }),
+                    );
+                    file = { url, name, filePath: downloaded.filePath };
+                    watch.officeLinkFiles.push(file);
+                } finally {
+                    finishStep();
+                }
+            }
+            const held = file;
+            // named among the ask's attached ones (a stand-in's watch too)
+            if (
+                !watch.officePictures.some((one) => {
+                    return one.filePath === held.filePath;
+                })
+            ) {
+                watch.officePictures = [
+                    ...watch.officePictures,
+                    { name: held.name, filePath: held.filePath },
+                ];
+            }
+            next = { ...next, [key]: held.name };
+        }
+        out.push(next);
+    }
+    return { changes: out };
+}
+
 async function runMcpToolCall(
     name: string,
     args: any,
@@ -6418,6 +6677,83 @@ async function runMcpToolCall(
         }
         lyricEditArgs = {
             ...(args ?? {}),
+            file: 'filePath' in resolved ? resolved.filePath : resolved.name,
+        };
+    }
+    // A PowerPoint or Word file the same way (EC-761): changed only in a
+    // conversation about one the person attached, named by its NAME -- the
+    // window puts its path in (`resolveOfficeEditFile`).
+    if (name === OFFICE_EDIT_TOOL_NAME) {
+        if (watch.officeFiles === null) {
+            return (
+                `Tool refused: ${OFFICE_EDIT_TOOL_NAME} changes a PowerPoint ` +
+                'or Word file the person attached to this chat. Ask them to ' +
+                'open it in the chat (Open in Chatbot, in its menu in the ' +
+                'Documents list).'
+            );
+        }
+        const resolved = resolveOfficeEditFile(args?.file, watch.officeFiles);
+        if ('reason' in resolved) {
+            return `Tool refused: ${resolved.reason}`;
+        }
+        // Changes sent with no `action` are an edit, as a note's are
+        // (2026-11-20, EC-770: gemma4:cloud sent `{changes}` alone first
+        // in two of ten asks, and the tool's schema refused the round).
+        const isEditMeant =
+            args?.action === undefined &&
+            (Array.isArray(args?.changes) || Array.isArray(args?.replace));
+        // a picture, video or sound from a link they typed: downloaded,
+        // then named as an attached one (EC-777)
+        const linked = await fetchOfficeLinkMedia(args?.changes, watch, signal);
+        if ('reason' in linked) {
+            return `Tool refused: ${linked.reason}`;
+        }
+        // a picture by its attached name: the window puts its path in
+        const pictured = resolveOfficePictures(
+            linked.changes,
+            watch.officePictures,
+        );
+        if ('reason' in pictured) {
+            return `Tool refused: ${pictured.reason}`;
+        }
+        // words sent to every place that their line never wrote go back
+        // once: the place they named is the box on every slide (EC-786)
+        const unwritten = findOfficeUnwrittenEverywhere(
+            pictured.changes,
+            watch.askedText,
+        );
+        if (
+            unwritten !== null &&
+            !watch.officeEverywhereSentBack.includes(unwritten)
+        ) {
+            watch.officeEverywhereSentBack.push(unwritten);
+            return `Tool refused: ${genOfficeUnwrittenEverywhereReason(unwritten)}`;
+        }
+        const misplaced = findOfficeMisplacedBox(
+            pictured.changes,
+            watch.askedText,
+        );
+        if (misplaced !== null && !watch.isOfficePlaceSentBack) {
+            watch.isOfficePlaceSentBack = true;
+            return `Tool refused: ${genOfficeMisplacedBoxReason(misplaced)}`;
+        }
+        // a `replace` written inside a change is the deck's (EC-776)
+        const lifted = liftOfficeNestedReplaces(
+            pictured.changes,
+            args?.replace,
+        );
+        if ('reason' in lifted) {
+            return `Tool refused: ${lifted.reason}`;
+        }
+        lyricEditArgs = {
+            ...(args ?? {}),
+            ...(isEditMeant || lifted.isLifted ? { action: 'edit' } : {}),
+            ...(Array.isArray(args?.changes)
+                ? { changes: lifted.changes }
+                : {}),
+            ...(lifted.replace === undefined
+                ? {}
+                : { replace: lifted.replace }),
             file: 'filePath' in resolved ? resolved.filePath : resolved.name,
         };
     }
@@ -7886,6 +8222,17 @@ export type AskExtraType = {
         files: SlideAskFileType[];
     };
     /**
+     * A question about a POWERPOINT or WORD file attached to the tab
+     * (`officeChatHelpers.ts`, EC-761): the ask carries each file as it
+     * reads now, line by line, and it goes out under `OFFICE_SYSTEM_PROMPT`
+     * with `owa_office_edit` -- offered to no other question. `files`: what
+     * a `file` the model names is turned into (`resolveOfficeEditFile`).
+     */
+    office?: {
+        files: OfficeAskFileType[];
+        pictures?: OfficeAskFileType[];
+    };
+    /**
      * A question about a PRESENTING FLOW attached to the tab
      * (`flowChatHelpers.ts`): the ask carries each flow as it reads now,
      * and it goes out under `FLOW_SYSTEM_PROMPT` with
@@ -7921,6 +8268,16 @@ export type AskExtraType = {
      * question.
      */
     screen?: {
+        isThread?: boolean;
+    };
+    /**
+     * A question about an ANIMATION in Customize (`animationChatHelpers.ts`):
+     * a tab the 🤖 in Customize or in Shader Code opened, or a line under
+     * its answer. The ask carries the animation as it reads now, and it
+     * goes out under `ANIMATION_SYSTEM_PROMPT` with `owa_animation_edit` --
+     * offered to no other question.
+     */
+    animation?: {
         isThread?: boolean;
     };
     /**
@@ -8227,6 +8584,9 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     if (extra?.slide !== undefined) {
         return SLIDE_SYSTEM_PROMPT;
     }
+    if (extra?.office !== undefined) {
+        return OFFICE_SYSTEM_PROMPT;
+    }
     if (extra?.flow !== undefined) {
         return FLOW_SYSTEM_PROMPT;
     }
@@ -8235,6 +8595,9 @@ function toSystemPrompt(focus: BotFocusType, extra?: AskExtraType) {
     }
     if (extra?.screen !== undefined) {
         return SCREEN_SYSTEM_PROMPT;
+    }
+    if (extra?.animation !== undefined) {
+        return ANIMATION_SYSTEM_PROMPT;
     }
     if (extra?.note !== undefined) {
         return NOTE_SYSTEM_PROMPT;
@@ -8559,15 +8922,19 @@ async function askAnthropicCompatible(
                           ? FOREGROUND_MAX_TOOL_ROUNDS
                           : extra?.screen !== undefined
                             ? SCREEN_MAX_TOOL_ROUNDS
-                            : extra?.slide !== undefined
-                              ? SLIDE_MAX_TOOL_ROUNDS
-                              : extra?.note !== undefined
-                                ? watch.isBlankLesson === true
-                                    ? NOTE_LESSON_MAX_TOOL_ROUNDS
-                                    : NOTE_MAX_TOOL_ROUNDS
-                                : extra?.study !== undefined
-                                  ? STUDY_MAX_TOOL_ROUNDS
-                                  : MAX_TOOL_ROUNDS;
+                            : extra?.animation !== undefined
+                              ? ANIMATION_MAX_TOOL_ROUNDS
+                              : extra?.slide !== undefined
+                                ? SLIDE_MAX_TOOL_ROUNDS
+                                : extra?.office !== undefined
+                                  ? OFFICE_MAX_TOOL_ROUNDS
+                                  : extra?.note !== undefined
+                                    ? watch.isBlankLesson === true
+                                        ? NOTE_LESSON_MAX_TOOL_ROUNDS
+                                        : NOTE_MAX_TOOL_ROUNDS
+                                    : extra?.study !== undefined
+                                      ? STUDY_MAX_TOOL_ROUNDS
+                                      : MAX_TOOL_ROUNDS;
     for (let round = 0; round < maxRounds; round++) {
         // Before the round is paid for, not after it comes back. The spend
         // guard is asked in the same breath and for the same reason: a
@@ -8962,15 +9329,19 @@ async function askOpenAiCompatible(
                                   ? FOREGROUND_MAX_TOOL_ROUNDS
                                   : extra?.screen !== undefined
                                     ? SCREEN_MAX_TOOL_ROUNDS
-                                    : extra?.slide !== undefined
-                                      ? SLIDE_MAX_TOOL_ROUNDS
-                                      : extra?.note !== undefined
-                                        ? watch.isBlankLesson === true
-                                            ? NOTE_LESSON_MAX_TOOL_ROUNDS
-                                            : NOTE_MAX_TOOL_ROUNDS
-                                        : extra?.study !== undefined
-                                          ? STUDY_MAX_TOOL_ROUNDS
-                                          : MAX_TOOL_ROUNDS,
+                                    : extra?.animation !== undefined
+                                      ? ANIMATION_MAX_TOOL_ROUNDS
+                                      : extra?.slide !== undefined
+                                        ? SLIDE_MAX_TOOL_ROUNDS
+                                        : extra?.office !== undefined
+                                          ? OFFICE_MAX_TOOL_ROUNDS
+                                          : extra?.note !== undefined
+                                            ? watch.isBlankLesson === true
+                                                ? NOTE_LESSON_MAX_TOOL_ROUNDS
+                                                : NOTE_MAX_TOOL_ROUNDS
+                                            : extra?.study !== undefined
+                                              ? STUDY_MAX_TOOL_ROUNDS
+                                              : MAX_TOOL_ROUNDS,
               );
     // Set when a round comes back rate-limited and there is already something
     // in `messages` worth writing an answer from. The next pass is spent with
@@ -9679,12 +10050,16 @@ const LOCAL_TOOL_NAME_LIST = [
     LYRIC_EDIT_TOOL_NAME,
     // ...and about a slide document attached to the tab.
     SLIDE_EDIT_TOOL_NAME,
+    // ...and about a PowerPoint or Word file attached to the tab.
+    OFFICE_EDIT_TOOL_NAME,
     // ...and about a presenting flow attached to the tab.
     FLOW_EDIT_TOOL_NAME,
     // ...and about a foreground session.
     FOREGROUND_EDIT_TOOL_NAME,
     // ...and about a Bible note attached to the tab.
     NOTE_EDIT_TOOL_NAME,
+    // ...and about an animation in Customize.
+    ANIMATION_EDIT_TOOL_NAME,
 ];
 const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
 
@@ -9693,6 +10068,7 @@ const LOCAL_TOOL_NAME_SET = new Set(LOCAL_TOOL_NAME_LIST);
 const DOCUMENT_EDIT_TOOL_NAME_SET = new Set([
     NOTE_EDIT_TOOL_NAME,
     SLIDE_EDIT_TOOL_NAME,
+    OFFICE_EDIT_TOOL_NAME,
     LYRIC_EDIT_TOOL_NAME,
     FLOW_EDIT_TOOL_NAME,
     FOREGROUND_EDIT_TOOL_NAME,
@@ -10580,7 +10956,9 @@ async function askLlmBotAsWritten(
         extra?.flow !== undefined ||
         extra?.foreground !== undefined ||
         extra?.screen !== undefined ||
+        extra?.animation !== undefined ||
         extra?.slide !== undefined ||
+        extra?.office !== undefined ||
         extra?.note !== undefined ||
         extra?.study !== undefined
             ? null
@@ -10608,8 +10986,12 @@ async function askLlmBotAsWritten(
     const askedStudyBlocks = toAskedStudyBlocks(asked);
     // The known recipe, when there is one, is the search hit the model
     // would have had (`searchedId`: a guess the page it opens overrides).
+    // one list for every watch of this ask: a stand-in takes the file
+    // already downloaded, and all are let go at the end (EC-777)
+    const askLinkFiles: ToolWatchType['officeLinkFiles'] = [];
     const genSeededWatch = (askedProvider: LlmProviderType = provider) => {
         const seeded = genToolWatch();
+        seeded.officeLinkFiles = askLinkFiles;
         seeded.windowAim = extra?.windowAim ?? null;
         // Only a tool this provider's model is sent: a server of the user's
         // own is sent the lean list, and is told it cannot.
@@ -10631,7 +11013,9 @@ async function askLlmBotAsWritten(
             extra?.flow === undefined &&
             extra?.foreground === undefined &&
             extra?.screen === undefined &&
+            extra?.animation === undefined &&
             extra?.slide === undefined &&
+            extra?.office === undefined &&
             extra?.note === undefined &&
             extra?.study === undefined;
         seeded.partControls = extra?.knownPartControls ?? [];
@@ -10694,7 +11078,9 @@ async function askLlmBotAsWritten(
             extra?.flow === undefined &&
             extra?.foreground === undefined &&
             extra?.screen === undefined &&
+            extra?.animation === undefined &&
             extra?.slide === undefined &&
+            extra?.office === undefined &&
             extra?.note === undefined &&
             extra?.study === undefined &&
             extra?.isGeneral !== true &&
@@ -10704,6 +11090,21 @@ async function askLlmBotAsWritten(
         seeded.skipLangOffer = extra?.skipLangOffer ?? null;
         seeded.onProgress = extra?.onProgress ?? null;
         seeded.slideFiles = extra?.slide?.files ?? null;
+        seeded.officeFiles = extra?.office?.files ?? null;
+        seeded.officePictures = extra?.office?.pictures ?? [];
+        seeded.officeTypedLinks =
+            extra?.office === undefined
+                ? []
+                : readTypedLinks([
+                      ...priorTurns
+                          .filter((turn) => {
+                              return turn.author === 'you';
+                          })
+                          .map((turn) => {
+                              return turn.text;
+                          }),
+                      extra.askedText ?? question,
+                  ]);
         seeded.flowFiles = extra?.flow?.files ?? null;
         seeded.foregroundAsks = extra?.foreground?.asks ?? null;
         seeded.isForegroundCurrentOnly =
@@ -10763,6 +11164,7 @@ async function askLlmBotAsWritten(
         // under a card holding a new study too (EC-700).
         seeded.changeClaimWords =
             seeded.noteFiles !== null ||
+            seeded.officeFiles !== null ||
             seeded.openStudyFiles.length > 0 ||
             seeded.foregroundAsks !== null ||
             seeded.heldStudyBefore !== null
@@ -10804,19 +11206,23 @@ async function askLlmBotAsWritten(
                         ? pickAskToolList(tools, FOREGROUND_ASK_KIND)
                         : extra?.screen !== undefined
                           ? pickAskToolList(tools, SCREEN_ASK_KIND)
-                          : extra?.slide !== undefined
-                            ? pickAskToolList(tools, SLIDE_ASK_KIND)
-                            : extra?.note !== undefined
-                              ? pickAskToolList(tools, NOTE_ASK_KIND)
-                              : extra?.study !== undefined
-                                ? pickAskToolList(tools, STUDY_ASK_KIND)
-                                : // With the study tool while the card above
-                                  // holds a new study (EC-606).
-                                  withHeldStudyTool(
-                                      filterModelToolList(tools),
-                                      tools,
-                                      watch.heldStudyBefore,
-                                  );
+                          : extra?.animation !== undefined
+                            ? pickAskToolList(tools, ANIMATION_ASK_KIND)
+                            : extra?.slide !== undefined
+                              ? pickAskToolList(tools, SLIDE_ASK_KIND)
+                              : extra?.office !== undefined
+                                ? pickAskToolList(tools, OFFICE_ASK_KIND)
+                                : extra?.note !== undefined
+                                  ? pickAskToolList(tools, NOTE_ASK_KIND)
+                                  : extra?.study !== undefined
+                                    ? pickAskToolList(tools, STUDY_ASK_KIND)
+                                    : // With the study tool while the card above
+                                      // holds a new study (EC-606).
+                                      withHeldStudyTool(
+                                          filterModelToolList(tools),
+                                          tools,
+                                          watch.heldStudyBefore,
+                                      );
     // Every round's usage goes to the spend guard's ledger BEFORE it goes to
     // whoever asked -- here, once, rather than in each provider loop, so
     // that no caller of this function (the window, the report, a rescue, one
@@ -11155,6 +11561,17 @@ async function askLlmBotAsWritten(
             answer.shows = [...(answer.shows ?? []), ...under.shows];
         } else if (
             answer.actions === undefined &&
+            checkIsAnimationEdited(watch.editedLyric)
+        ) {
+            // The animation changed: the press that puts it back, and no
+            // row to ring -- it is no document.
+            const undoAction =
+                watch.editedLyric === null
+                    ? null
+                    : genAnimationUndoAction(watch.editedLyric);
+            answer.actions = undoAction === null ? [] : [undoAction];
+        } else if (
+            answer.actions === undefined &&
             checkIsScreenEdited(watch.editedLyric)
         ) {
             // The screens changed: the press that puts them back, and no
@@ -11268,5 +11685,20 @@ async function askLlmBotAsWritten(
         // Re-thrown as one readable line; the caller shows it beside the
         // answer it fell back to.
         throw new Error(describeLlmError(error), { cause: error });
+    } finally {
+        // what this ask downloaded from a link: the deck keeps its own
+        // copy, so nothing is left in the temporary folder (EC-777)
+        if (askLinkFiles.length > 0) {
+            const filePaths = askLinkFiles.map((one) => {
+                return one.filePath;
+            });
+            void import('./officeLinkMediaDownload')
+                .then(({ deleteOfficeLinkFiles }) => {
+                    return deleteOfficeLinkFiles(filePaths);
+                })
+                .catch(() => {
+                    return undefined;
+                });
+        }
     }
 }

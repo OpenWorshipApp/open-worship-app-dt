@@ -204,14 +204,7 @@ const KH_VERSES: Record<string, string> = {
     'DAN 6:16': 'គេបោះដានីយ៉ែលទៅក្នុងរូងសិង្ហ',
     'DAN 6:22': 'ព្រះបានបិទមាត់សិង្ហ',
 };
-const KH_VOCABULARY = [
-    'ព្រះយេស៊ូ',
-    'សួរ',
-    'ពេត្រុស',
-    'ព្រាប',
-    'ណូអេ',
-    'ព្រះបន្ទូល',
-];
+const KH_VOCABULARY = ['ព្រះយេស៊ូ', 'សួរ', 'ពេត្រុស', 'ព្រាប', 'ណូអេ', 'ព្រះបន្ទូល'];
 
 /** Bible Find's table, built the way `initSearchingDatabase` builds it. */
 function genSearchDatabase(
@@ -320,12 +313,7 @@ beforeAll(() => {
         KJV_VERSES,
         'These are the statutes and judgments.',
     );
-    khDatabase = genSearchDatabase(
-        'km',
-        KH_VERSES,
-        'នេះជាច្បាប់',
-        KH_VOCABULARY,
-    );
+    khDatabase = genSearchDatabase('km', KH_VERSES, 'នេះជាច្បាប់', KH_VOCABULARY);
 });
 
 afterAll(() => {

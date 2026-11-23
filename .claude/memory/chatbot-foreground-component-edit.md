@@ -1,6 +1,6 @@
 ---
 name: chatbot-foreground-component-edit
-description: "The chatbot sets up and changes any of the 13 foreground components the PANEL's way: owa_foreground writes a new session named after its content, owa_foreground_edit (foreground ask only) changes an attached session in place; a session is chat context, attached from its chip menu, the panel header robot or the attach row; every write backed up as an app-setting restore"
+description: "The chatbot sets up and changes any of the 15 foreground components the PANEL's way (Fill Show and Animation Show, since 2026-11-15, only read, restyled and hidden): owa_foreground writes a new session named after its content, owa_foreground_edit (foreground ask only) changes an attached session in place; a session is chat context, attached from its chip menu, the panel header robot or the attach row; every write backed up as an app-setting restore"
 metadata:
   node_type: memory
   type: project

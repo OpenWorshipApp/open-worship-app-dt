@@ -11,6 +11,7 @@ import {
 } from 'vitest';
 
 import { DragTypeEnum } from '../../helper/DragInf';
+import { SCREEN_FONT_FAMILY } from '../screenFontFamily';
 
 const mocks = vi.hoisted(() => ({
     getSetting: vi.fn(),
@@ -171,6 +172,7 @@ vi.mock('../screenForegroundHelpers', () => ({
     genHtmlForegroundMessage: mocks.genQuickText,
     genHtmlForegroundCountdown: mocks.genCountdown,
     genHtmlForegroundMarquee: mocks.genMarquee,
+    FOREGROUND_MARQUEE_CLASS: 'foreground-marquee',
     genHtmlForegroundQuickText: mocks.genQuickText,
     genHtmlForegroundStopwatch: mocks.genStopwatch,
     genHtmlForegroundTime: mocks.genTime,
@@ -780,9 +782,7 @@ describe('non-Bible manager coverage', () => {
             lineHeight: 'normal',
             // The screen window's own stack, not whatever the host page
             // inherits into the mini preview's shadow root.
-            fontFamily: expect.stringMatching(
-                /^app-Google-Sans, system-ui, .*sans-serif/,
-            ),
+            fontFamily: SCREEN_FONT_FAMILY,
         });
 
         const timeA = {

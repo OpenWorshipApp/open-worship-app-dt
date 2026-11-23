@@ -1,6 +1,6 @@
 {
     "lang": "km",
-    "updated": "2026-11-15",
+    "updated": "2026-11-20",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -816,6 +816,10 @@
             "en": "How do I present a PDF or a PowerPoint?",
             "text": "តើខ្ញុំបង្ហាញឯកសារ PDF ឬ PowerPoint ដោយរបៀបណា?"
         },
+        "presenter.documents.pptx-omit-background": {
+            "en": "How do I show my own background behind PowerPoint slides?",
+            "text": "តើខ្ញុំបង្ហាញផ្ទៃខាងក្រោយផ្ទាល់ខ្លួននៅពីក្រោយស្លាយ PowerPoint ដោយរបៀបណា?"
+        },
         "presenter.documents.document-stage-monitor": {
             "en": "How do I show the singer on stage what slide comes next?",
             "text": "តើខ្ញុំបង្ហាញអ្នកច្រៀងនៅលើវេទិកាថាស្លាយណាមកបន្ទាប់ដោយរបៀបណា?"
@@ -871,6 +875,10 @@
         "presenter.documents.change-slides-with-assistant": {
             "en": "Can the assistant change my slides for me?",
             "text": "តើជំនួយការអាចកែស្លាយរបស់ខ្ញុំជូនខ្ញុំបានទេ?"
+        },
+        "presenter.documents.change-office-file-with-assistant": {
+            "en": "Can the assistant change my PowerPoint or Word file?",
+            "text": "តើជំនួយការអាចកែឯកសារ PowerPoint ឬ Word របស់ខ្ញុំបានទេ?"
         },
         "presenter.lyrics.present-lyrics": {
             "en": "How do I put a song's lyrics on the screen?",
@@ -1031,6 +1039,10 @@
         "presenter.background.background-shader-code": {
             "en": "Can I change or write the code of a shader background?",
             "text": "តើខ្ញុំអាចកែ ឬសរសេរកូដស្ហេឌឺនៃផ្ទៃខាងក្រោយបានទេ?"
+        },
+        "presenter.background.background-animation-export": {
+            "en": "Can I save an animation as a picture or a video?",
+            "text": "តើខ្ញុំអាចរក្សាទុកចលនាជារូបភាព ឬជាវីដេអូបានទេ?"
         },
         "presenter.background.background-paint-slide-show": {
             "en": "Can the background colours or animations change by themselves?",
@@ -1587,6 +1599,10 @@
         "reader.lookup.detail-language": {
             "en": "How do I open the same person or place in two languages?",
             "text": "តើខ្ញុំបើកមនុស្ស ឬទីកន្លែងដដែលជាពីរភាសាដោយរបៀបណា?"
+        },
+        "reader.lookup.names-language-install": {
+            "en": "How do I get the names and places in a language that is not in the list?",
+            "text": "តើខ្ញុំយកឈ្មោះ និងទីកន្លែងជាភាសាដែលមិនមាននៅក្នុងបញ្ជីដោយរបៀបណា?"
         },
         "reader.lookup.names-in-passage": {
             "en": "Who and where is named in the passage I am reading?",

@@ -68,6 +68,11 @@ import {
     genPaintCustomizeClosedSettingName,
     getForegroundPropsFlags,
 } from './foregroundComponentRules';
+import {
+    findPressedTile,
+    type PressedTileType,
+    readPressedTile,
+} from '../background/pressedTileHelpers';
 
 /**
  * Fill Show and Animation Show put the Background panel's FILLS and
@@ -475,14 +480,12 @@ export default function ForegroundPaintShowComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const listRef = useRef<HTMLDivElement | null>(null);
-    const pressedTileRef = useRef<{ label: string; at: number } | null>(null);
+    const pressedTileRef = useRef<PressedTileType | null>(null);
     const handleTilePressing = useCallback((event: SyntheticEvent) => {
-        const target = event.target as HTMLElement;
-        const label = target.matches?.(PRESSABLE_SELECTOR)
-            ? target.getAttribute('aria-label')
-            : null;
-        pressedTileRef.current =
-            label === null ? null : { label, at: Date.now() };
+        pressedTileRef.current = readPressedTile(
+            event.target as HTMLElement,
+            PRESSABLE_SELECTOR,
+        );
     }, []);
     const screenIdsKey = sessionShowingList
         .map(([screenId]) => {
@@ -504,11 +507,7 @@ export default function ForegroundPaintShowComp({
             return;
         }
         pressedTileRef.current = null;
-        Array.from(list.querySelectorAll<HTMLElement>(PRESSABLE_SELECTOR))
-            .find((element) => {
-                return element.getAttribute('aria-label') === pressed.label;
-            })
-            ?.focus();
+        findPressedTile(list, PRESSABLE_SELECTOR, pressed)?.focus();
     }, [screenIdsKey]);
     const paintTarget = useMemo<PaintTargetType>(() => {
         return {

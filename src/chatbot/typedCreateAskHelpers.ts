@@ -316,6 +316,52 @@ function checkHas(reading: ReadingType, group: CreateAskWordGroupType) {
     return (reading.spanMap.get(group) ?? []).length > 0;
 }
 
+// Where a sentence ends, in any script: a stop, a question or an
+// exclamation mark before a space or the line's end ("3.16" goes on), or
+// one of the marks that need no space after them (the Khmer khan, the
+// Chinese full stop, the Devanagari danda, the Ethiopic and Myanmar ones).
+const SENTENCE_END_PATTERN =
+    /\p{Sentence_Terminal}+(?=\s|$)|[^\P{Sentence_Terminal}.!?]+/gu;
+
+// The sentences of a line, as places in it.
+function listSentenceRanges(lower: string): SpanType[] {
+    const ranges: SpanType[] = [];
+    let start = 0;
+    for (const match of lower.matchAll(SENTENCE_END_PATTERN)) {
+        const end = (match.index ?? 0) + match[0].length;
+        ranges.push([start, end]);
+        start = end;
+    }
+    ranges.push([start, lower.length]);
+    return ranges;
+}
+
+/**
+ * Whether one sentence of the line says the word to make AND what is made
+ * (2026-11-21, `EC-783`): _my presentation is open in PowerPoint, but
+ * PowerPoint is closed. What do I do?_ said a slide document in its first
+ * sentence and the French "do" (_faire_, also "make") in its second, and a
+ * slide document was made.
+ */
+function checkHasTogether(
+    reading: ReadingType,
+    group: CreateAskWordGroupType,
+    other: CreateAskWordGroupType,
+) {
+    const startList = (reading.spanMap.get(group) ?? []).map(([start]) => {
+        return start;
+    });
+    const otherStartList = (reading.spanMap.get(other) ?? []).map(([start]) => {
+        return start;
+    });
+    return listSentenceRanges(reading.lower).some(([start, end]) => {
+        const isIn = (place: number) => {
+            return place >= start && place < end;
+        };
+        return startList.some(isIn) && otherStartList.some(isIn);
+    });
+}
+
 // Every word the lists read, but the name markers: what a passage's book
 // name never runs into.
 const STOP_GROUP_LIST = CREATE_ASK_WORD_GROUP_LIST.filter((group) => {
@@ -824,18 +870,21 @@ function readAsk(reading: ReadingType): TypedCreateAskType | null {
     if (!has('make')) {
         return null;
     }
-    if (has('webPage')) {
+    const madeWith = (group: CreateAskWordGroupType) => {
+        return checkHasTogether(reading, 'make', group);
+    };
+    if (madeWith('webPage')) {
         return {
             job: 'webBackground',
             name: readTypedName(reading)?.name ?? null,
             description: '',
         };
     }
-    if (has('flow') || has('slide')) {
+    if (madeWith('flow') || madeWith('slide')) {
         const name = readTypedName(reading);
         return {
             job: 'document',
-            kind: has('flow') ? 'flow' : 'slide',
+            kind: madeWith('flow') ? 'flow' : 'slide',
             isNew: has('new'),
             name: name?.name ?? null,
             hasContent: checkHasContent(reading, name),
@@ -846,7 +895,10 @@ function readAsk(reading: ReadingType): TypedCreateAskType | null {
     // called Easter". Unnamed, a new list may be a running order said in
     // words the language's list does not hold: no guess.
     const listName = readTypedName(reading)?.name ?? null;
-    if (has('bibleList') || (has('list') && has('new') && listName !== null)) {
+    if (
+        madeWith('bibleList') ||
+        (madeWith('list') && has('new') && listName !== null)
+    ) {
         return {
             job: 'bibleList',
             listName,

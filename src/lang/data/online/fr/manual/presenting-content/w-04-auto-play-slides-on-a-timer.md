@@ -3,7 +3,7 @@ id: W-04
 title: "Faire défiler les diapositives automatiquement avec une minuterie"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: 0ada2ed50941a93b
+translatedFrom: e9d9f4a1db9d4143
 ---
 # W-04 — Faire défiler les diapositives automatiquement avec une minuterie
 
@@ -31,8 +31,8 @@ translatedFrom: 0ada2ed50941a93b
 
 5. **Arrêter les diapositives qui avancent déjà.** La bande de minuterie est déjà ouverte en bas à gauche de l'aperçu des diapositives, à la place du chronomètre. Cliquez sur son bouton **pause** pour arrêter, ou sur son **✕** pour arrêter et la replier en chronomètre.
 
-La même bande fait défiler une liste **[en:tran:Background]** — **[en:tran:Images]**,
-**[en:tran:Videos]** et **[en:tran:Webs]**, où elle apparaît dès que cette liste a quelque chose sur un
-écran — ainsi que chaque session **[en:tran:Image Show]** / **[en:tran:Video Show]** /
+La même bande fait défiler une liste **[en:tran:Background]** — **[en:tran:Fills]**,
+**[en:tran:Animations]**, **[en:tran:Images]**, **[en:tran:Videos]** et **[en:tran:Webs]**, où elle apparaît dès que cette liste a quelque chose sur un
+écran — ainsi que chaque session **[en:tran:Fill Show]** / **[en:tran:Animation Show]** / **[en:tran:Image Show]** / **[en:tran:Video Show]** /
 **[en:tran:Web Show]**, où elle se place sur la rangée du haut du panneau. Dans la liste Sites web, une
 **URL** enregistrée défile exactement comme un fichier de page.

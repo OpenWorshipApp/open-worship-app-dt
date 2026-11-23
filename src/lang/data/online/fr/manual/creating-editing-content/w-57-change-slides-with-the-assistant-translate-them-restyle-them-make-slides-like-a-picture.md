@@ -3,7 +3,7 @@ id: W-57
 title: "Modifier des diapositives avec l'assistant (les traduire, changer leur style, faire des diapositives comme une image)"
 section: "Créer et modifier du contenu"
 lang: fr
-translatedFrom: 34cad29c2e80c7ed
+translatedFrom: 9e9868ba698e03c2
 ---
 # W-57 — Modifier des diapositives avec l'assistant (les traduire, changer leur style, faire des diapositives comme une image)
 
@@ -22,4 +22,4 @@ translatedFrom: 34cad29c2e80c7ed
 4. La réponse dit ce qui a changé. La modification n'est **pas encore enregistrée** : le document affiche un **\*** rouge à côté de son nom dans **[en:tran:Documents]**. **[en:tran:Undo this change]** sous la réponse annule toute la modification — chaque diapositive qu'elle a touchée, et un arrière-plan qu'elle a mis derrière elles — et **[en:tran:Show it in the list]** trouve sa ligne.
 5. Pour la garder, appuyez sur **[en:tran:Save]** dans la rangée d'historique des diapositives, dans le Présentateur (**[en:tran:Undo]** à cet endroit revient aussi en arrière), ou dans l'Éditeur de diapositives.
 
-**Pas là ?** **[en:tran:Open in Chatbot]** n'est dans le menu d'un document que tant que l'IA est activée (**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). Un fichier PDF, PowerPoint ou Word l'a aussi, mais seul un document de diapositives Open Worship a des diapositives que l'assistant peut modifier ; pour faire un chant à partir des mots d'un tel fichier, voir W-42 étape 18. Quand aucun assistant ne peut répondre, la conversation le dit et propose **[en:tran:Open AI settings]**.
+**Pas là ?** **[en:tran:Open in Chatbot]** n'est dans le menu d'un document que tant que l'IA est activée (**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). Un fichier PDF, PowerPoint ou Word l'a aussi : l'assistant modifie les mots d'un fichier PowerPoint ou Word dans le fichier lui-même (W-65) ; pour faire un chant à partir des mots d'un tel fichier, voir W-42 étape 18. Quand aucun assistant ne peut répondre, la conversation le dit et propose **[en:tran:Open AI settings]**.

@@ -189,19 +189,17 @@ describe('PptxAppDocument.getSlides', () => {
         ]);
     });
 
-    test('a preview made by another converter version is thrown away', async () => {
+    test('the slides of whatever preview getPptxData hands back -- a stale one is rebuilt there, never thrown away here', async () => {
+        // Another converter version used to empty the list here until the
+        // person pressed Refresh PPTX Slides; `getPptxData` rebuilds it now.
         mocks.getPptxToHtmlsVersionMock.mockResolvedValue('2.0.0');
 
-        expect(await new PptxAppDocument(FILE_PATH).getSlides()).toEqual([]);
+        const slides = await new PptxAppDocument(FILE_PATH).getSlides();
 
-        expect(mocks.removePptxHtmlsPreviewMock).toHaveBeenCalledWith(
-            FILE_PATH,
-        );
-        expect(mocks.appLogMock).toHaveBeenCalledWith(
-            'Pptx version mismatch:',
-            '2.0.0',
-            '1.0.0',
-        );
+        expect(slides.length).toBeGreaterThan(1);
+        expect(mocks.getPptxToHtmlsVersionMock).not.toHaveBeenCalled();
+        expect(mocks.removePptxHtmlsPreviewMock).not.toHaveBeenCalled();
+        expect(mocks.appLogMock).not.toHaveBeenCalled();
     });
 
     test('no preview yet gives no slides and removes nothing', async () => {

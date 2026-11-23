@@ -155,7 +155,7 @@ export default function BibleXMLInfoComp({
     const note = bibleInfo?.note?.trim() ?? '';
     return (
         <li
-            className="list-group-item p-1"
+            className="list-group-item p-1 app-selectable-text"
             title={`${title} ${filePath}`}
             onContextMenu={handBibleKeyContextMenuOpening.bind(null, bibleKey)}
         >

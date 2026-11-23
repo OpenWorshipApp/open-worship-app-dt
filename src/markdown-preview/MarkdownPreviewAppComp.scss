@@ -377,10 +377,74 @@
     // John 3 study read "Judgment/Peris", on screen and on paper.
     overflow-wrap: normal;
     &.app-markdown-mermaid--rendered {
+      // A picture moved or zoomed (`markdownMermaidViewHelpers.ts`) stays in
+      // its box. `clip`, not `hidden`: the box must not become a scroller,
+      // or its buttons could not stay at the window's top while a tall
+      // diagram scrolls under them.
+      overflow: clip;
+      // The edge the picture is cut at: a faint see-through line, rounded,
+      // drawn over the picture and taking no room (an outline, so no
+      // diagram moves by a pixel). Shown under the mouse, while
+      // drag-to-move is on, and for as long as the picture is moved or
+      // zoomed -- a diagram left as drawn at rest looks as it always did.
+      border-radius: 0.4rem;
+      outline: 1px solid transparent;
+      outline-offset: -1px;
       text-align: center;
-      svg {
+      &:hover,
+      &.app-markdown-mermaid--pan,
+      &:has(> svg[data-app-view]) {
+        outline-color: color-mix(in srgb, var(--app-ink) 22%, transparent);
+      }
+      > svg {
         max-width: 100%;
         height: auto;
+      }
+    }
+    &.app-markdown-mermaid--pan {
+      cursor: grab;
+      user-select: none;
+      touch-action: none;
+    }
+    &.app-markdown-mermaid--panning {
+      cursor: grabbing;
+    }
+  }
+
+  // A drawn diagram's buttons: in its top corner while the mouse is over it,
+  // a button of it has the keyboard, or its drag-to-move is on. No height of
+  // its own, so the picture does not move when they are made.
+  .app-markdown-mermaid-controls {
+    position: sticky;
+    top: 0.4rem;
+    z-index: 1;
+    display: flex;
+    justify-content: flex-end;
+    height: 0;
+    visibility: hidden;
+    cursor: default;
+  }
+  .app-markdown-mermaid:hover > .app-markdown-mermaid-controls,
+  .app-markdown-mermaid--pan > .app-markdown-mermaid-controls,
+  .app-markdown-mermaid-controls:focus-within {
+    visibility: visible;
+  }
+  .app-markdown-mermaid-controls-box {
+    display: flex;
+    align-self: flex-start;
+    margin: 0.4rem 0.4rem 0 0;
+    border: 1px solid var(--app-line);
+    border-radius: 0.35rem;
+    background-color: var(--app-surface);
+    .btn {
+      padding: 0.1rem 0.4rem;
+      border: 0;
+      color: var(--app-muted);
+      &:hover {
+        color: var(--app-ink);
+      }
+      &[aria-pressed='true'] {
+        color: var(--app-accent);
       }
     }
   }
@@ -506,6 +570,18 @@
     tr,
     .app-markdown-mermaid {
       break-inside: avoid;
+    }
+
+    // A diagram goes on paper as drawn, not as moved or zoomed, and without
+    // its buttons.
+    .app-markdown-mermaid > svg {
+      transform: none !important;
+    }
+    .app-markdown-mermaid-controls {
+      display: none;
+    }
+    .app-markdown-mermaid {
+      outline: none !important;
     }
 
     // A dark window's diagram goes on paper as its light picture.

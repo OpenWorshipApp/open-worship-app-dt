@@ -12,6 +12,8 @@ import {
 } from 'react';
 
 import PresetsRowComp from '../others/PresetsRowComp';
+import ColorModeSwitchComp from '../others/ColorModeSwitchComp';
+import type { ColorModeType } from '../others/color/colorContrastHelpers';
 import AppSuspenseComp from '../others/AppSuspenseComp';
 import { useAppCurrentRef, useAppEffect } from '../helper/appHooks';
 import { genTimeoutAttempt } from '../helper/timeoutHelpers';
@@ -26,27 +28,54 @@ import {
 import AnimationTileComp from './AnimationTileComp';
 import AnimationPreviewComp from './AnimationPreviewComp';
 import AnimationEditorComp from './AnimationEditorComp';
+import AnimationExportButtonsComp from './AnimationExportButtonsComp';
 import { genAnimationCopyCodeMenuItems } from './animationMenuHelpers';
-import { genAnimationLabel, tranAnimationTheme } from './animationLabelHelpers';
 import {
-    CSS_ANIMATION_SAMPLE_LIST,
-    GLSL_ANIMATION_SAMPLE_LIST,
+    genAnimationCategoryLabel,
+    genAnimationLabel,
+    genAnimationSampleCaption,
+    tranAnimationCategory,
+    tranAnimationCategoryGroup,
+} from './animationLabelHelpers';
+import {
+    ANIMATION_CATEGORY_GROUP_LIST,
+    ANIMATION_CATEGORY_LIST,
+    DEFAULT_ANIMATION_CATEGORY,
+    findAnimationSampleCategory,
+    findAnimationTone,
+    listAnimationCategorySamples,
+    toInitialAnimationTone,
+    type AnimationCategoryType,
     type AnimationSampleType,
 } from './animationBuiltInHelpers';
 import {
     ANIMATION_PRESET_SETTING_NAME,
     type SavedAnimationPresetType,
+    toAnimationCategorySettingName,
     toSavedAnimationPreset,
 } from './animationPresetHelpers';
+import {
+    ANIMATION_PIN_SETTING_NAME,
+    checkIsAnimationPinListFull,
+    checkIsAnimationPinned,
+    readAnimationPins,
+    toggleAnimationPin,
+} from './animationPinHelpers';
+import { subscribeSavedPresets } from '../others/savedPresetHelpers';
+import { getSetting, setSetting } from '../helper/settingHelpers';
 import {
     compareAnimationSrc,
     parseAnimation,
     toAnimationSrc,
     toAnimationStillFill,
     type AnimationType,
-    type GlslAnimationType,
 } from './animationValueHelpers';
 import { checkIsFillDark, genFillBackground } from './fillValueHelpers';
+import {
+    genAnimationAgentEditorId,
+    registerAnimationAgentEditor,
+    type AnimationAgentPlaceType,
+} from './animationAgentEditorRegistry';
 
 const LazyAnimationCodeEditorComp = lazy(() => {
     return import('./AnimationCodeEditorComp');
@@ -68,21 +97,40 @@ function genSavedChipColors(preset: SavedAnimationPresetType) {
     };
 }
 
+/** One tile of a grid: its animation and the words it is shown with. */
+type AnimationTileItemType = {
+    src: string;
+    /** The tile's own name, already translated. */
+    label: string;
+    /** The words under it, already translated. */
+    caption: string;
+    /** The animation's name, for its pin's words. */
+    name: string;
+};
+
+type AnimationPinViewType = {
+    pins: readonly SavedAnimationPresetType[];
+    onToggle: (src: string, name: string) => void;
+};
+
 function AnimationTileGridComp({
     iconName,
     label,
-    sampleList,
+    items,
     heldSrc,
     onPick,
+    pinView,
     headEnd,
 }: Readonly<{
     iconName: string;
     label: string;
-    sampleList: AnimationSampleType[];
+    items: AnimationTileItemType[];
     heldSrc: string | null;
     onPick: (src: string, event: MouseEvent) => void;
+    pinView: AnimationPinViewType;
     headEnd?: ReactNode;
 }>) {
+    const isPinListFull = checkIsAnimationPinListFull(pinView.pins);
     return (
         <div className="fill-picker-section" role="group" aria-label={label}>
             <div className="fill-picker-head">
@@ -91,23 +139,179 @@ function AnimationTileGridComp({
                 {headEnd}
             </div>
             <div className="animation-picker-grid">
-                {sampleList.map((sample) => {
+                {items.map((item) => {
                     return (
                         <AnimationTileComp
-                            key={sample.src}
-                            src={sample.src}
-                            label={genAnimationLabel(sample.animation)}
-                            caption={tranAnimationTheme(sample.theme)}
-                            isSelected={compareAnimationSrc(
-                                sample.src,
-                                heldSrc,
-                            )}
+                            key={item.src}
+                            src={item.src}
+                            label={item.label}
+                            caption={item.caption}
+                            isSelected={compareAnimationSrc(item.src, heldSrc)}
                             onPick={onPick}
+                            pin={{
+                                name: item.name,
+                                isPinned: checkIsAnimationPinned(
+                                    pinView.pins,
+                                    item.src,
+                                ),
+                                isPinListFull,
+                                onToggle: pinView.onToggle,
+                            }}
                         />
                     );
                 })}
             </div>
         </div>
+    );
+}
+
+/**
+ * A category's tiles of one kind: each captioned with its effect alone,
+ * numbered from its second look on -- the Category list and the switch
+ * already say the occasion and the side.
+ */
+function toCategoryTileItems(
+    category: AnimationCategoryType,
+    sampleList: AnimationSampleType[],
+): AnimationTileItemType[] {
+    return sampleList.map((sample) => {
+        const name = genAnimationCategoryLabel(
+            category,
+            sample.animation,
+            sample.number,
+            sample.tone,
+        );
+        return {
+            src: sample.src,
+            label: name,
+            caption: genAnimationSampleCaption(sample.animation, sample.number),
+            name,
+        };
+    });
+}
+
+function checkIsAnimationCategory(
+    value: unknown,
+): value is AnimationCategoryType {
+    return (ANIMATION_CATEGORY_LIST as readonly unknown[]).includes(value);
+}
+
+/**
+ * The category a picker shows (2026-11-19, the user: _I want to swhich
+ * category_): the one last chosen in this place -- a Background session's
+ * pickers, or Animation Show's --, else the held sample's own, else Sunday
+ * Worship. It changes only when the person changes it: a press keeps it
+ * (`keepCategory`), so the picker a first press swaps in, one per screen,
+ * opens on it too, and a pinned tile of another category leaves it be.
+ */
+function useAnimationCategory(settingName: string, heldSrc: string | null) {
+    const [category, setCategory] = useState<AnimationCategoryType>(() => {
+        const saved = getSetting(settingName);
+        if (checkIsAnimationCategory(saved)) {
+            return saved;
+        }
+        const held = parseAnimation(heldSrc);
+        return (
+            (held === null ? null : findAnimationSampleCategory(held)) ??
+            DEFAULT_ANIMATION_CATEGORY
+        );
+    });
+    const settingNameRef = useAppCurrentRef(settingName);
+    const categoryRef = useAppCurrentRef(category);
+    const changeCategory = useCallback((value: string) => {
+        if (!checkIsAnimationCategory(value)) {
+            return;
+        }
+        setCategory(value);
+        setSetting(settingNameRef.current, value);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    const keepCategory = useCallback(() => {
+        if (getSetting(settingNameRef.current) !== categoryRef.current) {
+            setSetting(settingNameRef.current, categoryRef.current);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return { category, changeCategory, keepCategory };
+}
+
+/**
+ * The side of the Dark / Light switch a picker shows, as the Fills tab's
+ * (`FillPickerComp`): it opens on the held animation's side and moves only
+ * when what is held is a sample of the OTHER side -- a press on it is never
+ * undone by a re-render. The pinned ones stay above whichever side is shown.
+ */
+function useAnimationTone(heldSrc: string | null) {
+    const [tone, setTone] = useState<ColorModeType>(() => {
+        return toInitialAnimationTone(heldSrc);
+    });
+    const heldTone = useMemo(() => {
+        return findAnimationTone(heldSrc);
+    }, [heldSrc]);
+    useAppEffect(() => {
+        if (heldTone !== null) {
+            setTone(heldTone);
+        }
+    }, [heldTone]);
+    return { tone, setTone };
+}
+
+/**
+ * The pinned animations, as every mounted picker shows them: a pin made in
+ * one -- the Background tab's, Animation Show's -- shows in the others at
+ * once, and each stops listening when it goes.
+ */
+function useAnimationPinList() {
+    const [pins, setPins] = useState(readAnimationPins);
+    useAppEffect(() => {
+        return subscribeSavedPresets(ANIMATION_PIN_SETTING_NAME, (list) => {
+            setPins(list as SavedAnimationPresetType[]);
+        });
+    }, []);
+    return pins;
+}
+
+function AnimationCategorySelectComp({
+    category,
+    onChange,
+}: Readonly<{
+    category: AnimationCategoryType;
+    onChange: (value: string) => void;
+}>) {
+    // Named on the select itself too, as the Effect select is: an agent
+    // finds a control by its own title or aria-label, not a wrapping label.
+    const label = tran('Category');
+    return (
+        <label className="animation-picker-category">
+            <i className="bi bi-tags" aria-hidden="true" />
+            <span>{label}</span>
+            <select
+                className="form-select form-select-sm"
+                aria-label={label}
+                title={label}
+                value={category}
+                onChange={(event) => {
+                    onChange(event.target.value);
+                }}
+            >
+                {ANIMATION_CATEGORY_GROUP_LIST.map((item) => {
+                    return (
+                        <optgroup
+                            key={item.group}
+                            label={tranAnimationCategoryGroup(item.group)}
+                        >
+                            {item.categories.map((value) => {
+                                return (
+                                    <option key={value} value={value}>
+                                        {tranAnimationCategory(value)}
+                                    </option>
+                                );
+                            })}
+                        </optgroup>
+                    );
+                })}
+            </select>
+        </label>
     );
 }
 
@@ -134,17 +338,23 @@ function AnimationHeldComp({
 
 /**
  * The Background panel's Animations for one screen -- or for whichever
- * screens a press is sent to, while none holds one: the samples in two
- * boxes, CSS Animations and GLSL Shaders, each a season or theme of worship
- * (`animationBuiltInHelpers`), the animations somebody saved under them,
+ * screens a press is sent to, while none holds one: a Dark / Light switch
+ * (2026-11-19, the user: _`Animations` of background and foreground should
+ * support dark/light mode, keep the pin_), the pinned ones of either side,
+ * then a Category and its samples of the side shown in two boxes, GLSL
+ * Shaders above CSS Animations (2026-11-19, the user: _move the css top
+ * section to the bottom_;
+ * `animationBuiltInHelpers`), the animations somebody saved under them,
  * and Customize for a held one. One screen's picker folds to its first line,
- * and its Customize closes from the CSS line, as the Fills tab's do.
+ * and its Customize closes from the first box's line, as the Fills tab's
+ * from its Gradients line -- it stays at the top of the tiles.
  *
  * A press (a tile, a saved animation) goes up at once -- pressing what is up
  * takes it down. Customize goes up after a pause (`genTimeoutAttempt`, this
  * picker's own: every screen with an animation has a picker, and each must
  * put up its own last change), so a drag along a slider is one screen
- * change, not one a frame. Edit Code's Apply goes up at once.
+ * change, not one a frame. Edit Code's Apply goes up at once -- Shader Code
+ * for a shader, CSS Code for a CSS animation (2026-11-19).
  */
 export default function AnimationPickerComp({
     screenView,
@@ -153,6 +363,7 @@ export default function AnimationPickerComp({
     onPick,
     onEdit,
     presetSettingName = ANIMATION_PRESET_SETTING_NAME,
+    agentPlace = 'background',
 }: Readonly<{
     screenView?: FillPickerScreenViewType;
     /** Customize's own toggle, for a picker that is not one screen's. */
@@ -168,12 +379,58 @@ export default function AnimationPickerComp({
      * always been.
      */
     presetSettingName?: string;
+    /**
+     * Which panel this is, for the help window's assistant
+     * (`animationAgentEditorRegistry`): the Background panel's, or
+     * Animation Show's.
+     */
+    agentPlace?: AnimationAgentPlaceType;
 }>) {
     const heldAnimation = useMemo(() => {
         return parseAnimation(heldSrc);
     }, [heldSrc]);
+    const { category, changeCategory, keepCategory } = useAnimationCategory(
+        toAnimationCategorySettingName(presetSettingName, agentPlace),
+        heldSrc,
+    );
+    const { tone, setTone } = useAnimationTone(heldSrc);
+    const samples = useMemo(() => {
+        return listAnimationCategorySamples(category, tone);
+    }, [category, tone]);
+    const pins = useAnimationPinList();
+    // A pinned tile is named from its animation, with its category: it may
+    // be of any. Named apart from the category's own tile, so a focus put
+    // back after a press (`BackgroundAnimationsComp`) finds the one pressed.
+    const pinItems = useMemo(() => {
+        return pins.flatMap((pin): AnimationTileItemType[] => {
+            const animation = parseAnimation(pin.src);
+            if (animation === null) {
+                return [];
+            }
+            const name = genAnimationLabel(animation);
+            return [
+                {
+                    src: pin.src,
+                    label: `${tran('Pinned')}: ${name}`,
+                    caption: name,
+                    name,
+                },
+            ];
+        });
+    }, [pins]);
+    const pinView = useMemo<AnimationPinViewType>(() => {
+        return {
+            pins,
+            onToggle: (src, name) => {
+                toggleAnimationPin(src, name);
+            },
+        };
+    }, [pins]);
     const [draft, setDraft] = useState<AnimationType | null>(heldAnimation);
-    const [isCodeOpen, setIsCodeOpen] = useState(false);
+    // Which code is open, Shader Code or CSS Code; null when none is.
+    const [codeEngine, setCodeEngine] = useState<
+        AnimationType['engine'] | null
+    >(null);
     const pendingSrcRef = useRef<string | null>(null);
     const attemptTimeout = useMemo(() => {
         return genTimeoutAttempt(500);
@@ -195,13 +452,14 @@ export default function AnimationPickerComp({
             setDraft(heldAnimation);
         }
     }, [heldAnimation]);
-    // A shader's code is edited for the shader held: another one put up,
+    // Code is edited for the animation held: one of the other kind put up,
     // or none, closes it.
+    const heldEngine = heldAnimation?.engine ?? null;
     useAppEffect(() => {
-        if (heldAnimation?.engine !== 'glsl') {
-            setIsCodeOpen(false);
-        }
-    }, [heldAnimation?.engine]);
+        setCodeEngine((engine) => {
+            return engine === heldEngine ? engine : null;
+        });
+    }, [heldEngine]);
     // A change still waiting when the picker goes (the tab closed) goes up
     // now rather than never; `onEdit` itself decides whether it still can.
     useAppEffect(() => {
@@ -215,7 +473,7 @@ export default function AnimationPickerComp({
         attemptTimeout(flushEdit);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-    const handleCodeApplying = useCallback((animation: GlslAnimationType) => {
+    const handleCodeApplying = useCallback((animation: AnimationType) => {
         setDraft(animation);
         pendingSrcRef.current = toAnimationSrc(animation);
         attemptTimeout(flushEdit, true);
@@ -227,6 +485,7 @@ export default function AnimationPickerComp({
             // change would take the press's animation straight back down.
             pendingSrcRef.current = null;
             attemptTimeout(() => {}, true);
+            keepCategory();
             onPickRef.current(src, event);
         },
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -239,6 +498,44 @@ export default function AnimationPickerComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const isEditable = onEdit !== undefined;
+    // The help window's assistant changes this animation the way a press in
+    // Customize does, and opens its code the way Edit Code does
+    // (`owa_animation_edit`). One handle for the picker's life: its
+    // functions read the picker as it is at the call.
+    const agentEditorId = genAnimationAgentEditorId(
+        agentPlace,
+        screenView?.screenId ?? null,
+    );
+    const draftRef = useAppCurrentRef(draft);
+    useAppEffect(() => {
+        if (!isEditable) {
+            return;
+        }
+        return registerAnimationAgentEditor({
+            id: agentEditorId,
+            place: agentPlace,
+            screenId: screenView?.screenId ?? null,
+            getDraftSrc: () => {
+                return currentSrcRef.current;
+            },
+            setDraftSrc: (src) => {
+                const animation = parseAnimation(src);
+                if (animation === null) {
+                    return false;
+                }
+                handleEditing(animation);
+                return true;
+            },
+            openCode: () => {
+                const engine = draftRef.current?.engine;
+                if (engine === undefined) {
+                    return false;
+                }
+                setCodeEngine(engine);
+                return true;
+            },
+        });
+    }, [agentEditorId, isEditable]);
     const isFolded = screenView?.isFolded === true;
     const isCustomizeOffered = isEditable && draft !== null;
     const customizeView = screenView ?? customizeViewProp;
@@ -250,6 +547,15 @@ export default function AnimationPickerComp({
                 {screenView === undefined ? null : (
                     <FillPickerFoldComp screenView={screenView} />
                 )}
+                {isFolded ? null : (
+                    <ColorModeSwitchComp
+                        mode={tone}
+                        onChange={setTone}
+                        groupLabel={tran('Animations')}
+                        darkTitle={tran('Dark')}
+                        lightTitle={tran('Light')}
+                    />
+                )}
                 {screenView === undefined ? null : (
                     <ShowingScreenIcon screenId={screenView.screenId} />
                 )}
@@ -260,12 +566,27 @@ export default function AnimationPickerComp({
             {isFolded ? null : (
                 <>
                     <div className="fill-picker-box">
+                        {pinItems.length === 0 ? null : (
+                            <AnimationTileGridComp
+                                iconName="pin-angle-fill"
+                                label={tran('Pinned')}
+                                items={pinItems}
+                                heldSrc={heldSrc}
+                                onPick={handlePicking}
+                                pinView={pinView}
+                            />
+                        )}
+                        <AnimationCategorySelectComp
+                            category={category}
+                            onChange={changeCategory}
+                        />
                         <AnimationTileGridComp
-                            iconName="filetype-css"
-                            label={tran('CSS Animations')}
-                            sampleList={CSS_ANIMATION_SAMPLE_LIST}
+                            iconName="gpu-card"
+                            label={tran('GLSL Shaders')}
+                            items={toCategoryTileItems(category, samples.glsl)}
                             heldSrc={heldSrc}
                             onPick={handlePicking}
+                            pinView={pinView}
                             headEnd={
                                 isCustomizeOffered &&
                                 customizeView !== undefined ? (
@@ -279,11 +600,12 @@ export default function AnimationPickerComp({
                             }
                         />
                         <AnimationTileGridComp
-                            iconName="gpu-card"
-                            label={tran('GLSL Shaders')}
-                            sampleList={GLSL_ANIMATION_SAMPLE_LIST}
+                            iconName="filetype-css"
+                            label={tran('CSS Animations')}
+                            items={toCategoryTileItems(category, samples.css)}
                             heldSrc={heldSrc}
                             onPick={handlePicking}
+                            pinView={pinView}
                         />
                         <PresetsRowComp<SavedAnimationPresetType>
                             savedSettingName={presetSettingName}
@@ -301,30 +623,39 @@ export default function AnimationPickerComp({
                     {isCustomizeOpen && draft !== null ? (
                         <div className="fill-picker-box animation-picker-editor">
                             {currentSrc === null ? null : (
-                                <AnimationDraftPreviewComp src={currentSrc} />
+                                <div className="animation-picker-preview-row">
+                                    <AnimationDraftPreviewComp
+                                        src={currentSrc}
+                                    />
+                                    <AnimationExportButtonsComp
+                                        src={currentSrc}
+                                        place={agentPlace}
+                                    />
+                                </div>
                             )}
                             <AnimationEditorComp
                                 animation={draft}
                                 onChange={handleEditing}
-                                onCodeEditing={
-                                    draft.engine === 'glsl'
-                                        ? () => {
-                                              setIsCodeOpen(true);
-                                          }
-                                        : undefined
-                                }
+                                chatbotEditorId={agentEditorId}
+                                onCodeEditing={() => {
+                                    setCodeEngine(draft.engine);
+                                }}
                             />
                         </div>
                     ) : null}
                 </>
             )}
-            {isCodeOpen && draft?.engine === 'glsl' ? (
+            {codeEngine !== null && draft?.engine === codeEngine ? (
                 <AppSuspenseComp>
                     <LazyAnimationCodeEditorComp
+                        // Shader Code and CSS Code are two panels, each
+                        // with its own editor and model.
+                        key={codeEngine}
+                        agentEditorId={isEditable ? agentEditorId : undefined}
                         animation={draft}
                         onApply={handleCodeApplying}
                         onClose={() => {
-                            setIsCodeOpen(false);
+                            setCodeEngine(null);
                         }}
                     />
                 </AppSuspenseComp>

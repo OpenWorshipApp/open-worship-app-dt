@@ -54,7 +54,9 @@ function MirrorAddressRowComp({
     return (
         <li className="d-flex flex-column">
             <div className="d-flex align-items-center gap-1">
-                <span className="app-data text-break flex-grow-1">{text}</span>
+                <span className="app-data text-break flex-grow-1 app-selectable-text">
+                    {text}
+                </span>
                 {kindLabel ? (
                     <span className="badge text-bg-secondary">{kindLabel}</span>
                 ) : null}

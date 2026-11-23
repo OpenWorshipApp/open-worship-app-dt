@@ -103,6 +103,24 @@ export const CSS_ANIMATION_KEYFRAMES_CSS = `
   50% { opacity: 1; }
   100% { opacity: 0; transform: scale(1.08); }
 }
+@keyframes app-anim-tumble {
+  from { transform: rotate3d(var(--app-anim-tx, 1), var(--app-anim-ty, 0.4), 0, 0deg); }
+  to { transform: rotate3d(var(--app-anim-tx, 1), var(--app-anim-ty, 0.4), 0, 360deg); }
+}
+@keyframes app-anim-burst {
+  0% { opacity: 0; transform: scale(0.1); }
+  8% { opacity: 1; }
+  40% { opacity: 1; }
+  62% { opacity: 0; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+@keyframes app-anim-flicker {
+  0% { opacity: 0.9; transform: scale(1, 1) rotate(-1.5deg); }
+  20% { opacity: 1; transform: scale(0.95, 1.06) rotate(1.5deg); }
+  45% { opacity: 0.82; transform: scale(1.04, 0.95) rotate(-1deg); }
+  70% { opacity: 1; transform: scale(0.97, 1.04) rotate(2deg); }
+  100% { opacity: 0.9; transform: scale(1, 1) rotate(-1.5deg); }
+}
 @media (prefers-reduced-motion: reduce) {
   .app .app-anim-on-screen .app-anim-moving:not(.spinner-border):not(.spinner-grow) {
     animation-duration: var(--app-anim-seconds, 12s) !important;
@@ -252,6 +270,24 @@ function genAurora(animation: CssAnimationType): CssAnimationNodeType[] {
     });
 }
 
+type RandomType = ReturnType<typeof genRandom>;
+
+/**
+ * A particle that is not a soft round light: a leaf, a petal, a ribbon of
+ * confetti, a heart -- its look painted once, and how it turns on its way.
+ */
+type ParticleShapeType = {
+    /** Its look, and a still turn that shows in a tile. */
+    genStyle: (color: AppColorType, random: RandomType) => CssStyleRecordType;
+    turn?: {
+        names: string[];
+        secondsRange: [number, number];
+        genVars: (random: RandomType) => CssStyleRecordType;
+        timing?: string;
+        direction?: string;
+    };
+};
+
 type ParticleOptionType = {
     seed: string;
     counts: [number, number, number];
@@ -261,7 +297,23 @@ type ParticleOptionType = {
     isFalling: boolean;
     alphas: [number, number];
     sharpness: number;
+    shape?: ParticleShapeType;
 };
+
+/** Two moving styles on one element, each keeping its own time. */
+function mergeMovingStyles(
+    first: CssStyleRecordType,
+    second: CssStyleRecordType,
+): CssStyleRecordType {
+    const merged: CssStyleRecordType = { ...first };
+    for (const [property, value] of Object.entries(second)) {
+        merged[property] =
+            first[property] === undefined
+                ? value
+                : `${first[property]}, ${value}`;
+    }
+    return merged;
+}
 
 /**
  * Things that cross the screen one by one -- bokeh and embers rising, snow
@@ -286,20 +338,42 @@ function genParticles(
         };
         const solid = round(option.sharpness * 100);
         const circle: CssAnimationNodeType = {
-            style: {
-                width: '100%',
-                'aspect-ratio': '1',
-                'border-radius': '50%',
-                background:
-                    `radial-gradient(circle, ${toRgba(color, option.alphas[0])} 0 ${solid * 0.6}%, ` +
-                    `${toRgba(color, option.alphas[1])} ${solid}%, ${toRgba(color, 0)} 70%)`,
-            },
+            style:
+                option.shape === undefined
+                    ? {
+                          width: '100%',
+                          'aspect-ratio': '1',
+                          'border-radius': '50%',
+                          background:
+                              `radial-gradient(circle, ${toRgba(color, option.alphas[0])} 0 ${solid * 0.6}%, ` +
+                              `${toRgba(color, option.alphas[1])} ${solid}%, ${toRgba(color, 0)} 70%)`,
+                      }
+                    : {
+                          width: '100%',
+                          ...option.shape.genStyle(color, random),
+                      },
         };
         if (!option.isFalling) {
             circle.movingStyle = genMovingStyle(animation, {
                 ...motion,
                 names: ['app-anim-fade'],
             });
+        }
+        const turn = option.shape?.turn;
+        if (turn !== undefined) {
+            circle.style = { ...circle.style, ...turn.genVars(random) };
+            const turnSeconds = round(random.between(...turn.secondsRange));
+            const turnStyle = genMovingStyle(animation, {
+                names: turn.names,
+                seconds: turnSeconds,
+                delaySeconds: round(random.between(0, turnSeconds)),
+                timing: turn.timing,
+                direction: turn.direction,
+            });
+            circle.movingStyle =
+                circle.movingStyle === undefined
+                    ? turnStyle
+                    : mergeMovingStyles(circle.movingStyle, turnStyle);
         }
         return {
             style: {
@@ -359,6 +433,339 @@ function genSnow(animation: CssAnimationType): CssAnimationNodeType[] {
         alphas: [0.95, 0.5],
         sharpness: 0.5,
     });
+}
+
+/** A leaf, pointed at two corners, turning back and forth as it falls. */
+function genLeaves(animation: CssAnimationType): CssAnimationNodeType[] {
+    return genParticles(animation, {
+        seed: 'leaves',
+        counts: [10, 16, 26],
+        sizeRange: [2.2, 4.6],
+        secondsRange: [12, 21],
+        swayCqmin: 16,
+        isFalling: true,
+        alphas: [0.95, 0.75],
+        sharpness: 0.5,
+        shape: {
+            genStyle: (color, random) => {
+                return {
+                    'aspect-ratio': '1',
+                    'border-radius': '0 80% 0 80%',
+                    background:
+                        `linear-gradient(135deg, ${toRgba(color, 0.95)} 0 47%, ` +
+                        `${toRgba(color, 0.55)} 50%, ${toRgba(color, 0.8)} 53% 100%)`,
+                    transform: `rotate(${round(random.between(-60, 60))}deg)`,
+                };
+            },
+            turn: {
+                names: ['app-anim-sway'],
+                secondsRange: [2.4, 4.6],
+                genVars: (random) => {
+                    const swing = round(random.between(25, 60));
+                    return {
+                        '--app-anim-r0': `${-swing}deg`,
+                        '--app-anim-r1': `${swing}deg`,
+                    };
+                },
+                timing: 'ease-in-out',
+                direction: 'alternate',
+            },
+        },
+    });
+}
+
+/** Soft petals drifting down, turning over as they go. */
+function genPetals(animation: CssAnimationType): CssAnimationNodeType[] {
+    return genParticles(animation, {
+        seed: 'petals',
+        counts: [14, 24, 36],
+        sizeRange: [1.2, 2.6],
+        secondsRange: [14, 24],
+        swayCqmin: 22,
+        isFalling: true,
+        alphas: [0.95, 0.7],
+        sharpness: 0.5,
+        shape: {
+            genStyle: (color, random) => {
+                return {
+                    'aspect-ratio': '0.75',
+                    'border-radius': '50% 50% 50% 50% / 62% 62% 38% 38%',
+                    background:
+                        `radial-gradient(ellipse at 40% 30%, ${toRgba(color, 0.95)}, ` +
+                        `${toRgba(color, 0.7)} 70%)`,
+                    transform: `rotate(${round(random.between(-90, 90))}deg)`,
+                };
+            },
+            turn: {
+                names: ['app-anim-tumble'],
+                secondsRange: [3, 6],
+                genVars: (random) => {
+                    return {
+                        '--app-anim-tx': `${round(random.between(0.4, 1))}`,
+                        '--app-anim-ty': `${round(random.between(-0.6, 0.6))}`,
+                    };
+                },
+            },
+        },
+    });
+}
+
+/** Ribbons of every colour, tumbling down quickly. */
+function genConfetti(animation: CssAnimationType): CssAnimationNodeType[] {
+    return genParticles(animation, {
+        seed: 'confetti',
+        counts: [24, 40, 64],
+        sizeRange: [0.7, 1.4],
+        secondsRange: [7, 13],
+        swayCqmin: 8,
+        isFalling: true,
+        alphas: [0.95, 0.95],
+        sharpness: 0.5,
+        shape: {
+            genStyle: (color, random) => {
+                return {
+                    'aspect-ratio': '0.45',
+                    'border-radius': '0.15cqmin',
+                    background: toRgba(color, 0.95),
+                    transform: `rotate(${round(random.between(-80, 80))}deg)`,
+                };
+            },
+            turn: {
+                names: ['app-anim-tumble'],
+                secondsRange: [1.4, 3],
+                genVars: (random) => {
+                    return {
+                        '--app-anim-tx': `${round(random.between(0.2, 1))}`,
+                        '--app-anim-ty': `${round(random.between(-1, 1))}`,
+                    };
+                },
+            },
+        },
+    });
+}
+
+// A heart in percentages of its own box, point down.
+const HEART_CLIP_PATH =
+    'polygon(50% 100%, 14% 64%, 3% 44%, 2% 26%, 10% 11%, 24% 3%, ' +
+    '38% 4%, 50% 16%, 62% 4%, 76% 3%, 90% 11%, 98% 26%, 97% 44%, 86% 64%)';
+
+/** Hearts rising and fading, each tilted its own way. */
+function genHearts(animation: CssAnimationType): CssAnimationNodeType[] {
+    return genParticles(animation, {
+        seed: 'hearts',
+        counts: [8, 14, 22],
+        sizeRange: [2, 5],
+        secondsRange: [12, 20],
+        swayCqmin: 10,
+        isFalling: false,
+        alphas: [0.9, 0.6],
+        sharpness: 0.5,
+        shape: {
+            genStyle: (color, random) => {
+                return {
+                    'aspect-ratio': '1.08',
+                    'clip-path': HEART_CLIP_PATH,
+                    background:
+                        `radial-gradient(circle at 32% 30%, ${toRgba(color, 0.95)}, ` +
+                        `${toRgba(color, 0.65)} 75%)`,
+                    transform: `rotate(${round(random.between(-18, 18))}deg)`,
+                };
+            },
+            turn: {
+                names: ['app-anim-sway'],
+                secondsRange: [2.6, 4.4],
+                genVars: (random) => {
+                    const swing = round(random.between(8, 16));
+                    return {
+                        '--app-anim-r0': `${-swing}deg`,
+                        '--app-anim-r1': `${swing}deg`,
+                    };
+                },
+                timing: 'ease-in-out',
+                direction: 'alternate',
+            },
+        },
+    });
+}
+
+/**
+ * Bursts of sparks, each opening from its centre and fading, then dark a
+ * while before the next: the sparks are painted once and the burst they
+ * sit in grows (`app-anim-burst`), sinking a little as it goes.
+ */
+function genFireworks(animation: CssAnimationType): CssAnimationNodeType[] {
+    const random = genRandom(`fireworks:${animation.density}`);
+    const accents = genAccents(animation);
+    const count = genLevelCount(animation.density, [3, 5, 8]);
+    const sparkCount = 12;
+    return Array.from({ length: count }, (_, index) => {
+        const color = accents[index % accents.length];
+        const tip = accents[(index + 1) % accents.length];
+        const size = round(random.between(22, 38));
+        const seconds = round(random.between(3.2, 5.4));
+        const delaySeconds = round(random.between(0, seconds));
+        const turn = round(random.between(0, 360 / sparkCount));
+        const sparks = Array.from(
+            { length: sparkCount },
+            (_, sparkIndex): CssAnimationNodeType => {
+                return {
+                    style: {
+                        ...ABSOLUTE,
+                        left: '50%',
+                        top: 'calc(50% - 0.3cqmin)',
+                        width: '50%',
+                        height: '0.6cqmin',
+                        'transform-origin': '0 50%',
+                        transform: `rotate(${round(turn + (360 * sparkIndex) / sparkCount)}deg)`,
+                        background:
+                            `linear-gradient(90deg, ${toRgba(color, 0)} 35%, ` +
+                            `${toRgba(color, 0.55)} 75%, ${toRgba(tip, 1)} 96%, ${toRgba(tip, 0)})`,
+                    },
+                };
+            },
+        );
+        const glow: CssAnimationNodeType = {
+            style: {
+                ...ABSOLUTE,
+                inset: '0',
+                background:
+                    `radial-gradient(circle, ${toRgba(tip, 0.45)}, ` +
+                    `${toRgba(color, 0.12)} 30%, ${toRgba(color, 0)} 60%)`,
+            },
+        };
+        const burst: CssAnimationNodeType = {
+            style: { ...ABSOLUTE, inset: '0' },
+            movingStyle: genMovingStyle(animation, {
+                names: ['app-anim-burst'],
+                seconds,
+                delaySeconds,
+                timing: 'ease-out',
+            }),
+            children: [glow, ...sparks],
+        };
+        return {
+            style: {
+                ...ABSOLUTE,
+                left: `calc(${round(random.between(8, 92))}% - ${round(size / 2)}cqmin)`,
+                top: `calc(${round(random.between(12, 58))}% - ${round(size / 2)}cqmin)`,
+                width: `${size}cqmin`,
+                height: `${size}cqmin`,
+                '--app-anim-y': `${round(random.between(3, 7))}cqmin`,
+            },
+            movingStyle: genMovingStyle(animation, {
+                names: ['app-anim-fall'],
+                seconds,
+                delaySeconds,
+            }),
+            children: [burst],
+        };
+    });
+}
+
+/**
+ * Candles in rows, the far ones smaller and higher: each a body in the
+ * first accent, a flame of the last over the middle one, and a halo that
+ * breathes; a few sparks rise from them.
+ */
+function genCandles(animation: CssAnimationType): CssAnimationNodeType[] {
+    const random = genRandom(`candles:${animation.density}`);
+    const accents = genAccents(animation);
+    const wax = accents[0];
+    const core = accents[accents.length - 1];
+    const flameColor = accents.length >= 3 ? accents[1] : core;
+    const count = genLevelCount(animation.density, [5, 8, 12]);
+    const candles = Array.from(
+        { length: count },
+        (_, index): CssAnimationNodeType => {
+            const depth = round(random.between(0, 1));
+            const size = round(2.2 + depth * 2.6);
+            const left = round(
+                ((index + 0.5) / count) * 100 + random.between(-4, 4),
+            );
+            const top = round(78 - (1 - depth) * 26 + random.between(-3, 3));
+            const bodyHeight = round(size * random.between(2.2, 3.8));
+            const flameSeconds = round(random.between(1.6, 2.6));
+            const haloSeconds = round(random.between(2.4, 4));
+            return {
+                style: {
+                    ...ABSOLUTE,
+                    left: `calc(${left}% - ${round(size / 2)}cqmin)`,
+                    top: `${top}%`,
+                    width: `${size}cqmin`,
+                    height: `${round(size * 1.9 + bodyHeight)}cqmin`,
+                },
+                children: [
+                    {
+                        style: {
+                            ...ABSOLUTE,
+                            left: `${-size * 2.5}cqmin`,
+                            top: `${-size * 2.4}cqmin`,
+                            width: `${size * 6}cqmin`,
+                            height: `${size * 6}cqmin`,
+                            background:
+                                `radial-gradient(circle, ${toRgba(flameColor, 0.42)}, ` +
+                                `${toRgba(flameColor, 0.12)} 40%, ${toRgba(flameColor, 0)} 70%)`,
+                        },
+                        movingStyle: genMovingStyle(animation, {
+                            names: ['app-anim-pulse'],
+                            seconds: haloSeconds,
+                            delaySeconds: round(random.between(0, haloSeconds)),
+                            timing: 'ease-in-out',
+                            direction: 'alternate',
+                        }),
+                    },
+                    {
+                        style: {
+                            ...ABSOLUTE,
+                            left: `${round(size * 0.22)}cqmin`,
+                            top: '0',
+                            width: `${round(size * 0.56)}cqmin`,
+                            height: `${round(size * 1.6)}cqmin`,
+                            'border-radius':
+                                '50% 50% 50% 50% / 62% 62% 38% 38%',
+                            'transform-origin': '50% 90%',
+                            background:
+                                `radial-gradient(ellipse at 50% 72%, ${toRgba(core, 1)} 0 22%, ` +
+                                `${toRgba(flameColor, 0.95)} 46%, ${toRgba(flameColor, 0)} 74%)`,
+                        },
+                        movingStyle: genMovingStyle(animation, {
+                            names: ['app-anim-flicker'],
+                            seconds: flameSeconds,
+                            delaySeconds: round(
+                                random.between(0, flameSeconds),
+                            ),
+                            timing: 'ease-in-out',
+                        }),
+                    },
+                    {
+                        style: {
+                            ...ABSOLUTE,
+                            left: '0',
+                            top: `${round(size * 1.75)}cqmin`,
+                            width: '100%',
+                            height: `${bodyHeight}cqmin`,
+                            'border-radius':
+                                '0.5cqmin 0.5cqmin 0.3cqmin 0.3cqmin',
+                            background:
+                                `linear-gradient(90deg, ${toRgba(wax, 0.6)}, ` +
+                                `${toRgba(wax, 0.92)} 45%, ${toRgba(wax, 0.7)})`,
+                        },
+                    },
+                ],
+            };
+        },
+    );
+    const sparks = genParticles(animation, {
+        seed: 'candle-sparks',
+        counts: [4, 8, 12],
+        sizeRange: [0.4, 0.9],
+        secondsRange: [9, 15],
+        swayCqmin: 8,
+        isFalling: false,
+        alphas: [0.8, 0.3],
+        sharpness: 0.45,
+    });
+    return [...sparks, ...candles];
 }
 
 function genClouds(animation: CssAnimationType): CssAnimationNodeType[] {
@@ -637,11 +1044,18 @@ function genGround(animation: CssAnimationType) {
             `${toRgba(glow, 0)} 60%), ${toRgba(ground)}`
         );
     }
-    if (animation.name === 'stars') {
+    if (animation.name === 'stars' || animation.name === 'fireworks') {
         const glow = genAccents(animation)[0];
         return (
             `radial-gradient(ellipse at 50% 115%, ${toRgba(glow, 0.3)}, ` +
             `${toRgba(glow, 0)} 60%), ${toRgba(ground)}`
+        );
+    }
+    if (animation.name === 'candles') {
+        const glow = genAccents(animation).at(-1) ?? ground;
+        return (
+            `radial-gradient(ellipse at 50% 100%, ${toRgba(glow, 0.22)}, ` +
+            `${toRgba(glow, 0)} 65%), ${toRgba(ground)}`
         );
     }
     return toRgba(ground);
@@ -665,6 +1079,12 @@ export function genCssAnimationTree(
         clouds: genClouds,
         cross: genCross,
         embers: genEmbers,
+        leaves: genLeaves,
+        fireworks: genFireworks,
+        petals: genPetals,
+        candles: genCandles,
+        confetti: genConfetti,
+        hearts: genHearts,
     };
     const style: CssStyleRecordType = {
         position: 'relative',
@@ -677,7 +1097,15 @@ export function genCssAnimationTree(
     if (animation.opacity < MAX_ANIMATION_OPACITY) {
         style.opacity = `${animation.opacity / 100}`;
     }
-    return { style, children: layerMap[animation.name](animation) };
+    // A person's own CSS is drawn from its code
+    // (`cssCodeAnimationElementHelpers`); here it is its ground alone.
+    return {
+        style,
+        children:
+            animation.name === 'custom'
+                ? []
+                : layerMap[animation.name](animation),
+    };
 }
 
 /** A node's own style for one of the two ways it is drawn. */

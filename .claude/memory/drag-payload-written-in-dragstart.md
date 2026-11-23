@@ -1,6 +1,6 @@
 ---
 name: drag-payload-written-in-dragstart
-description: "A drag's dataTransfer is writable only inside dragstart and readable only inside drop: an await before setData sends an empty drag, one before getData reads nothing"
+description: "A drag's dataTransfer is writable only inside dragstart and readable only inside drop: an await before setData sends an empty drag, one before getData reads nothing; how to test a drag and drive a file drop by hand"
 metadata:
   node_type: memory
   type: project
@@ -62,6 +62,23 @@ the Bible lookup's history row awaited `extractBibleTitle` before
   nothing else reaches a list's copy-in. Send `dragOver` twice with a pause:
   Chromium silently discards a drop the page has not yet accepted, and
   Resources answered too late for a back-to-back drop.
+- **Driving the drop pipeline by hand** (moved here from `CLAUDE.md`
+  2026-11-19, `AD-41`). Synthetic `DragEvent` drops can't exercise
+  `readDroppedFiles` (`src/others/droppingFileHelpers.ts`) — `webkitGetAsEntry()`
+  returns null for programmatic `DataTransfer`s. The drag-over mimetype gate IS
+  testable synthetically (dispatch `dragover` with a typed `File`; canvas opacity
+  0.5 = accepted). For the drop pipeline, get the live `CanvasController` by
+  walking React fibers up from a shadow-pierced `.slide-canvas-editor` until
+  `memoizedProps.value` has `.addNewItems` + `.canvas`, then call the controller
+  method directly. A real `video/webm` `File` can be synthesized in-page via
+  canvas `captureStream()` + `MediaRecorder`. Restore with the Undo toolbar
+  button only, never Discard changed. What DOES drive the whole real pipeline:
+  dispatch a plain bubbling `Event('drop')` and `Object.defineProperty` a
+  fabricated `dataTransfer` onto it — `{items: [{kind: 'file', webkitGetAsEntry:
+  () => ({isFile: true}), getAsFile: () => file}]}` — since React only forwards
+  the property. Stamp `appFilePath` on the `File` (the electron preload does this
+  for real drops) and handlers that resolve a real path, e.g. the presenting flow
+  archive import, run end to end against a real file on disk.
 - **In vitest**, `src/test-setup/sealedDataTransfer.ts`: dispatch, `seal()`,
   then let the handler's awaits run.
 - The chrome-devtools `drag` by uid is the browser's own drag, but reports

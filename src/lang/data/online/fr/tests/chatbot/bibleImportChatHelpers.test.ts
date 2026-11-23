@@ -45,8 +45,10 @@ describe('a step by step import, pressed through', () => {
             keys: ['NBS', 'FRNBS'],
             takenKeys: [],
         });
+        // Offered, but not suggested: nothing says an NBS file is the LSG
+        // (F-29 of robot run 20261120-2021).
         expect(step.actions?.map((one) => one.label)).toEqual([
-            'LSG (suggested)',
+            'LSG',
             'Cancel',
         ]);
         expect(step.actions?.[0].title).toBe('La Sainte Bible, Louis Segond');

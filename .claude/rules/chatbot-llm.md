@@ -19,7 +19,7 @@ What the chatbot sends a provider, what it withholds, what it costs and what
 happens when a provider fails. The window itself: `chatbot-window.md`.
 
 - **The chatbot's model sees the app's own `owa_*` tools and nothing of
-  chrome-devtools' at all** — 39 of the 73 the chatbot's door lists are withheld on 2026-11-11 (and eight offered only to the kinds of ask `MODEL_ON_ASK_TOOL_MAP` and `MODEL_ASK_SHARED_TOOL_MAP` name), declared ONCE in
+  chrome-devtools' at all** — 39 of the 73 the chatbot's door lists are withheld on 2026-11-11 (and eight offered only to the kinds of ask `MODEL_ON_ASK_TOOL_MAP` and `MODEL_ASK_SHARED_TOOL_MAP` name; ten since `owa_screen_edit`, 2026-11-13, and `owa_animation_edit`, 2026-11-19), declared ONCE in
   `tools/owa-devtools-mcp/modelTools.mjs` (no `node:fs`, so the renderer
   bundles the module the audit script reads). All of them stay registered on the
   server, so the developer's door is whole — what is withheld is withheld from
@@ -27,8 +27,8 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   firewall and for the same reason: `askLlmBot` filters the list, and
   `runMcpTool` REFUSES the call, because these tools are named in the app's own
   manual and a filtered list alone is a suggestion. Every refusal says what to
-  use instead. Fifteen groups today (`MODEL_HIDDEN_TOOL_GROUP_LIST`), the
-  first six: the three the window presses itself
+  use instead. Sixteen groups today (`MODEL_HIDDEN_TOOL_GROUP_LIST`; the
+  sixteenth, `owa_inspect`, 2026-11-19, `AD-40`), the first six: the three the window presses itself
   (`owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`) plus
   `take_screenshot`, which quietly undid that same decision; the acting tools
   aimed by a snapshot uid (`click`, `fill`, `fill_form`, `drag`, `hover`,
@@ -202,7 +202,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   markdown pdf_; it was the text alone, `text/plain`, for a few hours):
   `genReportPostBody` in `customLlmProtocol.ts` is the one place that
   writes it — `{version, reference, prompt, attachments: [{name, mimeType,
-  data}]}`, `attachments` always there. A file's kind is read off its NAME
+data}]}`, `attachments` always there. A file's kind is read off its NAME
   in main (`REPORT_FILE_TYPE_MAP`: pictures, PDF, text kinds; nothing that
   runs, no `.html` / `.svg`), never taken from the window, and
   `toValidReportFiles` refuses a name with a path in it, bytes that are not
@@ -235,7 +235,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   shared_. What takes it on the admin's side is the kit's
   `llm-report-inbox.mjs` (Node's own SQLite; the same three numbers and the
   same kinds, held together by a test), put online by `llm-tunnel.mjs
-  --reports --publish`.
+--reports --publish`.
 - **The Anthropic loop is prompt-cached** (2026-09-08, `askAnthropicCompatible` in
   `src/chatbot/llmBotHelpers.ts`). Measured first with no caching at all: the
   standing corpus, 12 questions, 44 rounds, **813 000 input tokens every one
@@ -475,8 +475,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   by. The keyless models count as `FREE_MODEL_SIZE` 8, the one constant that
   draws the line between the user's own server and the public service, set
   from `extra-work/local-llm/model-benchmarks.json`: the free models 7 of 7
-  in 8-20 s, a 9B on the church's card right in 20-30 s, a 4B right on 26 of
-  47. So an 8B-or-bigger server model is asked before Free (as good, and the
+  in 8-20 s, a 9B on the church's card right in 20-30 s, a 4B right on 26 of 47. So an 8B-or-bigger server model is asked before Free (as good, and the
   words stay in the building) and a smaller or unnamed one after it — there
   for the Sunday the internet is down. **A server's CLOUD model goes before
   all of them** (2026-10-17, `checkIsCloudModel`, the user's picture of their
@@ -578,7 +577,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   happened about one reply in six, at temperature 0 too and on the user's
   own server as well. So the OpenAI-shaped loop asks the SAME round once
   more when a reply came back empty with tokens generated while tools were
-  on offer (`isDroppedReplyRetried`, once an ask, never on the last round);
+  on offer (`isDroppedReplyRetried`, once an ask, never on the last round -- and once more after the ask has changed something, `isDroppedReplyRetriedAfterChange`, since BN-255, 2026-11-13: a lesson's long first write had spent the one retry, and the one more edit named under it was lost);
   a second empty reply is the model's, thrown as before. **A shared
   server's round that goes SILENT is sent again once** (2026-11-12,
   `EC-524`, `SHARED_STALL_MILLISECONDS`, `checkIsRoundTimeout`): the
@@ -1034,13 +1033,15 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   the English or the window's own words).
 
 - **And one for a Bible note** (2026-11-07, the user: _add `Open in
-  Chatbot` for bible-note … goal: chatbot can help modify and answer
+Chatbot` for bible-note … goal: chatbot can help modify and answer
   everything on bible-note_): `owa_note_edit` goes to a `note` ask -- a
   question while ONE note of a `.own` file is open in the tab
   (`ChatAttachmentType.noteId`) -- under `NOTE_SYSTEM_PROMPT`
   (`src/chatbot/noteChatHelpers.ts`), eight rounds (twelve for a lesson
   written into the empty note, BN-140: a children's Jonah ran out of eight
-  with nothing written), the note read fresh from
+  with nothing written; sixteen since BN-255, 2026-11-13,
+  `NOTE_LESSON_MAX_TOOL_ROUNDS`: the one more edit named after the write
+  had no round left), the note read fresh from
   its editing head into the user turn as numbered blocks in a light mark-up
   (`toNoteDocumentText`), on a custom server's lean list, and with
   `owa_help_search`, `owa_help_page` and `owa_find_verse` shared to it
@@ -1160,7 +1161,9 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   `assistant.json` (`textSizeAsks`, `noteStyleAsks`, `colorWords`;
   `languageEditAskHelpers.ts`, BN-16), and every other installed language's
   `typed.json` carries the size (larger, smaller) and bold for the whole
-  note (BN-31, 85 languages) -- what it does not say goes to the model.
+  note (BN-31, 85 languages; read on 2026-11-19, `om` and `to` have no size
+  words and `bo`, `ka`, `om`, `sn` and `so` no whole-note bold, never
+  having had them) -- what it does not say goes to the model.
   **A change made and THEN a failure is answered with the change**
   (2026-11-08, BN-36, `genChangedWithoutAnswer` in `askLlmBot`'s catch):
   on Free's Nemotron, three typed lines of twelve went into the note --
@@ -1374,7 +1377,8 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   translation's words in a note whose verses are the KJV's -- Philippians
   2:7 as "emptied himself" -- is given the KJV's words by the window and
   the model told so under the change (BN-137,
-  `lessonKjvWordingHelpers.ts`: 44 wordings of the verses quoted most,
+  `lessonKjvWordingHelpers.ts`: 44 wordings of the verses quoted most
+  at first, 68 in `KJV_WORDING_LIST` by 2026-11-19 (BN-177..BN-282),
   each held to the app's own KJV by a test, changed only where the
   quotation's other words are mostly that verse's), and a sermon's
   detail no verse gives -- the stone that "found the only gap in the
@@ -1549,8 +1553,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   tab does not hold, has the name dropped, so new words go into a session
   of their own and never over the panel's Default. **A 0 written beside a
   time is dropped** (2026-11-14, `EC-616`): Free called a 5 minute
-  countdown as `{minutes: 5, seconds: 0}`, the tool's schema (a time above
-  0) refused it and a round was spent, so `toForegroundEditArgs` drops a
+  countdown as `{minutes: 5, seconds: 0}`, the tool's schema (a time above 0) refused it and a round was spent, so `toForegroundEditArgs` drops a
   `minutes` or `seconds` of 0 when the call gives another time or an `at`;
   a 0 alone is left for the schema to refuse. **No button or field is
   named for the person** (`EC-617`): an off screen is offered _to turn
@@ -1622,7 +1625,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   standing on the finished answer gets the window's note
   (`checkClaimsUnmadeChange`). ~717 tokens a round to that ask alone; the
   ordinary list did not move (26 tools, ~8 471 of 8 480, `--stdio
-  --ratchet`). Measured on the first 14 of the skill's 27 asks
+--ratchet`). Measured on the first 14 of the skill's 27 asks
   (`scripts/screen-run.mjs`, Auto, mostly the shared gemma4:cloud): 0 of
   13 changes done before (2 already so), 13 of 13 after, 500.1k → 76.0k
   tokens, about 4.3 s an answer at the driver's poll. **A first line in
@@ -2443,7 +2446,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   keeps its own, one put into a named `section` goes in unheaded, and a
   new study made of an answer is as before. Seen in the window twice, in
   `EC-701`'s run: the study ending `## What does the word begotten mean
-  in this verse?` and the answer under it word for word.
+in this verse?` and the answer under it word for word.
   **And no option under its card says one of its buttons again**
   (2026-11-14, `EC-705`, `dropStudyCardEchoReplies` in
   `studyFileChatHelpers.ts`, applied in `ChatbotAppComp.tsx` where an
@@ -2467,7 +2470,7 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
 
 - **A song's words read off pictures** (2026-11-10, `EC-488`,
   `agent-songs.md`): `askLlmBot(…, {isGeneral, isTranslation,
-  isTranscription, images})`. `isTranscription` is read first by
+isTranscription, images})`. `isTranscription` is read first by
   `toSystemPrompt` and sends `TRANSCRIPTION_SYSTEM_PROMPT` (copy the sung
   lines exactly as printed, in the script printed, never translated; a blank
   line between stanzas; no titles, numbers or copyright; `=== picture N ===`
@@ -2481,3 +2484,137 @@ happens when a provider fails. The window itself: `chatbot-window.md`.
   never another company's key; nobody, a sentence and **Open AI settings**.
   The wait reads _Asking {who} to read the words off the pictures_, the cost
   counts in the tab's credit, and the card names who read them.
+
+- **And one for an animation in Customize** (2026-11-19, the user: _add
+  chatbot icon to open in chatbot and let chatbot control editor_, the goal
+  _chatbot can help handle css and glsl code editing_; the tool in
+  `agent-tools.md`). `owa_animation_edit` goes to an `animation` ask
+  (`src/chatbot/animationChatHelpers.ts`): the conversation the 🤖 on a
+  Customize row or in the **[en:tran:Shader Code]** or
+  **[en:tran:CSS Code]** title bar opens
+  (`takeChatbotAnimationRequest`, the editor's id checked against
+  `^(background|foreground):(\d{1,3}|none)$`), and any plain line under an
+  animation answer (`checkIsAnimationThread`, the answer marked
+  `isAnimationAnswer`, kept across a reload; not a `/` command). The
+  opening answer is the window's, no model: what can change, its code
+  among it, with three replies (`genAnimationOpeningAnswer`; the third
+  **[en:tran:Explain the shader code]**, or
+  **[en:tran:Explain the CSS code]** for any CSS animation: a built-in
+  effect's code is what its panel opens on, the effect written as CSS
+  (`agent-tools.md`), so the hand-off carries no `hasCode` and the chip
+  _Write it as CSS code_ went, 2026-11-19). Each question reads the
+  editors first (`toAnimationReadText`: six editors and 12 000 characters
+  of the target's code at most, quoted as `glsl` or `css`, whether it
+  compiles or passes its check -- a built-in effect's code as any other's,
+  `genCssEffectCode` or `genGlslAnimationCode` when its panel is shut) and
+  puts them and the last answer's undo ids under it (`toAnimationAsk`),
+  under `ANIMATION_SYSTEM_PROMPT` (WebGL 1 / GLSL ES 1.00 and the helpers
+  the runtime's header declares: `iResolution`, `iTime`, `uColors`,
+  `colorAt`, `palette`, `noise`, `fbm` …; and the CSS scaffold -- `.scene`,
+  `.layer`, `.dot` and their variables, `var(--color-N)` and
+  `var(--accent)`, keyframes on transform and opacity only, what is
+  refused), `ANIMATION_MAX_TOOL_ROUNDS`
+  8 -- code that does not pass is sent back with its error. Every
+  change of one answer is ONE **[en:tran:Undo this change]**
+  (`readEditedAnimation`, `mergeEditedAnimation`); the press undoes the
+  OLDEST id (`pickAnimationUndoId`), which takes the later ones with it,
+  through the tool's own `undo` (not `owa_undo`: the change is no file),
+  and says _The animation is back as it was before that change._
+  ~402 tokens a round to that ask alone; the ordinary list and its
+  ratchet did not move (~8 464 of 8 480, `--stdio --ratchet`). **With the
+  strip full the card lands in the tab in front, and that tab lets go of
+  what it held** (`toAnimationHandoffSession`): its file, its record and
+  its foreground sessions are put away at its last message, as their ×
+  does -- seen live, the card had landed under an Exodus study still
+  _Still asking about_, and a line typed under it would have gone to the
+  study (`resourceFileNames` turns the animation route off). Seen live on
+  the dev app: the 🤖 in the Shader Code title bar and on the Customize
+  row each opened the help window on _Living Water - Ripples_ with its
+  three replies, the second with the held study put away. Typed lines
+  under the card, seen live the same day (gemma4:cloud through Auto, no
+  cost): _Change the shader code so the ripples swirl slowly around the
+  center of the screen_ wrote a new `mainImage` (an `atan` swirl over
+  `fbm`, the runtime's `lightOver` / `rampColor` helpers) that compiled
+  and went on as `custom`, and its **[en:tran:Undo this change]** put
+  _ripples_ and the panel's own code back; on Animation Show's CSS card
+  (_Bokeh_, offering then to make it a shader), _Make the bokeh
+  slower and use warm sunset colors, a bit see-through_ set speed slow,
+  four warm colours and opacity 70, and its Undo put all three back.
+  **And a CSS animation's own code** (the same day, once CSS Code was
+  built): under the **Custom CSS** card from the CSS Code title bar,
+  _Rewrite the CSS code so slow golden snowflakes fall gently from the
+  top, using the animation's colours_ wrote CSS that passed and went on
+  (6.1k tokens, no cost) -- but styled `.dot` with no `left`, so every
+  flake fell in one column at the left edge, which the model cannot see.
+  The tool now says so in its answer (`findCssCodeHint`: a `.dot` styled
+  and no `var(--x)` anywhere), and the person's own next line, _they all
+  fall in one line at the left edge, spread them across the whole
+  screen_, got `left: calc(var(--x) * 1%)` / `top: calc(var(--y) * 1%)`
+  (6.8k tokens). That answer's **[en:tran:Undo this change]** put the
+  first version back. (The FIRST answer's Undo, pressed after a hot
+  reload of the registry module in dev, answered _no longer held_: the
+  list is memory, and a dev reload empties it.)
+
+- **And one for a PowerPoint or Word file** (2026-11-20, `EC-761`, the
+  user: _open pptx or docx in chatbot then interact to edit the
+  powerpoint_, _able to undo_; the tool in `agent-tools.md`).
+  `owa_office_edit` goes to an `office` ask (`src/chatbot/officeChatHelpers.ts`,
+  the slide document's shape): a question while a `.pptx` or `.docx` is
+  open in the tab -- two at most (`MAX_OFFICE_ASK_FILES`), found the way a
+  slide document is (`findOpenSlideAttachments` with
+  `checkIsOfficeEditFileName`, so a picture attached after it does not
+  close it), and a supported question asked as it stands still the
+  guide's. Before each question the window reads each file as it is now
+  through `owa_office_edit read` with its whole path and puts it under the
+  question as plain lines with their ids (`toOfficeDocumentText`,
+  `toOfficeAsk`; a translation's or a placement's hint as for slides),
+  under `OFFICE_SYSTEM_PROMPT`, `OFFICE_MAX_TOOL_ROUNDS` 8. The model
+  names a file; the WINDOW turns the name into the attached file's path
+  (`resolveOfficeEditFile`, in `runMcpToolCall`), a path the model writes
+  is refused, and outside an office ask the tool is refused and never
+  called. Every edit of one answer is ONE **[en:tran:Undo this change]**
+  (the MCP layer's answer carries `name`, `isChanged` and `undoId`, read
+  by `readEditedLyric`, merged by `mergeEditedDocument`), and
+  **[en:tran:Show it in the list]** beside it. Two files changed by one
+  answer are BOTH put back by that press (`EC-787`: the undo of each
+  document is kept, `undoNames`, one _… is back as it was_ sentence
+  each); and a question that came with an office file names the tab's
+  earlier ones as not to be changed unless named (`toOfficeAsk`'s
+  `otherNames`) -- _add a box Serve after Pray_ with Mission Process
+  attached had changed Mission Steps too, from earlier in the chat.
+  **[en:tran:Make a song from it]** on its card stays the window's own
+  song drafting (`EC-590`), reached before the office route. ~2 491 tokens a round to that ask alone (~497 since `EC-765`, `owa_find_verse` riding it too; ~733 with the look, background and `removeBox` of `EC-768`; ~960 with the boxes, sizes, show, slide size and pictures of `EC-770`; ~1 381 with the layouts, tables, charts and animations of `EC-771`; ~1 993 with the box looks, shapes, links, numbers, footers and gradients of `EC-773`; a slide by its words, a pattern, the theme and SmartArt's words of `EC-774`/`EC-775` ~2 158; a picture, video or sound at a link they typed, `EC-777`, ~2 172; the masters, `toShapes` and a box's shape of `EC-778`/`EC-779`, ~2 282; `arrange` and its `at`, `EC-780`, ~2 319; `smartArtLayout`, `EC-784`, ~2 364; its Venn and Hierarchy and `everywhere`, `EC-785`/`EC-786`, ~2 371; a SmartArt's box added, taken out or moved and a deck's own layout, `EC-787`, the rest);
+  the ordinary list and its ratchet did not move (~8 464 of 8 480,
+  `--stdio --ratchet`). A picture attached beside the file is named to
+  the model by its NAME and its path put in by the window
+  (`resolveOfficePictures`, `ToolWatchType.officePictures`; a path the
+  model writes is `Tool refused:`; `chatbot-files-report.md`).
+  Held by `officeChatHelpers.test.ts`, the loop's own test in
+  `llmBotHelpers.ut100.test.ts` (prompt, a path refused, two edits named
+  by name both by the path and undone by one press, the tool refused
+  outside) and `ChatbotAppComp.office.test.tsx` (the card with no model,
+  a typed change asked with the file read first and `extra.office`, the
+  song button never an edit). **Seen live in the window** (`EC-762`,
+  the same day, a scratch dev instance, fixture files; the AI caution's
+  **Open** pressed by automation under the user's authorization for that
+  check alone): _Change Lord to God everywhere_ answered in 4 s on Auto,
+  a slide copied and its title changed in one answer through `copies`, a
+  Word word replaced and a paragraph added, each put back to the same MD5
+  by one **Undo this change**, and **Make a song from it** leaving the
+  file alone. Asked in French since (`EC-772`, `EC-773`): the card and
+  every change in French, each undone byte for byte. **A quotation of the
+  file's own words is written as the file has it** (`AnswerKeepType.fileText`,
+  the read office or slide document's text, `holdFileQuotes` in
+  `answerLanguageHelpers.ts`): the deck's _his only Son_ had come back with
+  the dictionary's French for the label "Son" as its last word. Speaker
+  notes asked there too. Not yet: a file open in PowerPoint on Windows
+  (`EC-766`). Recipe W-65. **The model was
+  measured too** (`EC-765`, the same day): the window's prompt,
+  ask and tool list (`pickAskToolList(tools, 'office')`, which since then
+  carries `owa_find_verse` too: the prompt said a verse is read before it
+  is written and nothing could read one) on gemma4:cloud at temperature
+  0, 18 asks against the scratch instance, every change undone byte for
+  byte: 12 of 16 → **18 of 18** right, one call each but a verse (read,
+  then written) and a copy retitled (copied, then changed by the ids its
+  answer gave). The driver was a session script, not kept; its rows are
+  in `test-results/chatbot-quality/office-model-20261120-{a,b,c}.jsonl`.

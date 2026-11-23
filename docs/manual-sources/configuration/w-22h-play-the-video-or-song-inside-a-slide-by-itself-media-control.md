@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-22h — Play the video or song inside a slide by itself (Media Control)
 
@@ -33,6 +33,7 @@ where you say, for as long as you say.
      slide went to. Tick one and it works **only** where the slide also landed. It is
      controlling the media the slide put on a screen, so a screen the slide never reached
      has nothing on it to control.
+
 2. The new line appears as a CC element under the slide, reading what it will do —
    `Slide: Media Control (Play +3s 10s→70s 70% 2x)` — with a small **cyan gear** at its
    right. Click the gear (or right-click → **[en:tran:Media Control Settings]**) to change it later;
@@ -44,6 +45,7 @@ where you say, for as long as you say.
    presenter machine, exactly as it does when you press play by hand, so the **[en:tran:Volume]** is
    the level you hear at the desk; the projected screen stays silent and simply keeps in
    step, at the same speed.
+
 3. **Moving off the slide stops it.** When you put another slide on that screen — or clear
    the screen — everything the Media Control started is stopped and anything still waiting
    (a "stop at 1:10", a delayed start) is dropped, so nothing carries over to whatever you

@@ -104,3 +104,123 @@ describe('genLangData song plugin without fonts', () => {
         expect(genLangData(genFolder()).initOpenLyricPlugins).toBeUndefined();
     });
 });
+
+describe('genLangData song labels (F-10)', () => {
+    // A language's preview and Config card plugins, as a package's
+    // `openLyricPlugin.ts` names them: what they contribute is all that is read.
+    class InventedPreviewPlugin {
+        contributes = {
+            language: { labels: { Key: 'Keyword', Attachments: 'Things' } },
+            settings: [{ render: () => undefined }],
+        };
+        install() {
+            throw new Error('never installed: it would hold every preview');
+        }
+    }
+    class InventedMarkdownPlugin {
+        contributes = { language: { labels: { Title: 'Heading' } } };
+    }
+
+    function genSurface(ids: string[] = []) {
+        const plugins = new Map<string, any>(ids.map((id) => [id, {}]));
+        return {
+            plugins,
+            addPlugin: vi.fn((id: string, plugin: any) => {
+                plugins.set(id, plugin);
+            }),
+            hasPlugin: (id: string) => plugins.has(id),
+        };
+    }
+
+    test('the preview gets the labels alone, under the locale, for auto', () => {
+        const langData = genLangData(
+            genFolder({
+                openLyricPluginModule: {
+                    LyricPreviewPlugin: InventedPreviewPlugin,
+                    LyricMarkdownPlugin: InventedMarkdownPlugin,
+                },
+            }),
+        );
+        const openLyric = genSurface();
+        const openLyricMarkdownManager = genSurface();
+        langData.initOpenLyricPlugins!({
+            openLyric: openLyric as any,
+            openLyricMarkdownManager: openLyricMarkdownManager as any,
+            genOpenLyricFontFaces: vi.fn(),
+        });
+        expect(openLyric.plugins.get('xx-XX')).toEqual({
+            id: 'xx-XX',
+            apiVersion: 1,
+            surfaces: ['lyric'],
+            contributes: {
+                language: { labels: { Key: 'Keyword', Attachments: 'Things' } },
+            },
+        });
+        expect(openLyricMarkdownManager.plugins.get('xx-XX')).toEqual({
+            id: 'xx-XX',
+            apiVersion: 1,
+            surfaces: ['markdown'],
+            contributes: { language: { labels: { Title: 'Heading' } } },
+        });
+        // No `labelLocale` was set: the song's own Locales decide.
+        expect('labelLocale' in openLyric).toBe(false);
+    });
+
+    test('a surface that has the locale already keeps it', () => {
+        const langData = genLangData(
+            genFolder({
+                openLyricPluginModule: {
+                    LyricPreviewPlugin: InventedPreviewPlugin,
+                },
+            }),
+        );
+        const openLyric = genSurface(['xx-XX']);
+        langData.initOpenLyricPlugins!({
+            openLyric: openLyric as any,
+            genOpenLyricFontFaces: vi.fn(),
+        });
+        expect(openLyric.addPlugin).not.toHaveBeenCalled();
+    });
+
+    test('a plugin with no labels, or none named, adds nothing', () => {
+        class NoLabelsPlugin {
+            contributes = { language: {} };
+        }
+        const langData = genLangData(
+            genFolder({
+                openLyricPluginModule: { LyricPreviewPlugin: NoLabelsPlugin },
+            }),
+        );
+        const openLyric = genSurface();
+        const openLyricMarkdownManager = genSurface();
+        langData.initOpenLyricPlugins!({
+            openLyric: openLyric as any,
+            openLyricMarkdownManager: openLyricMarkdownManager as any,
+            genOpenLyricFontFaces: vi.fn(),
+        });
+        expect(openLyric.addPlugin).not.toHaveBeenCalled();
+        expect(openLyricMarkdownManager.addPlugin).not.toHaveBeenCalled();
+    });
+
+    test('the labels are read once, however many previews are made', () => {
+        let made = 0;
+        class CountedPlugin {
+            contributes = { language: { labels: { Key: 'Keyword' } } };
+            constructor() {
+                made += 1;
+            }
+        }
+        const langData = genLangData(
+            genFolder({
+                openLyricPluginModule: { LyricPreviewPlugin: CountedPlugin },
+            }),
+        );
+        for (let i = 0; i < 3; i += 1) {
+            langData.initOpenLyricPlugins!({
+                openLyric: genSurface() as any,
+                genOpenLyricFontFaces: vi.fn(),
+            });
+        }
+        expect(made).toBe(1);
+    });
+});

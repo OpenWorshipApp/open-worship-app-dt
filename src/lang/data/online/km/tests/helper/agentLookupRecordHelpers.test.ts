@@ -71,8 +71,7 @@ describe('what owa_lookup_record says of a person', () => {
             type: 'person',
             gender: 'male',
             age: '930 years',
-            summary:
-                'ជាមនុស្សប្រុសដំបូងគេក្នុងកណ្ឌ Genesis និងជាស្វាមីរបស់ អេវ៉ា',
+            summary: 'ជាមនុស្សប្រុសដំបូងគេក្នុងកណ្ឌ Genesis និងជាស្វាមីរបស់ អេវ៉ា',
             description: 'អ័ដាម ត្រូវបានបង្ហាញក្នុងកណ្ឌ Genesis។',
             places: [
                 {
@@ -123,8 +122,7 @@ describe('what owa_lookup_record says of a place', () => {
         kjvName: 'Garden of Eden',
         oldName: null,
         title: 'ជាសួនច្បារដើមដំបូង',
-        description:
-            'សួនច្បារអេដែន គឺជាសួនច្បារក្នុងកណ្ឌ [Genesis](book-key://GEN)',
+        description: 'សួនច្បារអេដែន គឺជាសួនច្បារក្នុងកណ្ឌ [Genesis](book-key://GEN)',
         type: 'place',
         relatedLocations: [EDEN_ID, 'Nowhere'],
         modernIdentification: null,

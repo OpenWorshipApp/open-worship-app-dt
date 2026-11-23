@@ -468,6 +468,33 @@ function toHex(rgb: number[]) {
         .toUpperCase()}` as AppColorType;
 }
 
+/**
+ * `colors` as one colour laid over `base` across `cover` of it (0 to 1):
+ * what a picture that is mostly `base`, with `colors` here and there, reads
+ * as from across the room.
+ */
+export function toCoveredColor(
+    base: AppColorType,
+    colors: readonly AppColorType[],
+    cover: number,
+): AppColorType {
+    const baseRgb = toRgb(base);
+    if (colors.length === 0) {
+        return toHex(baseRgb);
+    }
+    const sums = [0, 0, 0];
+    for (const color of colors) {
+        toRgb(color).forEach((value, index) => {
+            sums[index] += value;
+        });
+    }
+    return toHex(
+        baseRgb.map((value, index) => {
+            return value * (1 - cover) + (sums[index] / colors.length) * cover;
+        }),
+    );
+}
+
 /** How much of a tile a pattern's ink covers, near enough. */
 const PATTERN_COVER_MAP: Record<FillPatternNameType, number> = {
     dots: 0.1,

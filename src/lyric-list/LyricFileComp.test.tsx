@@ -22,6 +22,7 @@ const h = vi.hoisted(() => ({
     checkIsOnScreen: vi.fn(),
     openEditor: vi.fn(),
     exportAppDocument: vi.fn(),
+    exportOpenLyric: vi.fn(),
     dragStart: vi.fn(),
     handleError: vi.fn(),
     openLongText: vi.fn(),
@@ -127,6 +128,9 @@ vi.mock('../helper/dragHelpers', () => ({
 }));
 vi.mock('../app-document-list/appDocumentArchiveHelpers', () => ({
     exportAppDocument: h.exportAppDocument,
+}));
+vi.mock('./openLyricFileHelpers', () => ({
+    exportLyricToOpenLyricFile: h.exportOpenLyric,
 }));
 vi.mock('../helper/errorHelpers', () => ({ handleError: h.handleError }));
 vi.mock('../app-document-list/appDocumentPreviewFloatingHelpers', () => ({
@@ -356,6 +360,7 @@ describe('context menu', () => {
             'Open in Chatbot',
             'Edit',
             'Export',
+            'Export to Open Lyric File',
         ]);
     });
 
@@ -382,6 +387,21 @@ describe('context menu', () => {
         expect(h.openEditor).toHaveBeenCalledWith(h.lyrics.get(FILE_PATH));
         getMenuItem('Export').onSelect();
         expect(h.exportAppDocument).toHaveBeenCalledWith(FILE_PATH);
+    });
+
+    test('Export to Open Lyric File writes this song out, fetched on demand', async () => {
+        await renderRow();
+        await getMenuItem('Export to Open Lyric File').onSelect();
+        expect(h.exportOpenLyric).toHaveBeenCalledWith(h.lyrics.get(FILE_PATH));
+        expect(h.handleError).not.toHaveBeenCalled();
+    });
+
+    test('an Open Lyric export that fails is handled, not thrown', async () => {
+        const error = new Error('disk full');
+        h.exportOpenLyric.mockRejectedValueOnce(error);
+        await renderRow();
+        await getMenuItem('Export to Open Lyric File').onSelect();
+        expect(h.handleError).toHaveBeenCalledWith(error);
     });
 
     test('Long Text Show opens the song there, fetched on demand', async () => {

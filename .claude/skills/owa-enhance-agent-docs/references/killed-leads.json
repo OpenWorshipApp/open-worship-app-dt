@@ -581,5 +581,17 @@
         "doc": ".claude/rules/language-packages.md",
         "name": "__owa_lang_entry__.js",
         "why": "virtual: the plugin build's in-memory entry (LANG_ENTRY_FILE_NAME in extra-work/build-lang-plugins.mjs), never a file on disk; the rule says so"
+    },
+    {
+        "check": "paths",
+        "doc": "src/helper/anthropicBibleCrossHelpers.md",
+        "name": "anthropicBibleCrossHelpers.ts",
+        "why": "history: the helper whose sample output this file is, removed on 2025-10-01 (c60968f29); the doc's first line says so and names today's helper"
+    },
+    {
+        "check": "symbols",
+        "doc": "src/helper/anthropicBibleCrossHelpers.md",
+        "name": "focusThemes",
+        "why": "history: the removed helper's thematic variant (c60968f29, 2025-10-01), the file's second sample; the doc's first line says so"
     }
 ]

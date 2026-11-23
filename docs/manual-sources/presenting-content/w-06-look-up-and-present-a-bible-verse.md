@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [NAV-06, NAV-07, RD-02, PM-12, PR-02, KB-01, KB-02, KB-06, KB-09, SC-03, SP-33, SP-34, CB-61, CB-131, CM-101, CM-102, CM-103]
 screenshots: 7
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-06 — Look up and present a Bible verse
 
@@ -49,7 +49,8 @@ workflowsVersion: "2026-11-15"
    press **Ctrl+→** (or **Alt+→**): the screen moves on by as many verses as it is showing —
    John 3:16 becomes 3:17, John 3:16-18 becomes 3:19-21 — into the next chapter when the
    chapter ends, and **Ctrl+←** goes back. It only works while the main window is on the
-   Presenter: from the Bible Reader, press **[en:tran:Go Back to Presenter]** first. Nothing
+   Presenter: from the Bible Reader, press **[en:tran:Go Back to Presenter]** first, and once
+   more in the question it asks (W-02). Nothing
    on the mini screen card steps the verse; from the Presenter itself, present the next
    passage the same way you presented this one.
    **Another version on the screen.** If no passage is on the screen yet, press **Ctrl+B**,
@@ -110,7 +111,7 @@ workflowsVersion: "2026-11-15"
     slide; the file is named after them all. Each Bible verse is a
     part named after its number (`Verse 22`, `Verse 23` …), and in it one line
     per version, the verse number first — `22: A cheerful heart is good
-    medicine …` — in that version's own digits. Edit it like any other song
+medicine …` — in that version's own digits. Edit it like any other song
     (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
     its own. 📸
 12. To put the passage up as a short notice over whatever is on the screen,
@@ -135,5 +136,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `NAV-06` · `NAV-07` · `RD-02` · `PM-12` · `PR-02` · `KB-01` · `KB-02` · `KB-06` · `KB-09` · `SC-03` · `SP-33` · `SP-34` · `CB-61` · `CB-131` · `CM-101` · `CM-102` · `CM-103`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

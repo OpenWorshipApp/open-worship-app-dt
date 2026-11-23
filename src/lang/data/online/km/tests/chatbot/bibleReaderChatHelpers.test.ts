@@ -26,27 +26,20 @@ describe('a typed Bible-Reader question', () => {
         expect(readBibleReaderAsk(asked)).toEqual(expected);
     });
 
-    test.each([
-        ['តើឯកសារធនធាន MAT.18.pdf និយាយអំពីអ្វី?', { intent: 'resources' }],
-    ])('a named Resources file: %s', (asked, expected) => {
-        expect(readBibleReaderAsk(asked)).toEqual(expected);
-    });
+    test.each([['តើឯកសារធនធាន MAT.18.pdf និយាយអំពីអ្វី?', { intent: 'resources' }]])(
+        'a named Resources file: %s',
+        (asked, expected) => {
+            expect(readBibleReaderAsk(asked)).toEqual(expected);
+        },
+    );
 
     test.each([
         // A chapter written WITHOUT the chapter word -- how a reader
         // actually says it. The window confirms the book name, so the
         // matcher stands in for the reader's own Bible here.
         ['សូមសង្ខេប ម៉ាថាយ ១៨', 'ម៉ាថាយ', { intent: 'reference' }],
-        [
-            'តើឈ្មោះអ្នកណាខ្លះនៅក្នុង លោកុប្បត្តិ ៤',
-            'លោកុប្បត្តិ',
-            { intent: 'names' },
-        ],
-        [
-            'សូមបង្ហាញឯកសារធនធានសម្រាប់ យ៉ូហាន ៣',
-            'យ៉ូហាន',
-            { intent: 'resources' },
-        ],
+        ['តើឈ្មោះអ្នកណាខ្លះនៅក្នុង លោកុប្បត្តិ ៤', 'លោកុប្បត្តិ', { intent: 'names' }],
+        ['សូមបង្ហាញឯកសារធនធានសម្រាប់ យ៉ូហាន ៣', 'យ៉ូហាន', { intent: 'resources' }],
     ])('a bare book and number: %s', (asked, bookText, expected) => {
         const checkIsBook = (value: string) => value === bookText;
         expect(readBibleReaderAsk(asked, checkIsBook)).toEqual(expected);

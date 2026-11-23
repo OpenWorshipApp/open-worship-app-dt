@@ -4,11 +4,11 @@ import {
     toNextIndex,
 } from '../slide-auto-play/slideAutoPlayRuleHelpers';
 import {
-    CSS_ANIMATION_SAMPLE_LIST,
-    GLSL_ANIMATION_SAMPLE_LIST,
+    findAnimationSample,
+    listAnimationCategorySrcs,
 } from './animationBuiltInHelpers';
 import { ANIMATION_PRESET_SETTING_NAME } from './animationPresetHelpers';
-import { compareAnimationSrc } from './animationValueHelpers';
+import { compareAnimationSrc, parseAnimation } from './animationValueHelpers';
 import {
     FILL_BUILT_IN_GRADIENT_MAP,
     FILL_BUILT_IN_PATTERN_MAP,
@@ -29,8 +29,11 @@ import { compareFillSrc } from './fillValueHelpers';
  * show walks the row the held one is in, in the order drawn: a gradient up,
  * the gradients go by; a saved one up, the saved ones. The saved row is
  * looked at first, so a session's own list is its playlist even when it
- * holds a built-in. A colour from the palette, or a fill changed in
- * Customize, is in no row -- the palette is a picker, not a row of
+ * holds a built-in; for an animation the PINNED ones are next (2026-11-19),
+ * then the row of the held sample's category, side and kind -- Christmas's
+ * Light shaders, say, as the Category and the switch show them. A colour
+ * from the palette, or a fill (an animation) changed in Customize, is in no
+ * row -- the palette is a picker, not a row of
  * backgrounds to show in turn -- and it stays where it is, as a picture from
  * another folder does; saved, it walks with the saved ones.
  *
@@ -40,20 +43,32 @@ export type PaintShowKindType = 'fill' | 'animation';
 
 const TONE_LIST: ColorModeType[] = ['dark', 'light'];
 
-const CSS_SRC_LIST = CSS_ANIMATION_SAMPLE_LIST.map((sample) => {
-    return sample.src;
-});
-const GLSL_SRC_LIST = GLSL_ANIMATION_SAMPLE_LIST.map((sample) => {
-    return sample.src;
-});
-
 function toCompare(kind: PaintShowKindType) {
     return kind === 'fill' ? compareFillSrc : compareAnimationSrc;
 }
 
-function toBuiltInRowList(kind: PaintShowKindType): string[][] {
+/**
+ * The built-in rows `heldSrc` could be in. An animation's is its category's
+ * row of its side and kind, built for this one tick and let go: no list of
+ * every sample is ever kept.
+ */
+function toBuiltInRowList(
+    kind: PaintShowKindType,
+    heldSrc: string,
+): string[][] {
     if (kind === 'animation') {
-        return [CSS_SRC_LIST, GLSL_SRC_LIST];
+        const animation = parseAnimation(heldSrc);
+        const sample =
+            animation === null ? null : findAnimationSample(animation);
+        return animation === null || sample === null
+            ? []
+            : [
+                  listAnimationCategorySrcs(
+                      sample.category,
+                      animation.engine,
+                      sample.tone,
+                  ),
+              ];
     }
     return TONE_LIST.flatMap((tone) => {
         return [
@@ -79,11 +94,15 @@ export function toPaintPresetSettingName(
     return `${base}${sessionSuffix}`;
 }
 
-/** The row `heldSrc` is in, in the order drawn; empty when it is in none. */
+/**
+ * The row `heldSrc` is in, in the order drawn; empty when it is in none.
+ * `pinnedSrcList` is an animation's pinned ones, walked after the saved.
+ */
 export function findPaintShowRow(
     kind: PaintShowKindType,
     heldSrc: string,
     savedSrcList: string[],
+    pinnedSrcList: string[] = [],
 ) {
     const compare = toCompare(kind);
     const checkHolds = (srcList: string[]) => {
@@ -94,8 +113,11 @@ export function findPaintShowRow(
     if (checkHolds(savedSrcList)) {
         return savedSrcList;
     }
+    if (checkHolds(pinnedSrcList)) {
+        return pinnedSrcList;
+    }
     return (
-        toBuiltInRowList(kind).find((srcList) => {
+        toBuiltInRowList(kind, heldSrc).find((srcList) => {
             return checkHolds(srcList);
         }) ?? []
     );
@@ -112,8 +134,9 @@ export function findNextPaintShowSrc(
     heldSrc: string,
     savedSrcList: string[],
     rule: { isNext: boolean; step: number; repeatKind: RepeatKindType },
+    pinnedSrcList: string[] = [],
 ) {
-    const row = findPaintShowRow(kind, heldSrc, savedSrcList);
+    const row = findPaintShowRow(kind, heldSrc, savedSrcList, pinnedSrcList);
     const compare = toCompare(kind);
     const index = row.findIndex((src) => {
         return compare(src, heldSrc);

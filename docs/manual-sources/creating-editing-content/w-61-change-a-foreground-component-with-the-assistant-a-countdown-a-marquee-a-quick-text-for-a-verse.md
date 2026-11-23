@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PM-174, CB-172, CB-183]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-61 — Change a foreground component with the assistant (a countdown, a marquee, a quick text for a verse)
 
@@ -85,5 +85,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-174` · `CB-172` · `CB-183`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

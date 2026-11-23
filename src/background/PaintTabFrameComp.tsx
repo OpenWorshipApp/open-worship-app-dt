@@ -16,10 +16,12 @@ import {
     type PaintShowKindType,
     toPaintPresetSettingName,
 } from './paintShowOrderHelpers';
+import { toAnimationCategorySettingName } from './animationPresetHelpers';
 
 /**
  * Every setting one session of the Fills or Animations tab keeps, for its
- * removal: its saved list and its slide show. Never the Default session's
+ * removal: its saved list, the category its Animations show, and its slide
+ * show. Never the Default session's
  * saved list -- it is the one Fill Show and Animation Show offer too, and a
  * Background session removed must not empty the Foreground's.
  */
@@ -28,10 +30,21 @@ export function genPaintSessionSettingNames(
     sessionId: string,
 ) {
     const suffix = toSessionSuffix(sessionId);
+    const presetSettingName = toPaintPresetSettingName(kind, suffix);
     return [
         ...(sessionId === DEFAULT_SESSION_ID
             ? []
-            : [toPaintPresetSettingName(kind, suffix)]),
+            : [
+                  presetSettingName,
+                  ...(kind === 'animation'
+                      ? [
+                            toAnimationCategorySettingName(
+                                presetSettingName,
+                                'background',
+                            ),
+                        ]
+                      : []),
+              ]),
         ...genSlideAutoPlaySettingNames(
             toBackgroundPaintAutoPlayPrefix(kind, suffix),
         ),

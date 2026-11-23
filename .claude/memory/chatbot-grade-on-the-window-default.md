@@ -18,15 +18,21 @@ EVERY question, with a live Claude key one option along.
 **Why:** the degraded path is where the worst answer lives, and a corpus
 graded on the best key stops measuring it. Since 2026-09-09 `askLlmBot`
 stands in with the next provider whose key is set on a provider fault
-(401/403/429/5xx, never a 400 or a no-network error), the tab moves to it and
+(401/403/429/5xx and, since 2026-09-12, an empty account's 402 or 400 --
+`readLlmIssue`'s kind; never an ordinary 400 or a no-network error), the tab
+moves to it and
 the note says so; Free is never on either side of the stand-in. The
 OpenAI-shaped loop posts with `maxRetries: 0`.
 
 **How to apply:** the first ask of an `/owa-enhance-chatbot` run goes to the
-window as found (`ask-corpus.mjs` with no `--provider`); read the head row
+window as found (the scratch `ask-corpus.mjs` with no `--provider`; the kept
+`corpus-run.mjs` always picks its `--server`, so give it the head row's own
+Assistant); read the head row
 and the note on the first answer before choosing a provider to grade on. To
 reach the offline bot with live keys present, cut the chatbot window's
-`fetch` for every host off the machine (`--offline` in the driver) — a
+`fetch` for every host off the machine (the scratch driver's `--offline`;
+the kept `corpus-run.mjs --offline` aims `--server` at a custom server that is
+not running instead) — a
 no-status error is the one failure the stand-in deliberately does not take.
 An offline-bot fix must be re-asked through the window: the manual bolds
 its control names (`**Documents** list`), and a test written in plain words

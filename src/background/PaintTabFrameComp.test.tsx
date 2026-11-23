@@ -44,9 +44,10 @@ import PaintTabFrameComp, {
 } from './PaintTabFrameComp';
 
 describe('what a Fills or Animations session keeps', () => {
-    it('is its saved list and its show, all forgotten with it', () => {
+    it('is its saved list, its category and its show, all forgotten with it', () => {
         expect(genPaintSessionSettingNames('animation', 's1')).toEqual([
             'background-animation-presets-s1',
+            'background-animation-presets-s1-category',
             'background-animation-s1-slide-auto-play-playing',
             'background-animation-s1-slide-auto-play-timer-seconds',
         ]);

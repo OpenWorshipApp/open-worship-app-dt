@@ -392,7 +392,11 @@ describe('presenting-flow archives', () => {
 
     test('rejects invalid archive state and handles password cancellation', async () => {
         state.readable = null;
+        mocks.safeDelete.mockClear();
         await expect(importPresentingFlowArchive('/x')).resolves.toBeNull();
+        // A cancelled password still takes its work folder away (F-28: two
+        // were found left in the temp folder, from prompts never answered).
+        expect(mocks.safeDelete).toHaveBeenCalledOnce();
         state.readable = { filePath: '/plain' };
         state.manifest = null;
         await expect(importPresentingFlowArchive('/x')).rejects.toThrow(
@@ -424,9 +428,13 @@ describe('presenting-flow archives', () => {
             target: { bookKey: 'JHN', chapter: 1, verseStart: 1, verseEnd: 2 },
         };
         state.defaultBible = null;
+        mocks.importFiles.mockClear();
         await expect(importPresentingFlowArchive('/x')).rejects.toThrow(
             'Unable to open the Default',
         );
+        // Refused before the bundle's files were copied (F-26): a retry leaves
+        // no orphan document behind.
+        expect(mocks.importFiles).not.toHaveBeenCalled();
         state.defaultBible = {
             items: [],
             filePath: '/default',

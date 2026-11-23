@@ -62,7 +62,13 @@
                 "polokalama 'o e lotu",
                 "polokalama o e lotu"
             ],
-            "slide": ["silaiti", "silaite", "ngaahi silaiti"],
+            "slide": [
+                "silaiti",
+                "silaite",
+                "ngaahi silaiti",
+                "ngaahi slide",
+                "slide"
+            ],
             "save": [
                 "tauhi",
                 "tauhi'i",

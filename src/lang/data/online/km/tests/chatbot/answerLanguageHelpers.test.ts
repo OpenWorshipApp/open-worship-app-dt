@@ -74,9 +74,7 @@ describe('toAnswerShownInLanguage', () => {
         expect(show('ឃ្លានេះមាននៅក្នុង ទំនុកដំកើង ២៣:១ (Psalm 23:1)។')).toBe(
             'ឃ្លានេះមាននៅក្នុង ទំនុកដំកើង ២៣:១។',
         );
-        expect(show('សូមប្រើកណ្ដុរ (mouse) ចុចឱ្យជាប់')).toBe(
-            'សូមប្រើកណ្ដុរ ចុចឱ្យជាប់',
-        );
+        expect(show('សូមប្រើកណ្ដុរ (mouse) ចុចឱ្យជាប់')).toBe('សូមប្រើកណ្ដុរ ចុចឱ្យជាប់');
         expect(show('ពេលនេះអេក្រង់ធំត្រូវបានបិទ (Off)។')).toBe(
             'ពេលនេះអេក្រង់ធំត្រូវបានបិទ។',
         );
@@ -87,14 +85,10 @@ describe('toAnswerShownInLanguage', () => {
 
     test('a bracket a reader needs stays', () => {
         // A key, as the key cap prints it.
-        expect(show('រក្សាទុកដោយចុច (Ctrl+S)។')).toBe(
-            'រក្សាទុកដោយចុច (Ctrl+S)។',
-        );
+        expect(show('រក្សាទុកដោយចុច (Ctrl+S)។')).toBe('រក្សាទុកដោយចុច (Ctrl+S)។');
         expect(show('បិទ/បើកអេក្រង់ (F5)')).toBe('បិទ/បើកអេក្រង់ (F5)');
         // Its own letters inside.
-        expect(show('ចុចប៊ូតុង (ឧទាហរណ៍៖ KJV)')).toBe(
-            'ចុចប៊ូតុង (ឧទាហរណ៍៖ KJV)',
-        );
+        expect(show('ចុចប៊ូតុង (ឧទាហរណ៍៖ KJV)')).toBe('ចុចប៊ូតុង (ឧទាហរណ៍៖ KJV)');
         // A command and an address.
         expect(show('សូមវាយ (/btw សំណួរ)')).toBe('សូមវាយ (/btw សំណួរ)');
         expect(show('មើល (https://openworship.app)')).toBe(
@@ -178,8 +172,7 @@ describe('toAnswerShownInLanguage', () => {
             'តើលោក Noah ជានរណានៅក្នុងព្រះគម្ពីរ?',
             'ខ្ញុំចុច Esc ហើយតែវាមិនបិទទេ',
         ];
-        const answer =
-            'ដើម្បីធ្វើឱ្យអក្សរធំជាងនេះ សូមអានអំពី Noah ឬស្វែងរកនៅ Google។';
+        const answer = 'ដើម្បីធ្វើឱ្យអក្សរធំជាងនេះ សូមអានអំពី Noah ឬស្វែងរកនៅ Google។';
         expect(
             toRepliesShownInLanguage(
                 replies,
@@ -236,9 +229,7 @@ describe('toAnswerShownInLanguage', () => {
             'លើខ ១១ អ្នកបានគូស ពាក្យថា',
         );
         expect(show('ខ្ញុំប្រាប់អ្នកleថា')).toBe('ខ្ញុំប្រាប់អ្នកថា');
-        expect(show('ដើម្បីរក្សាhonneur របស់គាត់')).toBe(
-            'ដើម្បីរក្សា របស់គាត់',
-        );
+        expect(show('ដើម្បីរក្សាhonneur របស់គាត់')).toBe('ដើម្បីរក្សា របស់គាត់');
         // Before a gloss, which goes too.
         expect(show('ការគូស podkre (Highlights):')).toBe('ការគូស:');
         // A file name, a key, a name and a word at the edge of the sentence
@@ -266,13 +257,9 @@ describe('toAnswerShownInLanguage', () => {
             'សូមចូលទៅកាន់ **Tools** › Start',
         );
         // Glued to the word before it, it gets a space.
-        expect(show('ចុចជំនួយ → ផ្លូវកាត់ក្ដារចុច')).toBe(
-            'ចុច Help → ផ្លូវកាត់ក្ដារចុច',
-        );
+        expect(show('ចុចជំនួយ → ផ្លូវកាត់ក្ដារចុច')).toBe('ចុច Help → ផ្លូវកាត់ក្ដារចុច');
         // Not in the middle of a path, and not without one.
-        expect(show('ការកំណត់ → ជំនួយ → ផ្សេងទៀត')).toBe(
-            'ការកំណត់ → ជំនួយ → ផ្សេងទៀត',
-        );
+        expect(show('ការកំណត់ → ជំនួយ → ផ្សេងទៀត')).toBe('ការកំណត់ → ជំនួយ → ផ្សេងទៀត');
         expect(show('សុំជំនួយពីគេ។')).toBe('សុំជំនួយពីគេ។');
         // After the language's word for a menu (pass 6: _ម៉ឺនុយ ជំនួយ_ for
         // the Help menu under six tips answers), whole words only.
@@ -301,9 +288,7 @@ describe('toAnswerShownInLanguage', () => {
             'ចុច ជំនួយ រួចជ្រើសរើស បើកជំនួយតាមអ៊ីនធឺណិត។',
         );
         // Not across a sentence.
-        expect(showTips('សុំជំនួយ។ គន្លឹះប្រចាំថ្ងៃ')).toBe(
-            'សុំជំនួយ។ គន្លឹះប្រចាំថ្ងៃ',
-        );
+        expect(showTips('សុំជំនួយ។ គន្លឹះប្រចាំថ្ងៃ')).toBe('សុំជំនួយ។ គន្លឹះប្រចាំថ្ងៃ');
         // A button called Help elsewhere is still the button.
         expect(show('ចុច Help នៅខាងលើ')).toBe('ចុច ជំនួយ នៅខាងលើ');
     });
@@ -351,12 +336,8 @@ describe('toAnswerShownInLanguage', () => {
             });
         };
         expect(
-            showReport(
-                'ចុចប៊ូតុង រាយការណ៍បញ្ហា (ឬម៉ឺនុយ Help រួចជ្រើសរើស រាយការណ៍បញ្ហា)។',
-            ),
-        ).toBe(
-            'ចុចប៊ូតុង រាយការណ៍បញ្ហា (ឬម៉ឺនុយ Help រួចជ្រើសរើស Report a Problem)។',
-        );
+            showReport('ចុចប៊ូតុង រាយការណ៍បញ្ហា (ឬម៉ឺនុយ Help រួចជ្រើសរើស រាយការណ៍បញ្ហា)។'),
+        ).toBe('ចុចប៊ូតុង រាយការណ៍បញ្ហា (ឬម៉ឺនុយ Help រួចជ្រើសរើស Report a Problem)។');
         expect(showReport('ម៉ឺនុយ Help មានវា។ ចុចប៊ូតុង រាយការណ៍បញ្ហា')).toBe(
             'ម៉ឺនុយ Help មានវា។ ចុចប៊ូតុង រាយការណ៍បញ្ហា',
         );

@@ -102,7 +102,8 @@ panels are two items — a volunteer meets them separately.
 (`>{tran('Reset Search Data')}<`) — in `sourceDirs`, `sourceFiles` and every
 file a harvest saw rendered (`data-react-comp-fp`, dev only). `message` and
 `description` are sentences and are not read. A label that is not passed
-through `tran()` (`PathSelectorComp`'s `'Show path editor'`) is invisible to
+through `tran()` (`PathSelectorComp`'s `'Show path editor'` was one until
+2026-11-15) is invisible to
 the source sweep and to every translation — the live harvest is what finds
 it, and it is also an app bug to file.
 

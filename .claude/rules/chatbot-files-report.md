@@ -191,6 +191,34 @@ window as a whole — tabs, pickers, its language, the caution — is in
   did the same. Not seen live: the Resources card's button (unit-tested),
   and a Documents row's **[en:tran:Open in Chatbot]**, which asks the AI
   caution, the person's to answer.
+  **A PowerPoint made into a slide document needs no model either**
+  (2026-11-20, `EC-763`; the user: _as a user I want to ask chatbot to help
+  convert the pptx file to app-document file_). `readPptxSlidesAsk`
+  (`pptxSlideAskHelpers.ts`, pure) takes _convert .pptx to .ows_, _turn
+  the PowerPoint into a slide document_, _make slides from the Sunday
+  PowerPoint_ -- a PowerPoint word and the app's own slides, either way
+  round, the app's name taken out first -- and never a song, lyric or hymn
+  (the drafter above), a slide document put into a PowerPoint, or a
+  PowerPoint's slides talked about. It is read just before the song
+  drafter's ask, with nothing attached, and the document-create reader
+  (`EC-514`) steps aside for it, or _make a slide document from my
+  PowerPoint_ would make an empty one. `planPptxSlidesAsk`
+  (`pptxSlideAnswerHelpers.ts`) reads the Documents list once: its `.pptx`
+  files (never a `.ppt`) as **Make a slide document from "…"** buttons
+  (`PPTX_SLIDES_TOOL_NAME`, six, how many more said; the label translated
+  where drawn), or the one the ask named converted at once. A conversion
+  is `owa_media_file` `convert` (`agent-tools.md`), its progress line
+  _Making a slide document of “…”_, the tab busy and not stoppable; the
+  answer says what was made, how alike its slides measured, that a build
+  became a slide a click, the missing fonts and what is left out, under
+  **[en:tran:Undo this change]** (`withCreatedUndoAction`), and the new
+  document then waits in the box with its own card, as a slide document
+  asked for in words does. **Seen live in the window** (2026-11-20, a
+  scratch dev copy, the caution's Open pressed with the user's leave):
+  the six buttons with no model, a press making 5 slides 99.4% alike
+  under Undo, the Undo trashing it, a named deck converted at once; a
+  cut font list ends on its `…` with no stop after it
+  (`dropStopAfterEllipsis`). Another language in the window is `EC-764`.
 - **A PDF is read as its pages, and a file can be asked about question
   after question** (2026-10-17, the user, with a picture of the assistant
   answering _I cannot open PDF files_ under `1CH.0.pdf`: _convert to images
@@ -1017,8 +1045,9 @@ window as a whole — tabs, pickers, its language, the caution — is in
   (2026-11-07). A `.ows` attachment is a line a slide of its text boxes
   (`toSlideFileText`), never the JSON whose pictures are base64. A
   slide document row's **[en:tran:Open in Chatbot]** in the Documents list
-  (a PowerPoint, Word or PDF row's opens it under the Resources card
-  instead: its words to ask about or make a song of) and the Slide Editor
+  (a PDF row's opens it under the Resources card instead: its words to ask
+  about or make a song of; a PowerPoint or Word row's under its own card,
+  below) and the Slide Editor
   footer's robot
   (`SlideEditorChatbotButtonComp`) hand it over through
   `openDocumentInChatbot` (`lyricChatbotMenuHelpers.ts`, the song's names
@@ -1041,6 +1070,44 @@ window as a whole — tabs, pickers, its language, the caution — is in
   menu. And _list me more options_, _what can you do?_, _help_ (English,
   a few words and nothing more, `checkIsDocumentOptionsAsk`) show the
   document's card again with no model.
+
+- **A PowerPoint or Word file is changed in its tab** (2026-11-20,
+  `EC-761`). A `.pptx` / `.docx` row's **[en:tran:Open in Chatbot]** in
+  the Documents list (`VaryAppDocumentFileComp`, the same
+  `openDocumentInChatbot`) -- or the file attached by the paperclip or a
+  drop -- opens under a card written with no model
+  (`genOfficeOpeningAnswer`, the hand-off's `checkIsOfficeEditFileName`
+  branch after the slide document's): what can be changed -- words fixed,
+  translated or replaced everywhere, lines added or taken out, and in a
+  PowerPoint its speaker notes and slides copied, moved or taken out --
+  that every change can be undone, and the song card's two translate
+  buttons, **[en:tran:Check the spelling]**,
+  **[en:tran:Make a song from it]** (still the window's own drafting,
+  `EC-590`) and **[en:tran:What is this file about?]**. The attachment
+  itself stays its words (`readDocumentWords`; a PowerPoint whose every
+  word is in a SmartArt reads NONE from the converter, which draws a
+  SmartArt as a picture, so the file is read by the app's own office
+  reader instead, `readOwnOfficeWords` → `toOfficeReadBlocks`, imported
+  only then -- `EC-787`: _I cannot read Team Chart.pptx_); a question while it is
+  open is an `office` ask (`chatbot-llm.md`), the file read again with its
+  line ids before every question. After a change:
+  **[en:tran:Undo this change]**, which puts the whole file back byte for
+  byte, and **[en:tran:Show it in the list]**. (The Documents list shows
+  `.pptx` and `.docx` only; an older `.ppt` / `.doc` attached from
+  elsewhere is refused by the tool with the way to save it again.)
+  **A picture attached beside it goes INTO the deck** (2026-11-20,
+  `EC-770`): `findOfficeAskPictures` lists the pictures from disk in the
+  box, then in the user's messages newest first (since the file was last
+  closed; never a pasted picture, one of the screen or a pointed-at
+  control -- they have no file), ten at most; the ask names them under its
+  file (`toOfficeAsk`'s `pictureNames`) and rides them on
+  `AskExtraType.office.pictures`. The model names one by its NAME (or its
+  name without the extension, any case) and the loop puts its path in
+  (`resolveOfficePictures` in `runMcpToolCall`); a path the model writes
+  is refused naming the attached ones, and with none attached it is told
+  to ask for one. A picture's path never counts as the open office file
+  (`checkIsOfficeOpenedLast`). Seen live: a JPEG and a PNG dropped into
+  the box beside the hymn deck, four asks put them in as asked.
 
 - **A presenting flow is attached as its lines and changed in its tab**
   (2026-11-07). A `.owpf` attachment is a line a line, title and kind

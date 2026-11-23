@@ -108,6 +108,12 @@ vi.mock('../presenter-foreground/ForegroundPropRowComp', () => ({
     ),
 }));
 
+// Its own test covers it (`BibleTextScreenScaleComp.test.tsx`); here only
+// where it sits, without the screen managers behind it.
+vi.mock('./BibleTextScreenScaleComp', () => ({
+    default: () => <section data-screen-scale="" />,
+}));
+
 import { toBibleTextStyleView } from '../_screen/bibleTextStyleHelpers';
 import BibleTextControlsComp from './BibleTextControlsComp';
 
@@ -182,6 +188,26 @@ describe('BibleTextControlsComp', () => {
         expect(applyStyle.mock.lastCall?.[0]).toHaveProperty('textShadow');
         await click('Text Color picker');
         expect(container.querySelector('[aria-label="Text Color"]')).toBeNull();
+    });
+
+    test('Screen Scale sits under the size rows, before the highlight', async () => {
+        await renderPanel();
+        const screenScale = container.querySelector('[data-screen-scale]')!;
+        expect(screenScale).not.toBeNull();
+        const letterSpacing = container.querySelector(
+            '[data-row="Letter Spacing"]',
+        )!;
+        const highlight = container.querySelector(
+            'section[aria-label="Highlight Color"]',
+        )!;
+        expect(
+            letterSpacing.compareDocumentPosition(screenScale) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+        expect(
+            screenScale.compareDocumentPosition(highlight) &
+                Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
     });
 
     test('the highlight is a section of its own, a row per backdrop', async () => {

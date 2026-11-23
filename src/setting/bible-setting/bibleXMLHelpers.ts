@@ -124,7 +124,7 @@ function downloadXMLToFile(
                 onProgress: (progress) => {
                     messageCallback(`${(progress * 100).toFixed(2)}% done`);
                 },
-                onDone: (error, filePath) => {
+                onDone: (error) => {
                     if (error) {
                         showSimpleToast(
                             tran('Download Error'),
@@ -133,10 +133,11 @@ function downloadXMLToFile(
                         reject(error);
                         return;
                     }
-                    showSimpleToast(
-                        tran('Download Completed'),
-                        `${tran('File saved at:')} ${filePath}`,
-                    );
+                    // No "File saved at" here: the file is a temporary one
+                    // the import reads and deletes a moment later, and the
+                    // toast told the operator a file was kept where none
+                    // remains (F-23 of robot run 20261120-2021, as PL-75
+                    // already held the run sheet's own URL import to).
                     resolve();
                 },
             },
@@ -158,7 +159,10 @@ export async function readFromUrl(
         messageCallback('Downloading file...');
         const response = await initHttpRequest(url);
         const userWritablePath = appLocalStorage.defaultStorageDirPath;
-        let fileFullName = appProvider.pathUtils.basename(url.pathname);
+        // A link with no file name (`https://host/`) had been saved as
+        // `temp-xml/.xml`.
+        let fileFullName =
+            appProvider.pathUtils.basename(url.pathname) || 'download';
         if (fileFullName.toLocaleLowerCase().endsWith('.xml') === false) {
             fileFullName += '.xml';
         }

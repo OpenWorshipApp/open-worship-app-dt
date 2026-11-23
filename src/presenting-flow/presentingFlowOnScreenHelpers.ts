@@ -300,8 +300,9 @@ export async function checkIsPresentingFlowItemOnScreen(
 // before they start, and re-asking per file would re-read four settings for
 // every presenting flow in the list.
 async function checkIsPresentingFlowOnScreen(filePath: string) {
-    const presentingFlowItems =
-        await PresentingFlow.getInstance(filePath).getItems();
+    const presentingFlowItems = await PresentingFlow.getInstance(
+        filePath,
+    ).getItems({ isQuiet: true });
     if (presentingFlowItems === null) {
         return false;
     }

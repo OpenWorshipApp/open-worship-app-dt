@@ -8,10 +8,13 @@ import { readBibleListAsk } from '../../../../chatbot/bibleListAskHelpers';
 import { readDocumentCreateAsk } from '../../../../chatbot/documentCreateHelpers';
 import {
     CREATE_ASK_WORD_GROUP_LIST,
+    type CreateAskWordsType,
     readCreateAskInOwnLanguage,
+    readTypedCreateAsk,
     type TypedCreateAskType,
 } from '../../../../chatbot/typedCreateAskHelpers';
 import { readWebBackgroundAsk } from '../../../../chatbot/webBackgroundAskHelpers';
+import { checkIsSpacedLocale } from '../../../../helper/bibleVerseFindHelpers';
 import {
     checkHasLangPackage,
     listLangPackageCodes,
@@ -390,6 +393,78 @@ describe("no language reads its own corpus's questions as asks", () => {
                 return row.text;
             });
         expect(hitList).toEqual([]);
+    });
+});
+
+// EC-783 (2026-11-21): _my presentation is open in PowerPoint, but
+// PowerPoint is closed. What do I do?_ -- the French "do" is "make", and a
+// slide document was made from words two sentences apart. In every language
+// the word to make and the thing made must share a sentence: each language's
+// own words, said apart, ask for nothing; said together, they still ask.
+describe('the word to make and the thing made share a sentence', () => {
+    // A list entry as a person writes it: no stem mark, no parts.
+    const toPlainWord = (list: string[] | undefined) => {
+        return (list ?? []).find((entry) => {
+            return !/[*…]/u.test(entry) && entry.trim() !== '';
+        });
+    };
+    const caseList = listCreateAskEntryList().flatMap(({ code, words }) => {
+        const wordMap = (words ?? {}) as CreateAskWordsType;
+        const make = toPlainWord(wordMap.make);
+        const slide = toPlainWord(wordMap.slide);
+        if (make === undefined || slide === undefined) {
+            return [];
+        }
+        return [{ code, wordMap, make, slide }];
+    });
+
+    test('apart, in every script, they ask for nothing; together they ask', () => {
+        const problemList: string[] = [];
+        const heldList: string[] = [];
+        for (const { code, wordMap, make, slide } of caseList) {
+            const isSpaced = checkIsSpacedLocale(code);
+            const together = isSpaced ? `${make} ${slide}` : `${make}${slide}`;
+            const read = (line: string) => {
+                return readTypedCreateAsk(line, wordMap, isSpaced);
+            };
+            if (read(together)?.job !== 'document') {
+                // A pair the language reads as nothing even together (a
+                // make word that is also a how-to word) says nothing here.
+                continue;
+            }
+            heldList.push(code);
+            for (const end of ['. ', '? ', '! ', '។', '。', '؟ ', '। ']) {
+                const apart = `${slide}${end}${make}?`;
+                const ask = read(apart);
+                if (ask !== null) {
+                    problemList.push(
+                        `${code}: ${apart} -> ${describeAsk(ask)}`,
+                    );
+                }
+            }
+        }
+        expect(problemList).toEqual([]);
+        // 61 languages write a plain word for each (2026-11-21); the others
+        // say theirs as stems or in parts, held by their samples above.
+        expect(heldList.length).toBeGreaterThanOrEqual(55);
+    });
+
+    test('a stop that ends no sentence, and a sentence after the ask, are kept', () => {
+        const words: CreateAskWordsType = {
+            make: ['make'],
+            slide: ['slide document'],
+            bibleList: ['bible list'],
+            webPage: ['web page'],
+            named: ['called'],
+        };
+        const read = (line: string) => {
+            return readTypedCreateAsk(line, words, true);
+        };
+        expect(read('Make a slide document. Thanks!')?.job).toBe('document');
+        expect(read('Make a bible list with John 3.16')?.job).toBe('bibleList');
+        expect(read('Slide document? Make it later.')).toBeNull();
+        expect(read('My web page is gone. Make tea!')).toBeNull();
+        expect(read('Thanks. Make a web page.')?.job).toBe('webBackground');
     });
 });
 

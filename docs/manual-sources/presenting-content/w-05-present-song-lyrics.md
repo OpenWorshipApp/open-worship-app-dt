@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PL-07, PL-08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, PM-178, PM-179, PM-180, XW-08]
 screenshots: 9
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-05 — Present song lyrics
 
@@ -33,14 +33,14 @@ workflowsVersion: "2026-11-15"
 5. Links the app cannot show — a PDF, or a line that is not a web address — still get
    their named slide, just an empty one.
 6. **One song can be previewed at several stages at once.** **[en:tran:Add Stage]** in
-    the Stage Previewer header opens the same menu the mini screen's **St:** badge does:
-    **[en:tran:Stage] 0** to **[en:tran:Stage] 5** — a stage already on screen is listed but greyed out — and
-    **[en:tran:Increment] · [en:tran:Stage] N** at the foot, which adds one past the highest stage you have.
-    Increment is how you get past Stage 5, and it is what matches a screen whose **St:**
-    number you have already pushed up there. Each stage arrives as its own chip and its
-    own pane, in its own colour; the **×** on a chip (**[en:tran:Hide Stage] N**) hides
-    that stage's pane again — its look under **⚙** is kept for when you add it back — and
-    the padlocked **[en:tran:Stage] 0** stays. 📸
+   the Stage Previewer header opens the same menu the mini screen's **St:** badge does:
+   **[en:tran:Stage] 0** to **[en:tran:Stage] 5** — a stage already on screen is listed but greyed out — and
+   **[en:tran:Increment] · [en:tran:Stage] N** at the foot, which adds one past the highest stage you have.
+   Increment is how you get past Stage 5, and it is what matches a screen whose **St:**
+   number you have already pushed up there. Each stage arrives as its own chip and its
+   own pane, in its own colour; the **×** on a chip (**[en:tran:Hide Stage] N**) hides
+   that stage's pane again — its look under **⚙** is kept for when you add it back — and
+   the padlocked **[en:tran:Stage] 0** stays. 📸
 7. To change how a stage's slides **look**, click the **⚙** on that stage's chip
    (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **[en:tran:Stage Style]** window
    opens — drag it anywhere, it remembers where you left it. It sets the
@@ -144,5 +144,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-07` · `PL-08` · `PM-11` · `PM-115` · `PM-116` · `PM-117` · `PM-127` · `PM-148` · `PM-169` · `PM-178` · `PM-179` · `PM-180` · `XW-08`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

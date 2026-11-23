@@ -1,7 +1,9 @@
 /**
  * CSS plumbing shared by every "print through a separate window" flow (slides,
- * lyric preview). Kept out of the printing modules themselves so a caller does
- * not have to pull a whole renderer in just to copy a few font rules.
+ * the graph export; a song prints through open-lyric's own page,
+ * `lyricPrintHelpers.ts`). Kept out of the printing modules themselves so a
+ * caller does not have to pull a whole renderer in just to copy a few font
+ * rules.
  */
 
 export function resolveCssUrls(cssText: string, baseUrl?: string) {

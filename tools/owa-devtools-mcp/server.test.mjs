@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   guardToolCalls: vi.fn(),
   order: [],
   puppeteer: { connect: null },
+  pageIdSchema: { pageId: null },
 }));
 
 vi.mock('chrome-devtools-mcp', () => ({
@@ -48,6 +49,9 @@ vi.mock('chrome-devtools-mcp/build/src/config/ConfigParser.js', () => ({
 vi.mock('chrome-devtools-mcp/build/src/third_party/index.js', () => ({
   puppeteer: mocks.puppeteer,
 }));
+vi.mock('chrome-devtools-mcp/build/src/tools/ToolDefinition.js', () => ({
+  pageIdSchema: mocks.pageIdSchema,
+}));
 vi.mock('chrome-devtools-mcp/build/src/version.js', () => ({
   VERSION: '9.9.9',
 }));
@@ -65,7 +69,24 @@ vi.mock('./owaTools.mjs', () => ({
 vi.mock('./notify.mjs', () => ({ watchToolCalls: mocks.watchToolCalls }));
 vi.mock('./firewall.mjs', () => ({ guardToolCalls: mocks.guardToolCalls }));
 
-import { createOwaMcpServer } from './server.mjs';
+import { createOwaMcpServer, makePageIdOptional } from './server.mjs';
+
+/** A stand-in for chrome-devtools' zod field: required until `optional()`. */
+function genPageIdField({ isOptional = false, description = 'required' }) {
+  return {
+    isOptional,
+    description,
+    safeParse(value) {
+      return { success: value !== undefined || isOptional };
+    },
+    optional() {
+      return genPageIdField({ isOptional: true, description });
+    },
+    describe(text) {
+      return genPageIdField({ isOptional, description: text });
+    },
+  };
+}
 
 let innerServer;
 
@@ -101,6 +122,23 @@ beforeEach(() => {
   });
   mocks.requireAppChoice.mockReset();
   mocks.abandonPendingAttempt.mockReset();
+  mocks.pageIdSchema.pageId = genPageIdField({});
+});
+
+describe('makePageIdOptional', () => {
+  it('lets a page tool leave pageId out, and keeps the field', () => {
+    const schema = { pageId: genPageIdField({}) };
+    makePageIdOptional(schema);
+    expect(schema.pageId.isOptional).toBe(true);
+    expect(schema.pageId.description).toMatch(/select_page/);
+  });
+
+  it('leaves a field that is optional already as it is', () => {
+    const field = genPageIdField({ isOptional: true });
+    const schema = { pageId: field };
+    makePageIdOptional(schema);
+    expect(schema.pageId).toBe(field);
+  });
 });
 
 describe('createOwaMcpServer', () => {
@@ -126,6 +164,16 @@ describe('createOwaMcpServer', () => {
     expect(mocks.browserManagerArgs).toEqual([
       [config, { logFile: 'mcp.log' }],
     ]);
+  });
+
+  it('makes pageId optional before chrome-devtools builds its page tools', async () => {
+    let isOptionalWhenBuilt = null;
+    mocks.mcpServerFrom.mockImplementation(async () => {
+      isOptionalWhenBuilt = mocks.pageIdSchema.pageId.isOptional;
+      return { server: innerServer };
+    });
+    await createOwaMcpServer({ door: 'app' });
+    expect(isOptionalWhenBuilt).toBe(true);
   });
 
   it('finds the app afresh every time chrome-devtools asks where it is', async () => {

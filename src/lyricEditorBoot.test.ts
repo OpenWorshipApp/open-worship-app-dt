@@ -97,7 +97,8 @@ const state = vi.hoisted(() => {
         isDarkMode: false,
         themeListeners: [] as [string[], () => void][],
         applyTheme: vi.fn(),
-        installPrint: vi.fn(),
+        applyLabelLocale: vi.fn(),
+        printPage: vi.fn(),
         langDataList: [] as any[],
         initLangCss: vi.fn(),
         fileParam: 'Amazing Grace.own' as string | null,
@@ -149,10 +150,11 @@ vi.mock('./lang/langHelpers.ts', () => ({
     initLangCss: state.initLangCss,
 }));
 vi.mock('./lyric-list/lyricHelpers.ts', () => ({
+    applyOpenLyricLabelLocale: state.applyLabelLocale,
     applyOpenLyricTheme: state.applyTheme,
 }));
 vi.mock('./lyric-list/lyricPrintHelpers.ts', () => ({
-    installOpenLyricPrintPopupHandler: state.installPrint,
+    printOpenLyricPage: state.printPage,
 }));
 vi.mock('./others/themeHelpers.tsx', () => ({
     THEME_CHANGE_EVENT: 'app:theme-changed',
@@ -210,7 +212,9 @@ describe('lyric editor dashboard', () => {
         const { dashboard, editor, openLyric, openLyricMarkdownManager } =
             getDashboardInstance() as any;
 
-        expect(state.installPrint).toHaveBeenCalledOnce();
+        // Both panels print through open-lyric's own Print, into the app's.
+        expect(openLyric.onPrint).toBe(state.printPage);
+        expect(openLyricMarkdownManager.onPrint).toBe(state.printPage);
         expect(state.installed).toEqual([
             'dashboard-style',
             'editor-style',
@@ -248,6 +252,12 @@ describe('lyric editor dashboard', () => {
             }),
         );
         expect(state.initLangCss).toHaveBeenCalledTimes(2);
+        // The song's labels in the app's language, on the preview and on
+        // the Config card, once the languages have plugged in.
+        expect(state.applyLabelLocale.mock.calls).toEqual([
+            [openLyric],
+            [openLyricMarkdownManager],
+        ]);
     });
 
     test('draws light guide lines, then re-themes on a theme change', () => {

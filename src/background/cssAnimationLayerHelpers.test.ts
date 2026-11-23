@@ -40,6 +40,7 @@ function genAnimation(
     return {
         engine: 'css',
         name: 'aurora',
+        code: null,
         colors: COLORS,
         speed: 'normal',
         density: 'normal',

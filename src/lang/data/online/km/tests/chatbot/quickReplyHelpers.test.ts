@@ -84,9 +84,10 @@ describe('options in the language of the answer', () => {
     });
 
     test('a Khmer yes-or-no question gets the Khmer buttons', () => {
-        expect(
-            genQuickReplies('ចុចប៊ូតុងនោះ។ តើអ្នកចង់ឲ្យខ្ញុំបង្ហាញទេ?'),
-        ).toEqual(['បាទ/ចាស', 'ទេ អរគុណ']);
+        expect(genQuickReplies('ចុចប៊ូតុងនោះ។ តើអ្នកចង់ឲ្យខ្ញុំបង្ហាញទេ?')).toEqual([
+            'បាទ/ចាស',
+            'ទេ អរគុណ',
+        ]);
     });
 
     test('a Khmer yes beside the walkthrough buttons is an echo', async () => {

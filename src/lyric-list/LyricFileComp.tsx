@@ -79,6 +79,21 @@ function genContextMenuItems(
                 exportAppDocument(lyric.filePath);
             },
         },
+        {
+            childBefore: genContextMenuItemIcon('filetype-md'),
+            menuElement: tran('Export to Open Lyric File'),
+            // Its code is fetched when this is pressed, like Long Text
+            // Show's: a list of files has no use for it until then.
+            onSelect: async () => {
+                try {
+                    const { exportLyricToOpenLyricFile } =
+                        await import('./openLyricFileHelpers');
+                    await exportLyricToOpenLyricFile(lyric);
+                } catch (error) {
+                    handleError(error);
+                }
+            },
+        },
     ];
 }
 

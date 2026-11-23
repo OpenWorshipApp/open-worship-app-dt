@@ -313,6 +313,8 @@ vi.mock('../_screen/managers/screenManagerBaseHelpers', () => ({
 }));
 vi.mock('./lyricHelpers', () => ({
     initOpenLyric: (...args: any[]) => mocks.initOpenLyric(...args),
+    // Save in PPTX in Documents: its own tests are lyricHelpers'.
+    addSavePptxInDocumentsAction: () => undefined,
     applyOpenLyricTheme: (...args: any[]) => {
         return mocks.applyOpenLyricTheme(...args);
     },
@@ -1847,6 +1849,7 @@ describe('LyricFileComp', () => {
             'Open in Chatbot',
             'Edit',
             'Export',
+            'Export to Open Lyric File',
         ]);
     });
 

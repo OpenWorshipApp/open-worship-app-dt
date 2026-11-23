@@ -52,12 +52,21 @@ const modelsMap = new Map<string, editor.ITextModel>();
 function getModel(value: string, uri: Uri, language: string) {
     const key = uri.toString();
     const cachedModel = modelsMap.get(key);
-    if (cachedModel !== undefined) {
+    // A model its owner disposed (the Shader Code panel's, on close) is no
+    // model: handed to an editor it throws "Model is disposed!" and takes
+    // the window down. A new one goes in its place.
+    if (cachedModel?.isDisposed()) {
+        modelsMap.delete(key);
+    } else if (cachedModel !== undefined) {
         modelsMap.delete(key);
         modelsMap.set(key, cachedModel);
         return cachedModel;
     }
-    const model = editor.createModel(value, language, uri);
+    // Monaco's own registry holds every live model: this cache can forget
+    // one (a module reloaded in development) while Monaco keeps it, and
+    // creating it again throws "Cannot add model because it already exists".
+    const model =
+        editor.getModel(uri) ?? editor.createModel(value, language, uri);
     modelsMap.set(key, model);
     for (const [oldKey, oldModel] of modelsMap) {
         if (modelsMap.size <= MAX_CACHED_MODELS) {
@@ -272,33 +281,41 @@ export function useInitMonacoEditor({
         editorStore.editorInstance.focus();
     }, [isWrapText, editorStore]);
 
-    const resizeAttemptTimeout = useMemo(() => {
-        return genTimeoutAttempt(500);
-    }, []);
+    // Made once: a callback ref that is a new function each render is
+    // detached and attached again on every render (React 19 runs the old
+    // one's cleanup), which takes the editor out of the page and back --
+    // and the keyboard focus with it, mid-typing.
+    const { setNewValue, onContainerInit } = useMemo(() => {
+        const resizeAttemptTimeout = genTimeoutAttempt(500);
+        return {
+            setNewValue: (newContent: string) => {
+                editorStore.replaceValue(newContent);
+                editorStore.systemContent = newContent;
+            },
+            onContainerInit: (container: HTMLElement | null) => {
+                if (container === null) {
+                    return () => {};
+                }
+                const resizeObserver = new ResizeObserver(() => {
+                    resizeAttemptTimeout(() => {
+                        editorStore.editorInstance.layout();
+                    });
+                });
+                resizeObserver.observe(container);
+                container.appendChild(editorStore.div);
+                return () => {
+                    resizeObserver.disconnect();
+                    editorStore.div.remove();
+                };
+            },
+        };
+    }, [editorStore]);
 
     return {
         isWrapText,
         setIsWrapText,
         editorStore,
-        setNewValue: (newContent: string) => {
-            editorStore.replaceValue(newContent);
-            editorStore.systemContent = newContent;
-        },
-        onContainerInit: (container: HTMLElement | null) => {
-            if (container === null) {
-                return () => {};
-            }
-            const resizeObserver = new ResizeObserver(() => {
-                resizeAttemptTimeout(() => {
-                    editorStore.editorInstance.layout();
-                });
-            });
-            resizeObserver.observe(container);
-            container.appendChild(editorStore.div);
-            return () => {
-                resizeObserver.disconnect();
-                editorStore.div.remove();
-            };
-        },
+        setNewValue,
+        onContainerInit,
     };
 }

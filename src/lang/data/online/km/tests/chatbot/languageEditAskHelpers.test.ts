@@ -79,9 +79,9 @@ describe('a style for the whole note typed in Khmer', () => {
         expect(readLanguageNoteStyleAsk('ដាក់អក្សរទាំងអស់នៅកណ្ដាល')).toEqual({
             align: 'center',
         });
-        expect(
-            readLanguageNoteStyleAsk('ធ្វើឱ្យអក្សរទាំងអស់ទៅជាពណ៌ក្រហម'),
-        ).toEqual({ color: 'red' });
+        expect(readLanguageNoteStyleAsk('ធ្វើឱ្យអក្សរទាំងអស់ទៅជាពណ៌ក្រហម')).toEqual({
+            color: 'red',
+        });
         expect(readLanguageNoteStyleAsk('សម្អាតទម្រង់អក្សរទាំងអស់')).toEqual({
             clear: true,
         });
@@ -106,21 +106,15 @@ describe('a style for the whole note typed in Khmer', () => {
             readLanguageNoteStyleAsk('ប្រើ Georgia សម្រាប់កំណត់ត្រាទាំងមូល'),
         ).toEqual({ font: 'Georgia' });
         expect(
-            readLanguageNoteStyleAsk(
-                'ប្រើពុម្ពអក្សរ Georgia សម្រាប់កំណត់ត្រាទាំងមូល',
-            ),
+            readLanguageNoteStyleAsk('ប្រើពុម្ពអក្សរ Georgia សម្រាប់កំណត់ត្រាទាំងមូល'),
         ).toEqual({ font: 'Georgia' });
         // One part is still the assistant's.
-        expect(
-            readLanguageNoteStyleAsk('ប្រើ Georgia សម្រាប់ចំណងជើង'),
-        ).toBeNull();
+        expect(readLanguageNoteStyleAsk('ប្រើ Georgia សម្រាប់ចំណងជើង')).toBeNull();
     });
 
     test('one word, or a colour it does not name, is the assistant’s', () => {
         expect(
-            readLanguageNoteStyleAsk(
-                'ធ្វើឱ្យពាក្យ ព្រះ នៅបន្ទាត់ទីមួយ ទៅជាពណ៌ក្រហម',
-            ),
+            readLanguageNoteStyleAsk('ធ្វើឱ្យពាក្យ ព្រះ នៅបន្ទាត់ទីមួយ ទៅជាពណ៌ក្រហម'),
         ).toBeNull();
         expect(
             readLanguageNoteStyleAsk('ធ្វើឱ្យអក្សរទាំងអស់ទៅជាពណ៌ស្វាយខ្ចី'),

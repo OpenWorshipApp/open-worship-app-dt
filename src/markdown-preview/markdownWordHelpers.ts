@@ -443,6 +443,11 @@ function readSvgPicture(
     clone.setAttribute('width', String(width));
     clone.setAttribute('height', String(height));
     clone.style.removeProperty('max-width');
+    // As drawn, not as moved or zoomed in the window
+    // (`markdownMermaidViewHelpers.ts`).
+    clone.style.removeProperty('transform');
+    clone.style.removeProperty('transform-origin');
+    delete clone.dataset.appView;
     if (!clone.getAttribute('xmlns')) {
         clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     }

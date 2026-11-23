@@ -24,6 +24,35 @@ const handleForkingOnGithub = () => {
     appProvider.browserUtils.openExternalURL(GITHUB_URL);
 };
 
+function toNpmUrl(packageName: string) {
+    return `https://www.npmjs.com/package/${packageName}`;
+}
+
+function ModuleVersionComp({
+    title,
+    packageName,
+    version,
+}: Readonly<{
+    title: string;
+    packageName: string;
+    version?: string;
+}>) {
+    const npmUrl = toNpmUrl(packageName);
+    return (
+        <button
+            type="button"
+            className="m-1 module-version"
+            title={npmUrl}
+            onClick={() => {
+                appProvider.browserUtils.openExternalURL(npmUrl);
+            }}
+        >
+            {version === undefined ? title : `${title} (${version})`}
+            <i className="bi bi-box-arrow-up-right ms-1" />
+        </button>
+    );
+}
+
 function renderVersion(version: string | null | undefined) {
     if (version === undefined) {
         return 'Loading...';
@@ -98,22 +127,36 @@ export default function AboutComp() {
                     </strong>
                 </div>
                 <div className="card-body p-2">
-                    <div>{appInfo.description}</div>
+                    <div>
+                        {tran(
+                            'Fully Open-Source and completely free forever for worship service.',
+                        )}
+                    </div>
                     <div className="small mt-2 d-flex flex-wrap">
-                        <div className="m-1 module-version">
-                            Electron ({electronVersion || 'N/A'})
-                        </div>
-                        <div className="m-1 module-version">
-                            Pptx to Html Converter (
-                            {renderVersion(pptxToHtmlsVersion)})
-                        </div>
-                        <div className="m-1 module-version">
-                            Docx to Html Converter (
-                            {renderVersion(docxToHtmlsVersion)})
-                        </div>
-                        <div className="m-1 module-version">
-                            Bible Note ({renderVersion(bibleNoteVersion)})
-                        </div>
+                        <ModuleVersionComp
+                            title="Electron"
+                            packageName="electron"
+                            version={electronVersion || 'N/A'}
+                        />
+                        <ModuleVersionComp
+                            title="Pptx to Html Converter"
+                            packageName="pptx-to-html-conv"
+                            version={renderVersion(pptxToHtmlsVersion)}
+                        />
+                        <ModuleVersionComp
+                            title="Docx to Html Converter"
+                            packageName="docx-to-html-conv"
+                            version={renderVersion(docxToHtmlsVersion)}
+                        />
+                        <ModuleVersionComp
+                            title="Bible Note"
+                            packageName="bible-note"
+                            version={renderVersion(bibleNoteVersion)}
+                        />
+                        <ModuleVersionComp
+                            title="Open Worship App MCP"
+                            packageName="open-worship-app-mcp"
+                        />
                     </div>
                     <div className="my-2">
                         <button

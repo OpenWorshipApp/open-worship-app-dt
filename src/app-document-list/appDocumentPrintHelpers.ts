@@ -96,12 +96,13 @@ async function genBackgroundHtml(
     }
     if (droppedData.type === DragTypeEnum.BACKGROUND_ANIMATION) {
         // Paper holds it as it stands: a CSS one as its still layers, a
-        // shader as one frame, else the gradient of its colours.
+        // shader as one frame, else the gradient of its colours -- a
+        // person's own CSS too: its code goes into no page but its own box.
         const animation = parseAnimation(droppedData.item);
         if (animation === null) {
             return '';
         }
-        if (animation.engine === 'css') {
+        if (animation.engine === 'css' && animation.name !== 'custom') {
             const { genCssAnimationStillMarkup } =
                 await import('../background/cssAnimationLayerHelpers');
             backgroundDiv.innerHTML = genCssAnimationStillMarkup(animation);
@@ -111,6 +112,9 @@ async function genBackgroundHtml(
             background: genFillBackground(toAnimationStillFill(animation)),
             opacity: `${animation.opacity / 100}`,
         });
+        if (animation.engine === 'css') {
+            return backgroundDiv.outerHTML;
+        }
         const frameDataUrl = await captureGlslStillDataUrl(animation);
         if (frameDataUrl !== null) {
             const image = document.createElement('img');

@@ -19,7 +19,7 @@ export default function SongSelectResultItemComp({
           ? 'Not authorized for these lyrics'
           : 'Download';
     return (
-        <li className="list-group-item p-2">
+        <li className="list-group-item p-2 app-selectable-text">
             <div
                 className={
                     'd-flex justify-content-between align-items-center gap-2'

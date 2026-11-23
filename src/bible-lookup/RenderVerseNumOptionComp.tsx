@@ -32,7 +32,7 @@ export default function RenderVerseNumOptionComp({
     onVerseChange: (verseStart: number, verseEnd?: number) => void;
     onApply: (verseStart: number, verseEnd?: number) => void;
 }>) {
-    const { selectedNS, ind } = useMemo(() => {
+    const { selectedNS, ind, isInside } = useMemo(() => {
         const ind = index + 1;
         const started = verseStart === ind;
         const isInside = verseStart <= ind && ind <= verseEnd;
@@ -40,7 +40,7 @@ export default function RenderVerseNumOptionComp({
         let selectedNS = `${started ? 'selected-start' : ''}`;
         selectedNS += ` ${isInside ? 'selected' : ''}`;
         selectedNS += ` ${ended ? 'selected-end' : ''}`;
-        return { selectedNS, ind };
+        return { selectedNS, ind, isInside };
     }, [index, verseStart, verseEnd]);
     const indRef = useAppCurrentRef(ind);
     const verseStartRef = useAppCurrentRef(verseStart);
@@ -109,6 +109,11 @@ export default function RenderVerseNumOptionComp({
             data-verse-index={ind}
             role="button"
             tabIndex={0}
+            // Whether this verse is in the chosen passage. Only the class said
+            // so, which a screen reader does not read, and a press that
+            // picked a verse read back as changing nothing (F-3 of robot run
+            // 20261120-2021).
+            aria-pressed={isInside}
             aria-label={`${tran('Verse')} ${verseNum}`}
             title={
                 `${verseNum}` === verseNumText

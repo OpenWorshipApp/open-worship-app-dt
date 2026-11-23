@@ -31,8 +31,11 @@ import {
     initLangCss,
 } from './lang/langHelpers.ts';
 import { genLangOpenLyricFontFaces } from './lang/langFontListHelpers.ts';
-import { applyOpenLyricTheme } from './lyric-list/lyricHelpers.ts';
-import { installOpenLyricPrintPopupHandler } from './lyric-list/lyricPrintHelpers.ts';
+import {
+    applyOpenLyricLabelLocale,
+    applyOpenLyricTheme,
+} from './lyric-list/lyricHelpers.ts';
+import { printOpenLyricPage } from './lyric-list/lyricPrintHelpers.ts';
 import { checkIsDarkMode, THEME_CHANGE_EVENT } from './others/themeHelpers.tsx';
 import EventHandler from './event/EventHandler.ts';
 
@@ -59,7 +62,6 @@ function setEditorVerticalLines(editor: Editor) {
 }
 
 export function getDashboardInstance() {
-    installOpenLyricPrintPopupHandler();
     OpenLyricDashboard.installShellStyle();
     Editor.installShellStyle();
     OpenLyricMarkdownManager.installShellStyle();
@@ -80,13 +82,17 @@ export function getDashboardInstance() {
     });
     dashboard.isWeb = false;
 
+    // Print is open-lyric's own on both panels; the app only shows the page
+    // it hands over (`lyricPrintHelpers.ts`).
     const openLyric = new OpenLyric();
+    openLyric.onPrint = printOpenLyricPage;
     dashboard.openLyric = openLyric;
 
     const openLyricPlayer = new OpenLyricPluginPlayer();
     openLyric.addPlugin('player', openLyricPlayer);
 
     const openLyricMarkdownManager = new OpenLyricMarkdownManager();
+    openLyricMarkdownManager.onPrint = printOpenLyricPage;
     dashboard.openLyricMarkdownManager = openLyricMarkdownManager;
 
     const editor = new Editor({ selectionState: true });
@@ -113,6 +119,8 @@ export function getDashboardInstance() {
             openLyricMarkdownManager.fontFaces,
             langDataList,
         ) as OpenLyricFontFaceList;
+        applyOpenLyricLabelLocale(openLyric);
+        applyOpenLyricLabelLocale(openLyricMarkdownManager);
     });
 
     applyOpenLyricTheme(dashboard);

@@ -122,6 +122,15 @@ export const PRESENTING_FLOW_ITEM_UUID_ATTR = 'data-presenting-flow-item-uuid';
 export const PRESENTING_FLOW_CC_ROW_ATTR = 'data-presenting-flow-cc-row';
 
 /**
+ * The line number of a run sheet's line, on the wrapper that holds the line's
+ * row and what it holds (its CCs, a document's slides). A line's row has no
+ * next sibling to aim at, so this is how the MCP's `owa_drag` finds the line
+ * AFTER one for `place: "after"` (F-35 of robot run 20261120-2021: it had
+ * landed the drop before the line instead).
+ */
+export const PRESENTING_FLOW_LINE_ATTR = 'data-presenting-flow-line';
+
+/**
  * Where a CC actually lands: its OWN pin if it has one, else wherever its host
  * just went. The same inheritance a document's slide makes against the element
  * above it — a CC pinned to nothing follows its host rather than going nowhere.

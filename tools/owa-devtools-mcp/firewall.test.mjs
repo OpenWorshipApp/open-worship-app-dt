@@ -6,6 +6,7 @@ import {
     checkIsAppUrl,
     checkIsRemovingCall,
     checkToolCall,
+    explainRootsRefusal,
     filterToolList,
     findDestructiveLabel,
     findDestructiveUid,
@@ -18,6 +19,7 @@ import {
     recordPressRefusal,
     redactSecrets,
     resetFirewallState,
+    ROOTS_REFUSAL_HINT,
 } from './firewall.mjs';
 import { loadTranBundle } from './tran.mjs';
 
@@ -745,6 +747,50 @@ describe('guardToolCalls', () => {
         expect(seen.map((one) => one.id)).toEqual([31]);
         expect(sent.at(-1).id).toBe(32);
         expect(sent.at(-1).result.isError).toBe(true);
+    });
+
+    // chrome-devtools' own refusal names no folder it would take (`AD-39`).
+    it('says where a refused filePath may be written', () => {
+        const { transport, sent } = genTransport();
+        guardToolCalls(transport, { log: () => {} });
+        const refusal =
+            'Access denied: path "/private/tmp/x/snap.txt" (canonical: ' +
+            '"/private/tmp/x/snap.txt") is not within any of the configured ' +
+            'workspace roots.';
+        transport.onmessage({
+            jsonrpc: '2.0',
+            id: 51,
+            method: 'tools/call',
+            params: {
+                name: 'take_snapshot',
+                arguments: { filePath: '/private/tmp/x/snap.txt' },
+            },
+        });
+        transport.send({
+            jsonrpc: '2.0',
+            id: 51,
+            result: {
+                content: [{ type: 'text', text: refusal }],
+                isError: true,
+            },
+        });
+        expect(sent.at(-1).result.content[0].text).toBe(
+            `${refusal} ${ROOTS_REFUSAL_HINT}`,
+        );
+        expect(ROOTS_REFUSAL_HINT).toMatch(/test-results/);
+    });
+
+    it('leaves every other result as it came', () => {
+        const ok = [{ type: 'text', text: 'Saved snapshot to snap.txt.' }];
+        expect(explainRootsRefusal(ok)).toEqual(ok);
+        const said = [
+            {
+                type: 'text',
+                text: `is not within any of the configured workspace roots. ${ROOTS_REFUSAL_HINT}`,
+            },
+        ];
+        expect(explainRootsRefusal(said)).toEqual(said);
+        expect(explainRootsRefusal(undefined)).toBeUndefined();
     });
 
     it('does not read a file for a snapshot returned inline', () => {

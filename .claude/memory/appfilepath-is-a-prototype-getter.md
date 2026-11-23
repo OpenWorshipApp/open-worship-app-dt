@@ -18,7 +18,7 @@ context the write is dropped and the getter keeps answering `''`.
 sees `''`, returns `null`, and the drop handler `continue`s — no popup, no toast, no console
 error. During run `20260810-1238` this made the Bible XML `.owabdata` drop gate look broken
 for several minutes; the same bundle imported fine through `globalThis.tryBibleXMLImport`,
-which is what isolated it. CLAUDE.md says "stamp `appFilePath` on the `File`" but not that
+which is what isolated it. CLAUDE.md said "stamp `appFilePath` on the `File`" (since 2026-11-20 that line is in [[drag-payload-written-in-dragstart]], and CLAUDE.md points at `owa_drop_files` for real files) but not that
 assignment is the wrong way to do it.
 
 **How to apply:** in `evaluate_script`, build the drop as

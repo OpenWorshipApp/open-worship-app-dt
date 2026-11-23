@@ -17,12 +17,12 @@ describe('a foreground component named in Khmer (EC-563)', () => {
         // "Put the time on the screen", then "take the clock off the
         // screen": the first had named nothing, and the verse row's gap had
         // taken "the time" as its verse.
-        expect(
-            readForegroundComponentAsk('ដាក់ម៉ោងនៅលើអេក្រង់', translate),
-        ).toBe('time');
-        expect(
-            readForegroundComponentAsk('ដកនាឡិកាចេញពីអេក្រង់', translate),
-        ).toBe('time');
+        expect(readForegroundComponentAsk('ដាក់ម៉ោងនៅលើអេក្រង់', translate)).toBe(
+            'time',
+        );
+        expect(readForegroundComponentAsk('ដកនាឡិកាចេញពីអេក្រង់', translate)).toBe(
+            'time',
+        );
     });
 
     it('keeps the longer name: a stopwatch is no clock', () => {
@@ -30,10 +30,7 @@ describe('a foreground component named in Khmer (EC-563)', () => {
             readForegroundComponentAsk('ដាក់នាឡិកាបញ្ឈប់លើអេក្រង់', translate),
         ).toBe('stopwatch');
         expect(
-            readForegroundComponentAsk(
-                'ចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទី',
-                translate,
-            ),
+            readForegroundComponentAsk('ចាប់ផ្តើមរាប់ថយក្រោយ ៥ នាទី', translate),
         ).toBe('countdown');
     });
 

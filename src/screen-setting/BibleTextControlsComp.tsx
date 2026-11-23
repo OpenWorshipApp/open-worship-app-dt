@@ -44,6 +44,7 @@ import {
     toBibleTextPanelEffect,
     type BibleBackdropType,
 } from './bibleTextLookHelpers';
+import BibleTextScreenScaleComp from './BibleTextScreenScaleComp';
 
 // Module-level, so a fresh literal per render does not re-run `AppRangeComp`'s
 // `[value, defaultSize, fixedSize]` effect on every change elsewhere in the
@@ -477,6 +478,10 @@ export default function BibleTextControlsComp({
                     <span className="fg-unit-static">em</span>
                 </PropRowComp>
             </div>
+            {/* Under the size it scales (the user, 2026-11-19: _I recommend a
+                collapsible under_ the font rows): each screen's own factor of
+                it, the one part of the look that is not every screen's. */}
+            <BibleTextScreenScaleComp />
             {/* A section of its own (the user: _add a section … for
                 customizing text highlight color (default pink/blue)_). One
                 band per side: the screen draws the one the words are on, so

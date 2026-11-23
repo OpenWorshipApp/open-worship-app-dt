@@ -72,7 +72,8 @@ Consequences for a run:
   locale switch (`LT-01..02`, SKILL.md §6d / test-plan §S15) is part of the mandatory
   core, not an optional spot-check.
 - `npm run lint` now fails on a missing STATIC key (`src/lang/tranKeyCoverage.test.ts`), but stays
-  **fully green** for a dynamic `tran(variable)` one. Only running the app in a non-English
+  **fully green** for a dynamic `tran(variable)` one outside the few lists it reads by name
+  (foreground widgets, transitions, the Background tabs …). Only running the app in a non-English
   language finds that.
 - **Verified 2026-07-26:** `PositionSizeFieldComp` (`BoxPositionSizeComp.tsx`) called
   `tran(name)` with `name="X:"`; selecting a canvas item blanked the entire slide-editor
@@ -422,7 +423,9 @@ Preview, Bible Note and Settings popups of the same process, closed natively lik
   titles must appear **in order** and the stack must be empty after the 5th — a popup that
   never appears (torn down by the previous popup's async close, especially `Alert`→`Alert`)
   is a **High** finding. (Its jsdom twin `HandleAlertComp.test.tsx` was deleted in the
-  2026-08-24 test prune — the live `window.tryPopup()` probe is now the only coverage.)
+  2026-08-24 test prune; `src/popup-widget/components.coverage.test.tsx` walks this chain
+  through the real host again, and since 2026-11-20 `src/popup-widget/HandleAlertComp.test.tsx`
+  holds the same-type steps it lacks — Alert → Alert, Confirm → Confirm, Input → Input.)
 
 - **`press_key ContextMenu` opens the app's own right-click menu on the FOCUSED element**
   (verified 2026-09-26). `owa_click` right-clicks by label since 2026-10-10 (`button: "right"`); the keyboard way in: click a
@@ -694,7 +697,7 @@ Use as a diff target for regressions:
   via the red `btn-danger` **and** `Ctrl+Q`.
 - Documents: selecting a doc loads slides + updates the footer path; thumbnail slider rescales.
 - Lyrics: selected lyric renders (with chords) in `<iframe>` previews.
-- Background: panel expands; all six tabs switch; a color selection updates the mini-screen.
+- Background: panel expands; all six tabs switch (seven since **Animations** joined on 2026-11-15); a color selection updates the mini-screen.
 - Mini-screen: reflects active content; zoom slider rescales the preview.
 - Bible Reader: renders a verse via the step-by-step picker **and** from a typed full
   reference (§5 — re-verified 2026-09-11 on both lookup surfaces).
@@ -790,7 +793,7 @@ Editor saves a doc → the change must cross to the Presenter/Screen:
    a junk DirSource (`dirPath: ''`) and fired at nobody — and a deleted path returned early
    before ever reaching the diff. Fixed in code, **not yet re-verified live.**
 6. `useFileSourceEvents(['update'], …)` consumers reload: Presenter **center preview**
-   `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:84`) and the
+   `VarySlidesComp` (`src/app-document-presenter/items/VarySlidesComp.tsx:97`) and the
    **list-row** thumbnails (`VaryAppDocumentFileComp`) — each re-reads `getSlides()`
    (debounced **500 ms**) **through a 2-second `fileDataCacheManager` cache**
    (`src/helper/FileSource.ts`).
@@ -1030,7 +1033,7 @@ mis-file a finding:
 | kind | what it is | §|
 | --- | --- | --- |
 | **content** | something to SHOW — a slide, a document, a background, a verse, a widget, audio | §14.2 |
-| **action** | something to DO — 17 that clear a screen, 2 that show or hide it, 5 that drive the run itself | §14.9 |
+| **action** | something to DO — 19 that clear a screen, 2 that show or hide it, 1 that drives a slide's media, 5 that drive the run itself (`presentingFlowActionList`, 2026-11-20) | §14.9 |
 | **CC element** | a FOLLOWER of the line above it — rides its host's present | §14.10 |
 
 ### 14.1 It is NOT dev-only any more (corrected 2026-08-04)
@@ -1193,6 +1196,15 @@ Driving a real drop through CDP works here: dispatch a plain bubbling `Event('dr
 a fabricated `dataTransfer` and stamp `appFilePath` on the `File` — see CLAUDE.md's
 file-drop note. That exercises the whole import pipeline against a real file on disk.
 
+**A file of a kind the list does not hold is NAMED, not dropped in silence** (2026-11-21,
+robot run 20261120-2021 F-25; `genOnDrop` in `src/others/droppingFileHelpers.ts`). Every
+file list's drop takes what it can and, for the rest, says _Unsupported file type!_ with
+the skipped files' names joined by commas -- before, a `.txt` on the Presenting Flow List
+was accepted by the drop and did nothing. A drop of only taken files says nothing. Seen
+live on a scratch dev profile: `owa_drop_files` of `zz-fix-plain.txt` onto **Presenting
+Flow List** answered `accepted: true` and the toast read _Unsupported file type!
+zz-fix-plain.txt_. A silent `accepted: true` with nothing added is a regression.
+
 **The de-duplicated export name — FIXED 2026-08-06.** A second export used to be named
 `<name>.owapf.tar (1).gz` (`FileSource.genNextFilePath` splits on the LAST dot), which
 failed `checkIsPresentingFlowArchiveFileFullName` and made a dropped bundle do **nothing at all**
@@ -1205,7 +1217,7 @@ an old file, not a new bug.
 
 ### 14.8 Failure surfaces that are easy to miss
 
-- A damaged entry becomes ONE error row (`Invalid item`) plus a toast — the rest of the presenting flow must still render, and the bad entry must survive a later write of the file (PL-51). The toast and the log line come ONCE per entry per minute (`checkShouldNoticeInvalidItem`), not on every re-read and once per surface: a re-read after a write, or the run player opening, says nothing new. The log names the file and prints the entry as JSON text. A second toast for the same entry within the minute is a regression (it was thirteen in run 20261002-1644).
+- A damaged entry becomes ONE error row (`Invalid item`) plus a toast naming the SHEET (`Invalid item: <file>`, 2026-11-21, F-36) — and only a read the person made: the Presenting Flows list's on-screen mark re-reads every listed sheet in the background (`getItems({ isQuiet: true })`) and says nothing, where it had raised the toast on a press of a fill, about a sheet nobody touched — the rest of the presenting flow must still render, and the bad entry must survive a later write of the file (PL-51). The toast and the log line come ONCE per entry per minute (`checkShouldNoticeInvalidItem`), not on every re-read and once per surface: a re-read after a write, or the run player opening, says nothing new. The log names the file and prints the entry as JSON text. A second toast for the same entry within the minute is a regression (it was thirteen in run 20261002-1644).
 - `tran()` throws in dev on a missing key in any non-English language and blanks the page, so the locale pass
   (§6d / LT-01) MUST cover the presenting flow strings: `Drop items here`,
   `No items in this presenting flow`, `No slides`, `Not Supported Item Type`, `Preview Presenting Flow`,
@@ -1239,7 +1251,7 @@ and `acceptedDragTypeList` must keep refusing it.
 
 Two families, split by a `target` discriminant — the difference decides the whole menu:
 
-- **`target: 'screen'` (19 in Add Action, plus the attached-only `Slide: Media Control`)** — `apply(screenManager)`. Five mirror the mini screen's clear bar; TWELVE are per-foreground-widget clears derived from `foregroundClearMap` (Messages, Marquee Top/Bottom, Quick Text, Countdown, Stopwatch, Time, Video/Image/Camera/Screen/Web Show — badges `MS`/`M↑`/`M↓`/`QT`/`CD`/`SW`/`TM`/`VD`/`IM`/`CM`/`SS`/`WB`; Screen Show joined 2026-10-08)
+- **`target: 'screen'` (21 in Add Action, plus the attached-only `Slide: Media Control`)** — `apply(screenManager)`. Five mirror the mini screen's clear bar; FOURTEEN are per-foreground-widget clears derived from `foregroundClearMap` (Messages, Marquee Top/Bottom, Quick Text, Countdown, Stopwatch, Time, Video/Image/Fill/Animation/Camera/Screen/Web Show — badges `MS`/`M↑`/`M↓`/`QT`/`CD`/`SW`/`TM`/`VD`/`IM`/`FL`/`AN`/`CM`/`SS`/`WB`; Screen Show joined 2026-10-08, Fill Show and Animation Show 2026-11-15)
   (keyed by the widget type, so a new widget without a clear is a compile error). They
   behave like content for every purpose except being shown: clickable, draggable onto a
   mini screen, pinnable. The Foreground panel's **Background Images Slide Show** has no
@@ -1253,7 +1265,7 @@ Two families, split by a `target` discriminant — the difference decides the wh
   deliberately do (§14.10).
 
 **The menu is FOUR levels** since 2026-08-08: everything that erases folds behind one
-**Clear Screen** row with a chevron, and inside it the TWELVE per-widget FG clears fold again behind **Other Clear FG Items** (seventeen of the twenty-four entries clear something, so inline they were the menu; the count was eight until the Messages, Video Show and Image Show clears joined — corrected 2026-10-02). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
+**Clear Screen** row with a chevron, and inside it the FOURTEEN per-widget FG clears fold again behind **Other Clear FG Items** (nineteen of the twenty-six entries clear something, so inline they were the menu; the count was eight until the Messages, Video Show and Image Show clears joined — corrected 2026-10-02). `presentingFlowActionMenuList` is the menu's SHAPE — a group holds MENU
 ENTRIES, so a family may hold a family — and `presentingFlowActionList` the flat registry an id
 resolves against; only `PresentingFlowFileComp` reads the former, and its `genMenuEntry` walks
 it recursively, so a family added later folds itself away. The stored ids did not change. The
@@ -1262,7 +1274,7 @@ rows in that order (corrected 2026-08-13 — this said seven, which predates `Ne
 Interval`/PL-101 joining the run family): `Clear Screen`, `Screen: Show`, `Screen: Hide`,
 `Next: Interval`, `Next: Clear Interval`, `Next: Timeout`, `Jump to`, `Keyboard Event`.
 **Clear Screen** opens the five whole-layer clears in the mini screen bar's own order plus the
-**Other Clear FG Items** row, which in turn holds the twelve per-widget FG clears — all verified rendering non-blank in Khmer on 2026-08-13 (the six top rows of **Clear Screen** and the eight of **Add Action** again on 2026-10-02).
+**Other Clear FG Items** row, which in turn holds the fourteen per-widget FG clears — the ones it held then all verified rendering non-blank in Khmer on 2026-08-13 (the six top rows of **Clear Screen** and the eight of **Add Action** again on 2026-10-02).
 
 **Three things are asked BEFORE a line is written**, and Cancel must add nothing in every
 case: how a clock is armed, what shortcut a `Keyboard Event` answers to, and — new
@@ -1481,7 +1493,12 @@ language shows the same signals in its own words.
   `github.com/…/raw/…` link resolves to `raw.githubusercontent.com` on its own and a plain
   `http://host:8000/…` works too. The body is streamed to
   `<appLocalStorage.defaultStorageDirPath>/temp-xml/<basename>.xml`, read, then **deleted** — an
-  import that leaves anything in `temp-xml` failed partway.
+  import that leaves anything in `temp-xml` failed partway. A link with no file name is saved
+  as `download.xml`, and since 2026-11-21 (F-23) NO _Download Completed / File saved at_ toast
+  names that temp file: it had told the operator a file was kept where none remains. A toast
+  of it now is a regression. The review reads a bare language code as its usual region
+  (`locale="en"`, the app's own format example, is reviewed as `en-US`, `toImportLocale`,
+  F-22); before, it answered _Choose a valid locale_ with Import shut.
 - **`Key is missing`.** Most published XMLs carry no `key`/`abbr`, so `guessingBibleKey`
   loops a `showAppInput` until it has one. The **Guessing keys** buttons are
   `getGuessingBibleKeys`: every attribute value **on the root element**, split on
@@ -1789,7 +1806,8 @@ profile inside `release/`; it replaces the *(source)* marks it touches.
   `checkIsAppUrl` (`firewall.mjs`) allows `file:`, `about:blank` and `http(s)` on
   localhost/127.0.0.1/::1 only; a packaged build serves `owa://local`, so every attempt is
   refused with *"Opening an address outside this app is switched off"*. `owa_goto_page`
-  takes `presenter.html` / `reader.html` / `appDocumentEditor.html` and is not affected.
+  takes `presenter.html` / `reader.html` / `appDocumentEditor.html` (and, since 2026-11-14,
+  `screen-mirror.html`) and is not affected.
 - **A dev-only defect must be re-checked against the package before it is filed against a
   release.** A parallel dev run's blank `appDocumentEditor.html` (with a `.owl` selected)
   did NOT reproduce packaged: the editor rendered fully, the app raised its own

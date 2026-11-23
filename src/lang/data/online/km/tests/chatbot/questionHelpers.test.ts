@@ -194,9 +194,7 @@ describe('a known page rides in the language it is asked in', () => {
             KHMER_PAGE,
             'Open View on the top menu bar again and click',
         )!;
-        expect(lead.startsWith('បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត')).toBe(
-            true,
-        );
+        expect(lead.startsWith('បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត')).toBe(true);
         expect(lead.length).toBeLessThanOrEqual(60);
         // Cut at a space, never inside a word.
         expect(
@@ -360,11 +358,7 @@ describe('a known page rides in the language it is asked in', () => {
         expect(whole).toContain('the page goes on');
         // A translation whose blocks are of another kind is no translation.
         expect(
-            toLocalizedCut(
-                english,
-                khmer.replace('2. បិទ', '- បិទ'),
-                passageCut,
-            ),
+            toLocalizedCut(english, khmer.replace('2. បិទ', '- បិទ'), passageCut),
         ).toBeNull();
     });
 
@@ -421,9 +415,7 @@ describe('a known page rides in the language it is asked in', () => {
             localPageText: KHMER_PAGE,
         })!;
         expect(local).toContain(KHMER_PAGE.slice(0, 20));
-        expect(local).toContain(
-            'the words "បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត',
-        );
+        expect(local).toContain('the words "បើក View នៅលើរបារម៉ឺនុយខាងលើម្ដងទៀត');
         expect(local).not.toContain('on the top menu bar');
         // Asked in English: the English page, pointed at by its English words.
         const english = genKnownQuestionHint(row, { pageText: ENGLISH_PAGE })!;

@@ -78,12 +78,14 @@ import {
     checkIsCarriedFileName,
     checkIsFileAttachment,
     checkIsImageName,
+    checkIsMediaName,
     checkIsReadableTextFile,
     copyImageToClipboard,
     dropAttachmentData,
     findOpenFileAttachments,
     genElementAttachment,
     genImageAttachment,
+    genMediaAttachment,
     genTextAttachment,
     toSongDocumentFiles,
     toSongFileSources,
@@ -235,6 +237,17 @@ import {
     toFlowAsk,
     toFlowSheetText,
 } from './flowChatHelpers';
+import {
+    OFFICE_EDIT_TOOL_NAME,
+    checkHasOpenDeck,
+    checkIsOfficeEditFileName,
+    checkIsOfficeOpenedLast,
+    findOfficeAskFiles,
+    findOfficeAskPictures,
+    genOfficeOpeningAnswer,
+    toOfficeAsk,
+    toOfficeDocumentText,
+} from './officeChatHelpers';
 import {
     type CreatedDocumentType,
     type DocumentCreateKindType,
@@ -526,6 +539,7 @@ import {
     type BibleImportStateType,
 } from './bibleImportChatHelpers';
 import {
+    takeChatbotAnimationRequest,
     takeChatbotAsk,
     takeChatbotBibleListPaste,
     takeChatbotFileRequest,
@@ -562,6 +576,17 @@ import {
     toScreenReadText,
 } from './screenChatHelpers';
 import { checkIsScreenSettingKind } from './screenStateAnswerHelpers';
+import {
+    ANIMATION_EDIT_TOOL_NAME,
+    ANIMATION_UNDO_KIND,
+    checkIsAnimationThread,
+    findAnimationUndoIds,
+    genAnimationOpeningAnswer,
+    pickAnimationUndoId,
+    toAnimationAsk,
+    toAnimationHandoffSession,
+    toAnimationReadText,
+} from './animationChatHelpers';
 import { SCREEN_CHANGE_TOOL_NAME } from './screenChangeOfferHelpers';
 import { readScreenAsk } from './typedScreenAskHelpers';
 import {
@@ -775,6 +800,16 @@ import {
     readDeckSongAsk,
 } from './deckSongAskHelpers';
 import { draftDeckSongs, planDeckSongAsk } from './deckSongAnswerHelpers';
+import {
+    PPTX_SLIDES_TOOL_NAME,
+    readPptxSlidesArgs,
+    readPptxSlidesAsk,
+} from './pptxSlideAskHelpers';
+import {
+    convertPptxSlides,
+    planPptxSlidesAsk,
+    type PptxSlidesFileType,
+} from './pptxSlideAnswerHelpers';
 import {
     STUDY_CREATE_TOOL_NAME,
     STUDY_DRAFT_GONE_TEXT,
@@ -1098,6 +1133,11 @@ const SHOWN_LABEL_PATTERN_LIST: [RegExp, string][] = [
     [/^Create all (\d+) songs$/, 'Create all {count} songs'],
     // A Documents list deck's button (EC-590).
     [/^Make a song from "(.+)"$/, 'Make a song from "{name}"'],
+    // A Documents list PowerPoint's button (EC-763).
+    [
+        /^Make a slide document from "(.+)"$/,
+        'Make a slide document from "{name}"',
+    ],
     [/^Save changes to "(.+)"$/, 'Save changes to "{name}"'],
     [/^Open (.+) billing$/, 'Open {provider} billing'],
     [/^Open (.+) usage limits$/, 'Open {provider} usage limits'],
@@ -3185,17 +3225,23 @@ function RenderAttachmentChipsComp({
                                         ? 'bi-bullseye'
                                         : attachment.kind === 'foreground'
                                           ? 'bi-layers'
-                                          : attachment.kind === 'image' ||
-                                              checkIsImageName(attachment.name)
-                                            ? // A saved picture arrives as a
-                                              // file, and reads as one on its
-                                              // chip unless the NAME is asked.
-                                              'bi-image'
-                                            : checkIsCarriedFileName(
+                                          : attachment.kind === 'media'
+                                            ? /^audio/.test(attachment.mimeType)
+                                                ? 'bi-file-earmark-music'
+                                                : 'bi-film'
+                                            : attachment.kind === 'image' ||
+                                                checkIsImageName(
                                                     attachment.name,
                                                 )
-                                              ? 'bi-file-earmark-pdf'
-                                              : 'bi-file-earmark-text')
+                                              ? // A saved picture arrives as a
+                                                // file, and reads as one on its
+                                                // chip unless the NAME is asked.
+                                                'bi-image'
+                                              : checkIsCarriedFileName(
+                                                      attachment.name,
+                                                  )
+                                                ? 'bi-file-earmark-pdf'
+                                                : 'bi-file-earmark-text')
                                 }
                             />
                         ) : (
@@ -5946,6 +5992,18 @@ export default function ChatbotAppComp() {
                     }
                     continue;
                 }
+                // A video or a sound: named for a slide to play, never read
+                // here (2026-11-21) -- one with no place on disk is named.
+                if (checkIsMediaName(file.name)) {
+                    if (filePath) {
+                        added.push(
+                            genMediaAttachment(file.name, file.size, filePath),
+                        );
+                    } else {
+                        refused.push(file.name);
+                    }
+                    continue;
+                }
                 if (checkIsReadableTextFile(file)) {
                     added.push(
                         genTextAttachment(
@@ -7697,6 +7755,23 @@ export default function ChatbotAppComp() {
                 inputRef.current?.focus();
                 return result.attachment;
             }
+            // A PowerPoint or Word file (a Documents row's Open in Chatbot,
+            // EC-761): what can be changed in it, and the changes asked for
+            // most as buttons -- written with no model.
+            if (checkIsOfficeEditFileName(filePath)) {
+                const officeOpening = genOfficeOpeningAnswer(
+                    result.attachment.name,
+                    getAppLanguage(),
+                    [...listAssistantLanguages(), ...listTypedLanguages()],
+                );
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: officeOpening.text,
+                    replies: officeOpening.replies,
+                });
+                inputRef.current?.focus();
+                return result.attachment;
+            }
             if (isQuiet) {
                 inputRef.current?.focus();
                 return result.attachment;
@@ -8925,6 +9000,23 @@ export default function ChatbotAppComp() {
                 );
                 return;
             }
+            // An animation editor: the 🤖 in Customize or in Shader Code. A
+            // tab of its own under a card saying what can be changed; every
+            // line under it is about that animation (`isAnimationAnswer`).
+            const handedAnimation = takeChatbotAnimationRequest();
+            if (handedAnimation !== null) {
+                const sessionId = openHandoffSession();
+                updateSession(sessionId, toAnimationHandoffSession);
+                const opening = genAnimationOpeningAnswer(handedAnimation);
+                addMessage(sessionId, {
+                    author: 'bot',
+                    text: opening.text,
+                    replies: opening.replies,
+                    isAnimationAnswer: true,
+                });
+                inputRef.current?.focus();
+                return;
+            }
             // A foreground session: a chip's Open in Chatbot, a panel's 🤖.
             const handedForeground = takeChatbotForegroundRequest();
             if (handedForeground !== null) {
@@ -9053,6 +9145,33 @@ export default function ChatbotAppComp() {
     const startReportingRef = useRef<
         (complaint: string, shownText?: string) => void
     >(() => {});
+
+    // A PowerPoint of the Documents list made into a slide document
+    // (EC-763), asked for or pressed: the conversion's own sentences with
+    // Undo under them, then the new document's card, the file waiting in the
+    // box as a slide document asked for in words waits (EC-514).
+    const runPptxSlidesRef = useAppCurrentRef(
+        async (file: PptxSlidesFileType, sessionId: string) => {
+            clearProgressSteps(sessionId);
+            const made = await convertPptxSlides(
+                file,
+                genProgressReporter(genSessionProgress(sessionId)),
+            );
+            addMessage(sessionId, {
+                author: 'bot',
+                text: made.text,
+                ...(made.created === null
+                    ? {}
+                    : { actions: withCreatedUndoAction([], made.created) }),
+            });
+            if (made.created !== null) {
+                await attachHandedFileRef.current(
+                    sessionId,
+                    made.created.filePath,
+                );
+            }
+        },
+    );
 
     const handleAsking = useCallback(
         // `isForced` is for the follow-up `handleActing` fires the moment its
@@ -9670,10 +9789,17 @@ export default function ChatbotAppComp() {
                 ).length > 0
                     ? (['flow'] as const)
                     : []),
+                // a PowerPoint open in the tab is a slide document too: its
+                // slides are what a slide asked for is
                 ...(findOpenSlideAttachments(
                     lookupTab?.messages ?? [],
                     lookupTab?.fileClosedAt,
-                ).length > 0
+                ).length > 0 ||
+                checkHasOpenDeck(
+                    attachments,
+                    lookupTab?.messages ?? [],
+                    lookupTab?.fileClosedAt,
+                )
                     ? (['slide'] as const)
                     : []),
             ];
@@ -9690,6 +9816,9 @@ export default function ChatbotAppComp() {
                 generalQuestion === null &&
                 lookupSubject === null &&
                 resourceFileNames.length === 0 &&
+                // A slide document made OF a PowerPoint is the converter's
+                // (EC-763), never an empty one.
+                readPptxSlidesAsk(trimmedAsked) === null &&
                 !attachments.some((one) => {
                     const fileName = one.filePath ?? one.name;
                     return (
@@ -10212,22 +10341,37 @@ export default function ChatbotAppComp() {
             // A BIBLE NOTE attached now, or opened after the others, takes
             // over from them (`noteChatHelpers.ts`).
             const boxNoteFiles = findNoteAskFiles(attachments);
-            const isNoteFirst =
-                boxNoteFiles.length > 0 ||
+            // A POWERPOINT or WORD file attached now, or opened after the
+            // others, takes over from them (`officeChatHelpers.ts`, EC-761).
+            const boxOfficeFiles = findOfficeAskFiles(attachments);
+            const isOfficeFirst =
+                boxOfficeFiles.length > 0 ||
                 (boxSlideFiles.length === 0 &&
                     boxFlowFiles.length === 0 &&
-                    checkIsNoteOpenedLast(
+                    boxNoteFiles.length === 0 &&
+                    checkIsOfficeOpenedLast(
                         lookupTab?.messages ?? [],
                         lookupTab?.fileClosedAt,
                     ));
+            const isNoteFirst =
+                !isOfficeFirst &&
+                (boxNoteFiles.length > 0 ||
+                    (boxSlideFiles.length === 0 &&
+                        boxFlowFiles.length === 0 &&
+                        checkIsNoteOpenedLast(
+                            lookupTab?.messages ?? [],
+                            lookupTab?.fileClosedAt,
+                        )));
             const isFlowFirst =
-                boxFlowFiles.length > 0 ||
-                (boxSlideFiles.length === 0 &&
-                    pickOpenDocumentKind(
-                        lookupTab?.messages ?? [],
-                        lookupTab?.fileClosedAt,
-                    ) === 'flow');
+                !isOfficeFirst &&
+                (boxFlowFiles.length > 0 ||
+                    (boxSlideFiles.length === 0 &&
+                        pickOpenDocumentKind(
+                            lookupTab?.messages ?? [],
+                            lookupTab?.fileClosedAt,
+                        ) === 'flow'));
             const slideAskFiles =
+                !isOfficeFirst &&
                 !isNoteFirst &&
                 !isFlowFirst &&
                 (options?.shownText === undefined ||
@@ -10307,9 +10451,68 @@ export default function ChatbotAppComp() {
                     trimmedAsked.length === 0 ||
                     (await findKnownQuestion(trimmedAsked, focus, true)) ===
                         null);
+            // A POWERPOINT or WORD file open in this tab, the same way, makes
+            // it a question about changing that file (EC-761).
+            const officeAskFiles =
+                isOfficeFirst &&
+                (options?.shownText === undefined ||
+                    options?.keepOpenFiles === true) &&
+                !trimmedAsked.startsWith('/') &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                lyricAskFiles.length === 0
+                    ? boxOfficeFiles.length > 0
+                        ? boxOfficeFiles
+                        : findOfficeAskFiles(
+                              findOpenSlideAttachments(
+                                  lookupTab?.messages ?? [],
+                                  lookupTab?.fileClosedAt,
+                                  checkIsOfficeEditFileName,
+                              ),
+                          )
+                    : [];
+            // the chat's earlier files, when this question came with its own
+            const officeOtherNames =
+                boxOfficeFiles.length === 0
+                    ? []
+                    : findOfficeAskFiles(
+                          findOpenSlideAttachments(
+                              lookupTab?.messages ?? [],
+                              lookupTab?.fileClosedAt,
+                              checkIsOfficeEditFileName,
+                          ),
+                      )
+                          .filter((file) => {
+                              return !boxOfficeFiles.some((one) => {
+                                  return one.filePath === file.filePath;
+                              });
+                          })
+                          .map((file) => {
+                              return file.name;
+                          });
+            const isOfficeAsk =
+                officeAskFiles.length > 0 &&
+                (options?.isPressed === true ||
+                    trimmedAsked.length === 0 ||
+                    (await findKnownQuestion(trimmedAsked, focus, true)) ===
+                        null);
+            // the pictures from disk in the box and the tab: what a change
+            // may put into the deck by its name (EC-770)
+            const officeAskPictures = isOfficeAsk
+                ? findOfficeAskPictures(
+                      attachments,
+                      lookupTab?.messages ?? [],
+                      lookupTab?.fileClosedAt,
+                  )
+                : [];
             // Any one: a question about changing a document of theirs.
             const isDocumentAsk =
-                isFlowAsk || isLyricAsk || isSlideAsk || isNoteAsk;
+                isFlowAsk ||
+                isLyricAsk ||
+                isSlideAsk ||
+                isNoteAsk ||
+                isOfficeAsk;
             // A FOREGROUND session attached now or still open in this tab,
             // or a typed line naming a foreground component, makes it a
             // question about the foreground (`foregroundChatHelpers.ts`):
@@ -10328,7 +10531,21 @@ export default function ChatbotAppComp() {
                               lookupTab?.foregroundClosedAt,
                           ),
                       );
+            // A plain line under an animation answer -- the 🤖's opening card
+            // in Customize or Shader Code included -- is about THAT
+            // animation (`animationChatHelpers.ts`, 2026-11-19): read as it
+            // is now and changed by `owa_animation_edit`, in any language.
+            // It takes over from a foreground widget the words may name
+            // ("the animation").
+            const isAnimationThread =
+                !isDocumentAsk &&
+                attachments.length === 0 &&
+                generalQuestion === null &&
+                lookupSubject === null &&
+                resourceFileNames.length === 0 &&
+                checkIsAnimationThread(lookupTab?.messages ?? [], trimmedAsked);
             const isForegroundRoutable =
+                !isAnimationThread &&
                 !isDocumentAsk &&
                 (options?.shownText === undefined ||
                     options?.keepOpenFiles === true) &&
@@ -10396,25 +10613,31 @@ export default function ChatbotAppComp() {
                     ...listAssistantLanguages(),
                     ...listTypedLanguages(),
                 ];
-                const opening = isNoteAsk
-                    ? genNoteOpeningAnswer(
-                          noteAskFiles[0].name,
+                const opening = isOfficeAsk
+                    ? genOfficeOpeningAnswer(
+                          officeAskFiles[0].filePath,
                           getAppLanguage(),
                           languages,
                       )
-                    : isFlowAsk
-                      ? genFlowOpeningAnswer(flowAskFiles[0].filePath)
-                      : isSlideAsk
-                        ? genSlideOpeningAnswer(
-                              slideAskFiles[0].filePath,
-                              getAppLanguage(),
-                              languages,
-                          )
-                        : genLyricOpeningAnswer(
-                              lyricAskFiles[0].filePath,
-                              getAppLanguage(),
-                              languages,
-                          );
+                    : isNoteAsk
+                      ? genNoteOpeningAnswer(
+                            noteAskFiles[0].name,
+                            getAppLanguage(),
+                            languages,
+                        )
+                      : isFlowAsk
+                        ? genFlowOpeningAnswer(flowAskFiles[0].filePath)
+                        : isSlideAsk
+                          ? genSlideOpeningAnswer(
+                                slideAskFiles[0].filePath,
+                                getAppLanguage(),
+                                languages,
+                            )
+                          : genLyricOpeningAnswer(
+                                lyricAskFiles[0].filePath,
+                                getAppLanguage(),
+                                languages,
+                            );
                 addMessage(activeSessionId, {
                     author: 'you',
                     text: echoText,
@@ -10740,6 +10963,11 @@ export default function ChatbotAppComp() {
                 verseFindBible === null &&
                 bibleReaderAsk === null &&
                 (await findKnownQuestion(trimmedAsked, focus, true)) === null;
+            const isAnimationAsk =
+                isAnimationThread &&
+                !isStudyAsk &&
+                verseFindBible === null &&
+                bibleReaderAsk === null;
             // Neither of those two: a question about the app, which the
             // guide's pages, the shortcuts and the advice under an answer
             // are all for.
@@ -10752,6 +10980,7 @@ export default function ChatbotAppComp() {
                 !isDocumentAsk &&
                 !isForegroundAsk &&
                 !isScreenAsk &&
+                !isAnimationAsk &&
                 !isStudyAsk;
             // A COMMAND runs here, on the spot, with no model and no key --
             // see `builtinActionHelpers`. Nothing typed after the slash goes
@@ -11264,6 +11493,51 @@ export default function ChatbotAppComp() {
                 bibleReaderAsk === null &&
                 !isForegroundAsk &&
                 !isStudyAsk;
+            // A PowerPoint made into a slide document (2026-11-20, EC-763;
+            // the user: _as a user I want to ask chatbot to help convert the
+            // pptx file to app-document file_): the window answers it on any
+            // assistant, as the song drafter above does -- the Documents
+            // list's PowerPoints as buttons, or the one the ask named
+            // converted at once. A list that cannot be read leaves the ask
+            // to go on as before.
+            const pptxSlidesAsk =
+                isDeckSongAskable && attachments.length === 0
+                    ? readPptxSlidesAsk(trimmedAsked)
+                    : null;
+            const pptxSlidesPlan =
+                pptxSlidesAsk === null
+                    ? null
+                    : await planPptxSlidesAsk(pptxSlidesAsk);
+            if (pptxSlidesPlan !== null) {
+                const pptxSessionId = activeSessionId;
+                addMessage(pptxSessionId, {
+                    author: 'you',
+                    text: echoText,
+                    isStep: true,
+                });
+                clearAskedDraft(pptxSessionId);
+                if (pptxSlidesPlan.kind === 'answer') {
+                    addMessage(pptxSessionId, {
+                        author: 'bot',
+                        text: pptxSlidesPlan.answer.text,
+                        actions: pptxSlidesPlan.answer.actions,
+                    });
+                    return;
+                }
+                const pending = genPendingAsk(pptxSessionId, undefined, false);
+                syncBusy();
+                try {
+                    await runPptxSlidesRef.current(
+                        pptxSlidesPlan.file,
+                        pptxSessionId,
+                    );
+                } finally {
+                    endPendingAsk(pending);
+                    settleSession(pptxSessionId);
+                    clearProgressSteps(pptxSessionId);
+                }
+                return;
+            }
             const deckSongAsk =
                 isDeckSongAskable && attachments.length === 0
                     ? readDeckSongAsk(trimmedAsked)
@@ -11778,6 +12052,38 @@ export default function ChatbotAppComp() {
                           }),
                       )
                     : [];
+                // A PowerPoint or Word file the same way (`owa_office_edit
+                // read`, EC-761): its lines as they are NOW.
+                const isOfficeDocAsk =
+                    isOfficeAsk &&
+                    verseFindBible === null &&
+                    bibleReaderAsk === null;
+                const officeDocs = isOfficeDocAsk
+                    ? await Promise.all(
+                          officeAskFiles.map(async (file) => {
+                              try {
+                                  return {
+                                      name: file.name,
+                                      text: toOfficeDocumentText(
+                                          parseToolJson(
+                                              await callTool(
+                                                  OFFICE_EDIT_TOOL_NAME,
+                                                  {
+                                                      action: 'read',
+                                                      file: file.filePath,
+                                                  },
+                                                  signal,
+                                              ),
+                                          ),
+                                      ),
+                                  };
+                              } catch (_error) {
+                                  throwIfCancelled(signal);
+                                  return { name: file.name, text: null };
+                              }
+                          }),
+                      )
+                    : [];
                 // A presenting flow the same way (`owa_presenting_flow_edit
                 // lines`): its lines as they are NOW.
                 const isFlowDocAsk =
@@ -11950,6 +12256,7 @@ export default function ChatbotAppComp() {
                     !isNoteDocAsk &&
                     !isSongAsk &&
                     !isSlideDocAsk &&
+                    !isOfficeDocAsk &&
                     !isFlowDocAsk &&
                     !isForegroundAsk &&
                     verseFindBible === null &&
@@ -12150,6 +12457,29 @@ export default function ChatbotAppComp() {
                         throwIfCancelled(signal);
                     }
                 }
+                // An animation the same way (`owa_animation_edit read`): its
+                // settings, a shader's code and whether it compiles, as they
+                // are NOW -- and under a change, the id that takes it back.
+                let animationReadText: string | null = null;
+                const animationUndoIds = isAnimationAsk
+                    ? findAnimationUndoIds(lookupTab?.messages ?? [])
+                    : [];
+                if (isAnimationAsk) {
+                    try {
+                        animationReadText = toAnimationReadText(
+                            parseToolJson(
+                                await callTool(
+                                    ANIMATION_EDIT_TOOL_NAME,
+                                    { action: 'read' },
+                                    signal,
+                                ),
+                            ),
+                        );
+                    } catch (_error) {
+                        // The ask goes on: the model reads it itself.
+                        throwIfCancelled(signal);
+                    }
+                }
                 throwIfCancelled(signal);
                 // The song's words go to the model as read above, never also
                 // as the attachment's notation -- a model shown notation
@@ -12160,6 +12490,7 @@ export default function ChatbotAppComp() {
                     (isFlowDocAsk ||
                         isSongAsk ||
                         isSlideDocAsk ||
+                        isOfficeDocAsk ||
                         isNoteDocAsk) &&
                     trimmedAsked.length > 0
                         ? modelAttachments.filter((one) => {
@@ -12172,7 +12503,9 @@ export default function ChatbotAppComp() {
                                   (isFlowDocAsk &&
                                       checkIsFlowFileName(fileName)) ||
                                   (isSlideDocAsk &&
-                                      checkIsSlideFileName(fileName))
+                                      checkIsSlideFileName(fileName)) ||
+                                  (isOfficeDocAsk &&
+                                      checkIsOfficeEditFileName(fileName))
                               );
                           })
                         : modelAttachments;
@@ -12212,6 +12545,25 @@ export default function ChatbotAppComp() {
                     }
                     if (isScreenAsk) {
                         return toScreenAsk(text, screenReadText, screenUndoIds);
+                    }
+                    if (isAnimationAsk) {
+                        return toAnimationAsk(
+                            text,
+                            animationReadText,
+                            animationUndoIds,
+                        );
+                    }
+                    if (isOfficeDocAsk) {
+                        return toOfficeAsk(
+                            text,
+                            officeDocs,
+                            readLyricTranslateMode(trimmedAsked),
+                            trimmedAsked.length === 0,
+                            officeAskPictures.map((one) => {
+                                return one.name;
+                            }),
+                            officeOtherNames,
+                        );
                     }
                     if (isSlideDocAsk) {
                         return toSlideAsk(
@@ -12400,7 +12752,7 @@ export default function ChatbotAppComp() {
                 // than its own: the passage's letters, which the cleaner
                 // had taken out of a non-Latin-script answer about the Greek Bible
                 // letter by letter (2026-10-23).
-                const answerKeep =
+                const passageKeep =
                     lookupSubject === null || isLookupAppAsk
                         ? undefined
                         : (lookupStudy?.keep ??
@@ -12409,6 +12761,18 @@ export default function ChatbotAppComp() {
                                     readLookupFacts(lookupSubject.facts),
                                 )
                               : undefined));
+                // And the words of the document the answer is about, which
+                // a quotation keeps as the file has them (2026-11-21).
+                const documentText = [...officeDocs, ...slideDocs]
+                    .map((doc) => {
+                        return doc.text ?? '';
+                    })
+                    .join('\n')
+                    .trim();
+                const answerKeep =
+                    documentText.length === 0
+                        ? passageKeep
+                        : { ...passageKeep, fileText: documentText };
                 const toLookupModelAsk = (
                     text: string,
                     subject: LookupSubjectType,
@@ -12746,6 +13110,7 @@ export default function ChatbotAppComp() {
                         isForegroundDocAsk ||
                         isSongAsk ||
                         isSlideDocAsk ||
+                        isOfficeDocAsk ||
                         isNoteDocAsk
                     ) {
                         return {
@@ -13260,6 +13625,21 @@ export default function ChatbotAppComp() {
                                 ...(isSlideDocAsk
                                     ? { slide: { files: slideAskFiles } }
                                     : {}),
+                                ...(isOfficeDocAsk
+                                    ? {
+                                          office: {
+                                              files: officeAskFiles,
+                                              // only when one is attached:
+                                              // an ask carries no empty list
+                                              ...(officeAskPictures.length === 0
+                                                  ? {}
+                                                  : {
+                                                        pictures:
+                                                            officeAskPictures,
+                                                    }),
+                                          },
+                                      }
+                                    : {}),
                                 ...(isFlowDocAsk
                                     ? { flow: { files: flowAskFiles } }
                                     : {}),
@@ -13282,6 +13662,9 @@ export default function ChatbotAppComp() {
                                     : {}),
                                 ...(isScreenAsk
                                     ? { screen: { isThread: isScreenThread } }
+                                    : {}),
+                                ...(isAnimationAsk
+                                    ? { animation: { isThread: true } }
                                     : {}),
                                 ...(isNoteDocAsk
                                     ? {
@@ -13512,7 +13895,10 @@ export default function ChatbotAppComp() {
                             // A song or slides put into another language:
                             // Gemma 4 first, the user's word for any
                             // translation.
-                            ...((isSongAsk || isSlideDocAsk || isNoteDocAsk) &&
+                            ...((isSongAsk ||
+                                isSlideDocAsk ||
+                                isOfficeDocAsk ||
+                                isNoteDocAsk) &&
                             checkIsLyricTranslateAsk(trimmedAsked)
                                 ? {
                                       preferModelPattern:
@@ -14444,6 +14830,9 @@ export default function ChatbotAppComp() {
                         : {}),
                     // ...or more about the screens.
                     ...(isScreenAsk ? { isScreenAnswer: true as const } : {}),
+                    ...(isAnimationAsk
+                        ? { isAnimationAnswer: true as const }
+                        : {}),
                     // ...or the study the card above it holds (EC-702).
                     ...(isAskFailed ? { isAskFailed: true as const } : {}),
                     ...usageTally.toField(),
@@ -14495,6 +14884,9 @@ export default function ChatbotAppComp() {
                         ? { isLookupAnswer: true as const }
                         : {}),
                     ...(isScreenAsk ? { isScreenAnswer: true as const } : {}),
+                    ...(isAnimationAsk
+                        ? { isAnimationAnswer: true as const }
+                        : {}),
                     isAskFailed: true,
                 });
                 // Told either way: a card left waiting on an answer that is
@@ -16402,6 +16794,40 @@ export default function ChatbotAppComp() {
             // **Undo this change** under a song the assistant changed: put
             // back here, by the change's own id, and said in a sentence --
             // the undo tool's answer is JSON nobody should have to read.
+            // **Undo this change** under an animation answer: that tool's
+            // own undo, by the answer's OLDEST change, which puts back every
+            // change made after it in that editor.
+            if (
+                action.toolName === LYRIC_UNDO_TOOL_NAME &&
+                action.args?.kind === ANIMATION_UNDO_KIND
+            ) {
+                const undoId = pickAnimationUndoId(action.args ?? {});
+                try {
+                    if (undoId === null) {
+                        throw new Error('No change is named.');
+                    }
+                    await callTool(ANIMATION_EDIT_TOOL_NAME, {
+                        action: 'undo',
+                        id: undoId,
+                    });
+                    addMessage(actedSessionId, {
+                        author: 'bot',
+                        isFollowUp: true,
+                        isAnimationAnswer: true,
+                        text: tran(
+                            'The animation is back as it was before that ' +
+                                'change.',
+                        ),
+                    });
+                } catch (error: any) {
+                    addMessage(actedSessionId, {
+                        author: 'bot',
+                        isFollowUp: true,
+                        text: describeActionError(error, action),
+                    });
+                }
+                return;
+            }
             if (action.toolName === LYRIC_UNDO_TOOL_NAME) {
                 const undoId = String(action.args?.id ?? '');
                 const songName = String(action.args?.name ?? '');
@@ -16507,13 +16933,24 @@ export default function ChatbotAppComp() {
                                       ),
                                       { name: songName },
                                   )
-                                : fillWords(
-                                      tran(
-                                          '“{name}” is back as it was ' +
-                                              'before that change.',
-                                      ),
-                                      { name: songName },
-                                  ),
+                                : // every document the answer changed, one
+                                  // sentence each (EC-787)
+                                  (Array.isArray(action.args?.names)
+                                      ? (action.args.names as unknown[]).map(
+                                            String,
+                                        )
+                                      : [songName]
+                                  )
+                                      .map((name) => {
+                                          return fillWords(
+                                              tran(
+                                                  '“{name}” is back as it was ' +
+                                                      'before that change.',
+                                              ),
+                                              { name },
+                                          );
+                                      })
+                                      .join('\n'),
                     });
                 } catch (error: any) {
                     addMessage(actedSessionId, {
@@ -16854,6 +17291,34 @@ export default function ChatbotAppComp() {
                         },
                     );
                     syncBusy();
+                }
+                return;
+            }
+            // A PowerPoint of the Documents list made into a slide document
+            // (EC-763). Busy in its tab, and not stoppable: the converter
+            // runs to its end in the app either way.
+            if (action.toolName === PPTX_SLIDES_TOOL_NAME) {
+                const pptxFile = readPptxSlidesArgs(action.args);
+                if (pptxFile === null) {
+                    return;
+                }
+                busyHoldListRef.current = [
+                    ...busyHoldListRef.current,
+                    actedSessionId,
+                ];
+                syncBusy();
+                try {
+                    await runPptxSlidesRef.current(pptxFile, actedSessionId);
+                } finally {
+                    const holdIndex =
+                        busyHoldListRef.current.indexOf(actedSessionId);
+                    busyHoldListRef.current = busyHoldListRef.current.filter(
+                        (_sessionId, index) => {
+                            return index !== holdIndex;
+                        },
+                    );
+                    syncBusy();
+                    clearProgressSteps(actedSessionId);
                 }
                 return;
             }
@@ -17679,7 +18144,7 @@ export default function ChatbotAppComp() {
                         className="chat-file-input"
                         type="file"
                         multiple
-                        accept="image/*,text/*,.md,.markdown,.json,.csv,.log,.xml,.pdf,application/pdf,.own,.ows,.pptx,.docx"
+                        accept="image/*,text/*,.md,.markdown,.json,.csv,.log,.xml,.pdf,application/pdf,.own,.ows,.pptx,.docx,.mp4,.m4v,.mov,.wmv,.avi,.mp3,.m4a,.wav,.wma"
                         onChange={(event) => {
                             addFiles([...(event.target.files ?? [])]);
                             // Cleared so choosing the SAME file twice still

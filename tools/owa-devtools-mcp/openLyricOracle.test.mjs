@@ -193,6 +193,32 @@ const CASE_LIST = [
         true,
     ],
     ['bad Tempo', genLyricDoc('hi').replace('68bpm', '68 bpm'), false],
+    [
+        'Keywords, Year and Melody (open-lyric 0.1.89)',
+        genDoc(
+            [
+                '- Structure: V1',
+                '- Keywords: grace, morning',
+                '- Year: 1779',
+                '- Melody: New Britain',
+            ],
+            ['```ol:Verse 1', 'hi', '```'],
+        ),
+        true,
+    ],
+    [
+        'a two-digit Year',
+        genDoc(['- Structure: V1', '- Year: 79'], ['```ol:Verse 1', 'hi', '```']),
+        false,
+    ],
+    [
+        'a Year range',
+        genDoc(
+            ['- Structure: V1', '- Year: 2023-2024'],
+            ['```ol:Verse 1', 'hi', '```'],
+        ),
+        false,
+    ],
     ['bad Key', genLyricDoc('hi').replace('- Key: C', '- Key: H'), false],
     ['bad Time', genLyricDoc('hi').replace('- Time: 4/4', '- Time: 5/4'), false],
     [

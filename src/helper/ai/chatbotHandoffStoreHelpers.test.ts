@@ -20,10 +20,12 @@ vi.mock('../settingHelpers', () => {
 
 import {
     SELECTION_MENTION_GAP,
+    requestChatbotAnimation,
     requestChatbotAsk,
     requestChatbotFile,
     requestChatbotLookup,
     requestChatbotReport,
+    takeChatbotAnimationRequest,
     takeChatbotAsk,
     takeChatbotFile,
     takeChatbotFileRequest,
@@ -468,5 +470,50 @@ describe('a record handed to the assistant', () => {
         expect(takeChatbotLookup()).toBeNull();
         store.set('chatbot-handoff-lookup', 'not json');
         expect(takeChatbotLookup()).toBeNull();
+    });
+});
+
+describe('an animation editor handed to the assistant', () => {
+    beforeEach(() => {
+        store.clear();
+        vi.useRealTimers();
+    });
+
+    it('is taken once: the editor, its name and its engine', () => {
+        requestChatbotAnimation({
+            editorId: 'background:0',
+            name: '  Aurora\n  (custom) ',
+            engine: 'css',
+        });
+        expect(takeChatbotAnimationRequest()).toEqual({
+            editorId: 'background:0',
+            name: 'Aurora (custom)',
+            engine: 'css',
+        });
+        expect(takeChatbotAnimationRequest()).toBeNull();
+    });
+
+    it('is nothing for an editor it does not know, stale or edited', () => {
+        requestChatbotAnimation({
+            editorId: '../setting',
+            name: 'x',
+            engine: 'glsl',
+        });
+        requestChatbotAnimation({
+            editorId: 'foreground:1',
+            name: 'x',
+            engine: 'webgl' as any,
+        });
+        expect(store.size).toBe(0);
+        vi.useFakeTimers();
+        requestChatbotAnimation({
+            editorId: 'foreground:none',
+            name: 'Plasma',
+            engine: 'glsl',
+        });
+        vi.advanceTimersByTime(31 * 1000);
+        expect(takeChatbotAnimationRequest()).toBeNull();
+        store.set('chatbot-handoff-animation', 'not json');
+        expect(takeChatbotAnimationRequest()).toBeNull();
     });
 });

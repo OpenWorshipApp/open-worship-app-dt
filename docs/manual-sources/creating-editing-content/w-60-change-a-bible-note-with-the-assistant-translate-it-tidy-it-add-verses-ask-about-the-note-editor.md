@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-110, CB-169]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-60 — Change a Bible note with the assistant (translate it, tidy it, add verses, ask about the note editor)
 
@@ -48,6 +48,7 @@ row's own **[en:tran:Delete]** (a notes file's **[en:tran:Move to Trash]**).
    in your browser and **[en:tran:Copy Selected Text]** copies them, with no assistant.
    Select other words and press the robot again: they go under the first ones, in the
    same chat.
+
 2. The help window opens a chat of its own with that one note attached under the box, and a
    card that says what it can do, with five buttons. 📸 The chat works in the note's own
    window: at the top it is asking about **[en:tran:Bible Note]**, and **[en:tran:Working in]** above the box
@@ -180,5 +181,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-110` · `CB-169`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

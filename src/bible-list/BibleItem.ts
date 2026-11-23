@@ -94,7 +94,21 @@ export default class BibleItem
         this.originalJson.metadata = metadata;
     }
     get extraBibleKeys() {
-        return this.originalJson.extraBibleKeys ?? [];
+        const extraBibleKeys = this.originalJson.extraBibleKeys ?? [];
+        // Never the main Bible and never one twice: a pane split "to" the
+        // Bible that was already its extra one drew that translation twice,
+        // and React warned of two children keyed by it (F-5 of robot run
+        // 20261120-2021). The stored list is handed back as it is when it is
+        // already clean, so a reader comparing it by identity sees no change.
+        const checkIsKept = (key: string, index: number) => {
+            return (
+                key !== this.bibleKey && extraBibleKeys.indexOf(key) === index
+            );
+        };
+        if (extraBibleKeys.every(checkIsKept)) {
+            return extraBibleKeys;
+        }
+        return extraBibleKeys.filter(checkIsKept);
     }
     set extraBibleKeys(extraBibleKeys: string[]) {
         this.originalJson.extraBibleKeys = extraBibleKeys;

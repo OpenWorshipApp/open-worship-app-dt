@@ -10,3 +10,18 @@
     cursor: pointer;
   }
 }
+
+// The song's Undo / Redo / Discard changed / Save above the words, laid out as
+// the Stage Previewer's row is. A flex item the column must not squeeze below
+// its buttons, and gone while the song has no history: `FileEditingMenuComp`
+// renders nothing then, and an empty row would still take its padding.
+.app-lyric-render-preview-editing-menu {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+
+  &:empty {
+    display: none;
+  }
+}

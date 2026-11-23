@@ -5,7 +5,7 @@ section: "Bible study"
 verify: [RD-01, RD-02, RD-03, RD-04, RD-05, RD-06, RD-07, RD-11, RD-19, RD-21, RD-29, RD-38, RD-122, RD-124, RD-125, RD-126, ST-59, CB-125]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-11 — Read the Bible (references, text size, history, versions)
 
@@ -20,6 +20,7 @@ has no header tabs.
    the verse from the buttons that appear; the passage opens. This is the preferred
    route for a non-English Bible because the buttons use that Bible's own names and
    numbers. 📸
+
    > Typing a full reference such as `John 3:16` is an optional shortcut when the
    > selected Bible recognizes it. **Tab** completes a piece, **Escape** clears the
    > last piece and **Shift+Escape** clears the box.
@@ -34,9 +35,10 @@ has no header tabs.
    (**[en:tran:Show the next chapter]**): each click adds the next chapter, and
    the button goes once the last one is shown. 📸
    **Open a reference in a section heading.** Some Bibles print references in their section headings — `(… យ៉ូហាន
-   ១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
+១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
    names opens in a small floating panel — a long one the same way, three chapters
    and **...** — and the passage you are reading stays as it is.
+
 2. If the words are too small, click the small **⋯** at the bottom-left of the
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
@@ -103,5 +105,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-01` · `RD-02` · `RD-03` · `RD-04` · `RD-05` · `RD-06` · `RD-07` · `RD-11` · `RD-19` · `RD-21` · `RD-29` · `RD-38` · `RD-122` · `RD-124` · `RD-125` · `RD-126` · `ST-59` · `CB-125`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

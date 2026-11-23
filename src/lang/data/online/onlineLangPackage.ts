@@ -102,9 +102,73 @@ export type LangFolderType = {
     fonts?: LangFontsFileType;
     // Each `fonts.json` file, resolved to the address it is served at.
     fontUrls?: Record<string, string>;
-    // `openLyricPlugin.ts`: its song plugin, the one part that is code.
+    // `openLyricPlugin.ts`: its song plugin, the one part that is code --
+    // the editor's as its default export,
     OpenLyricPlugin?: new () => object;
+    // and the whole module, for the preview's and the Config card's plugins
+    // when it names them (`LyricPreviewPlugin`, `LyricMarkdownPlugin`).
+    openLyricPluginModule?: OpenLyricPluginModuleType;
 };
+
+type OpenLyricPluginModuleType = {
+    LyricPreviewPlugin?: new () => object;
+    LyricMarkdownPlugin?: new () => object;
+};
+
+type SongLabelsType = Record<string, string>;
+
+/**
+ * The labels a song plugin prints around a song in the language -- `Key`,
+ * `Attachments` and the rest, keyed by their English -- or null.
+ */
+function readSongLabels(
+    Plugin: (new () => object) | undefined,
+): SongLabelsType | null {
+    if (Plugin === undefined) {
+        return null;
+    }
+    const plugin = new Plugin() as {
+        contributes?: { language?: { labels?: unknown } };
+    };
+    const labels = plugin.contributes?.language?.labels;
+    return typeof labels === 'object' && labels !== null
+        ? (labels as SongLabelsType)
+        : null;
+}
+
+type SongSurfaceType = {
+    addPlugin: (id: string, plugin: any) => void;
+    hasPlugin: (id: string) => boolean;
+};
+
+/**
+ * Gives a song preview (or the Config card) the language's labels, as a
+ * plugin of that one contribution (robot run 20261120-2021 F-10: a Khmer
+ * song's card read _Attachments:_ and _Key:_ in a Khmer app, the song
+ * plugin having gone to the editor alone). Which language a preview prints
+ * them in is the app's to say, not the song's: it sets the preview's
+ * `labelLocale` to its own locale (`applyOpenLyricLabelLocale`, the user,
+ * 2026-11-21: _it should not depend on lyric locale_), and this plugin is
+ * the one that claims it. The language's own plugin class is not attached: its `install()`
+ * keeps every preview it is attached to in a page-wide set for its
+ * label-language field, and a preview is made for every song selected.
+ */
+function addSongLabels(
+    target: SongSurfaceType | undefined,
+    locale: string,
+    surface: 'lyric' | 'markdown',
+    labels: SongLabelsType | null,
+) {
+    if (target === undefined || labels === null || target.hasPlugin(locale)) {
+        return;
+    }
+    target.addPlugin(locale, {
+        id: locale,
+        apiVersion: 1,
+        surfaces: [surface],
+        contributes: { language: { labels } },
+    });
+}
 
 const WESTERN_DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const ZERO_WIDTH_SPACE = '\u200B';
@@ -172,7 +236,22 @@ export function genLangData(folder: LangFolderType): LanguageDataType {
 
     const fontsData =
         fonts === undefined ? null : genFontsData(fonts, folder.fontUrls ?? {});
-    const { OpenLyricPlugin, lookupDataUrls, crossRefBundle } = folder;
+    const { OpenLyricPlugin, openLyricPluginModule, lookupDataUrls } = folder;
+    const { crossRefBundle } = folder;
+    // Read once, at the first song preview, and kept with the language: a
+    // few dozen short strings.
+    let songLabels:
+        | { lyric: SongLabelsType | null; markdown: SongLabelsType | null }
+        | undefined;
+    const getSongLabels = () => {
+        songLabels ??= {
+            lyric: readSongLabels(openLyricPluginModule?.LyricPreviewPlugin),
+            markdown: readSongLabels(
+                openLyricPluginModule?.LyricMarkdownPlugin,
+            ),
+        };
+        return songLabels;
+    };
 
     const langData: LanguageDataType = {
         packageDir: '',
@@ -286,7 +365,11 @@ export function genLangData(folder: LangFolderType): LanguageDataType {
             }
         };
     }
-    if (OpenLyricPlugin !== undefined || fonts !== undefined) {
+    if (
+        OpenLyricPlugin !== undefined ||
+        openLyricPluginModule !== undefined ||
+        fonts !== undefined
+    ) {
         langData.initOpenLyricPlugins = ({
             editor,
             openLyric,
@@ -295,6 +378,16 @@ export function genLangData(folder: LangFolderType): LanguageDataType {
         }) => {
             if (OpenLyricPlugin !== undefined) {
                 editor?.addPlugin(locale, new OpenLyricPlugin() as any);
+            }
+            if (openLyricPluginModule !== undefined) {
+                const labels = getSongLabels();
+                addSongLabels(openLyric, locale, 'lyric', labels.lyric);
+                addSongLabels(
+                    openLyricMarkdownManager,
+                    locale,
+                    'markdown',
+                    labels.markdown,
+                );
             }
             if (fonts === undefined) {
                 return;

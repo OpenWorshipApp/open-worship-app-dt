@@ -426,14 +426,14 @@ describe('note containers', () => {
             Array.from(container.querySelectorAll('section')).map((section) =>
                 section.getAttribute('data-widget'),
             ),
-        ).toEqual(['Sunday.slides', 'Welcome']);
+        ).toEqual(['Document Note', 'Slide Note']);
         expect(noteTexts()).toEqual([
             ['Document Note', 'doc'],
             ['Slide Note', 'slide'],
         ]);
     });
 
-    it('names an unnamed slide pane by its id', async () => {
+    it('names an unnamed slide pane by its header, not its id', async () => {
         await render(
             <CanvasNoteContainerHandlerComp
                 appDocument={genAppDocument()}
@@ -444,7 +444,7 @@ describe('note containers', () => {
             container
                 .querySelectorAll('section')[1]
                 .getAttribute('data-widget'),
-        ).toBe('42');
+        ).toBe('Slide Note');
     });
 
     it('lists every slide note under the document note in the presenter', async () => {
@@ -464,7 +464,7 @@ describe('note containers', () => {
             container.querySelector('.resize')?.getAttribute('data-flex'),
         ).toBe('float-presenter-note@/docs/Sunday.slides');
         const sections = container.querySelectorAll('section');
-        expect(sections[0].getAttribute('data-widget')).toBe('Sunday.slides');
+        expect(sections[0].getAttribute('data-widget')).toBe('Document Note');
         expect(sections[1].getAttribute('data-widget')).toBe('Slide Notes');
         expect(sections[1].getAttribute('data-widget-key')).toBe('Slide Notes');
         expect(noteTexts()).toEqual([

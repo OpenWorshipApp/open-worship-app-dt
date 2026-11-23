@@ -3,7 +3,7 @@ id: W-21
 title: "Ajouter une vidéo ou un chant d'arrière-plan à partir d'un lien"
 section: "Configuration"
 lang: fr
-translatedFrom: 9e795a2f164243ed
+translatedFrom: 99d4f5bde383c5c6
 ---
 # W-21 — Ajouter une vidéo ou un chant d'arrière-plan à partir d'un lien
 
@@ -29,8 +29,9 @@ téléchargement continue tout seul. Quand une version plus récente est sortie,
    une nouvelle vignette dans l'onglet Vidéos, l'audio comme une nouvelle ligne sous **[en:tran:Audios]**. 📸 À partir
    de là, il se comporte comme n'importe quel autre arrière-plan (W-08) ou piste (W-09).
 
-> Remarques : l'audio est toujours converti en **MP3**, la vidéo garde la meilleure qualité du site
-> (`.webm`/`.mp4`). Si un fichier de ce nom est déjà dans le dossier, le nouveau est
+> Remarques : l'audio est toujours converti en **MP3**. La vidéo est enregistrée en 1080p au plus,
+> dans le format qu'un ordinateur ancien lit le plus facilement : un `.mp4` H.264 quand le site en
+> propose un, sinon le plus souvent `.webm`. Si un fichier de ce nom est déjà dans le dossier, le nouveau est
 > enregistré sous `name (1)`. Coller quelque chose qui n'est pas un lien web affiche un message
 > **[en:tran:Invalid URL]** et rien n'est téléchargé. Les téléchargements nécessitent une connexion
 > Internet — et un site très sollicité peut couper un gros téléchargement en cours de route, et dans ce cas,

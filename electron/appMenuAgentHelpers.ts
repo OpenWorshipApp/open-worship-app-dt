@@ -22,18 +22,42 @@ import { BrowserWindow, Menu, type MenuItem } from 'electron';
 export const AGENT_MENU_LIST_CHANNEL = 'main:app:agent-menu-list';
 export const AGENT_MENU_CLICK_CHANNEL = 'main:app:agent-menu-click';
 
-const DENIED_ROLE_SET = new Set([
-    'toggledevtools',
-    'quit',
-    'close',
-    'hide',
-    'hideothers',
-    'unhide',
-    'services',
-    'front',
-    'window',
-    'startspeaking',
-    'stopspeaking',
+// Each refused role says what IT does: one sentence for all of them told the
+// agent that Speech and Bring All to Front "close or hide the app" (F-1 of
+// robot run 20261120-2021), which is not what any of them does.
+const CLOSING_ROLE_REASON =
+    'That closes the app or its window -- a screen in front of a ' +
+    "congregation included -- so it is the user's to press.";
+const HIDING_ROLE_REASON =
+    'That hides this app or the other apps on the computer, and what is ' +
+    "on the person's desktop is theirs to arrange.";
+const ARRANGING_ROLE_REASON =
+    "That moves this app's windows in front of whatever the person is " +
+    'working in, and what is on their desktop is theirs to arrange.';
+const SPEAKING_ROLE_REASON =
+    "That is the computer's Speech: it reads the selected words aloud " +
+    'through the speakers -- in a church, into the room -- so starting or ' +
+    "stopping it is the user's.";
+const DENIED_ROLE_REASON_MAP = new Map<string, string>([
+    ['quit', CLOSING_ROLE_REASON],
+    ['close', CLOSING_ROLE_REASON],
+    ['hide', HIDING_ROLE_REASON],
+    ['hideothers', HIDING_ROLE_REASON],
+    [
+        'unhide',
+        'That brings back every app the computer has hidden, and what is ' +
+            "on the person's desktop is theirs to arrange.",
+    ],
+    [
+        'services',
+        'That hands the selection to another program on this computer ' +
+            "(the system's Services), outside this app, so it is the " +
+            "user's to press.",
+    ],
+    ['front', ARRANGING_ROLE_REASON],
+    ['window', ARRANGING_ROLE_REASON],
+    ['startspeaking', SPEAKING_ROLE_REASON],
+    ['stopspeaking', SPEAKING_ROLE_REASON],
 ]);
 // Labels, for the items that carry no role. Compared case-insensitively.
 const DENIED_LABEL_SET = new Set(['relaunch']);
@@ -63,11 +87,9 @@ function findRefusal(item: MenuItem) {
             'in every window of this app, so it is not opened for anyone.'
         );
     }
-    if (DENIED_ROLE_SET.has(role)) {
-        return (
-            'That closes or hides the app, every window of it, so it is ' +
-            "the user's to press."
-        );
+    const roleReason = DENIED_ROLE_REASON_MAP.get(role);
+    if (roleReason !== undefined) {
+        return roleReason;
     }
     const label = String(item.label ?? '').toLowerCase();
     if (label === FACTORY_RESET_DENIED_LABEL) {

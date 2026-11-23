@@ -6,14 +6,25 @@
 // --include=*.ts*" before grep runs. bash passes the word through
 // unchanged, which is why the habit survives. Measured before the guard: 3 of
 // 27 sessions hit it (x4), and the run that proposed this guard hit it twice.
-// A `--flag=value` word is never meant to match files, so this refuses
-// exactly that shape -- unquoted, under zsh -- and names the quoted form.
+// A `--flag=value` word is never meant to match files, so this catches
+// exactly that shape -- unquoted, under zsh.
+//
+// Since 2026-11-19 (`AD-35`) it ESCAPES the glob instead of refusing the
+// call: the refusal had cost a round trip in 14 of 40 sessions. It answers
+// `hookSpecificOutput.updatedInput` with a backslash before each unquoted
+// `*`, `?`, `[` of such a word -- not quotes around it, so a brace list,
+// a `$VAR` or a `~` in the same word keeps its meaning -- and NO
+// `permissionDecision`: Claude Code evaluates the permission rules, the
+// auto-mode classifier and any prompt against the rewritten command exactly
+// as it would have the original. Never add "allow" here; that would skip the
+// person's prompts for every command this rewrites.
 //
 //   node zsh-glob-guard.mjs hook        (stdin: the hook's JSON)
 //
-// Exit 2 refuses the call and hands the message to the agent; anything else
-// (another tool, another shell, a quoted glob, a parse it cannot follow)
-// exits 0. It never fails a call it could not read.
+// Exit 0 with JSON on stdout rewrites the call. When a rewrite would not
+// come out clean, exit 2 refuses as before and names the quoted form.
+// Anything else (another tool, another shell, a quoted glob, a parse it
+// cannot follow) exits 0 with nothing. It never fails a call it could not read.
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -27,17 +38,37 @@ const WORD_BREAK_SET = new Set([' ', '\t', '\n', ';', '|', '&', '(', ')', '<', '
  * is skipped, since the shell does not glob it.
  */
 export function findUnquotedFlagGlobs(command) {
+    return scanFlagGlobs(command).found;
+}
+
+/**
+ * The command with a backslash before every unquoted glob character of
+ * those words, and the words found. zsh then passes each word on exactly as
+ * bash would have.
+ */
+export function escapeUnquotedFlagGlobs(command) {
+    const { found, globIndexList } = scanFlagGlobs(command);
+    let escaped = command;
+    for (const index of [...globIndexList].sort((a, b) => b - a)) {
+        escaped = `${escaped.slice(0, index)}\\${escaped.slice(index)}`;
+    }
+    return { found, command: escaped };
+}
+
+function scanFlagGlobs(command) {
     const found = [];
+    const globIndexList = [];
     let word = '';
-    let isGlobInWord = false;
+    let wordGlobIndexList = [];
     let quote = null;
     const heredocList = [];
     const finishWord = () => {
-        if (isGlobInWord && /^--[A-Za-z0-9][\w-]*=/.test(word)) {
+        if (wordGlobIndexList.length > 0 && /^--[A-Za-z0-9][\w-]*=/.test(word)) {
             found.push(word);
+            globIndexList.push(...wordGlobIndexList);
         }
         word = '';
-        isGlobInWord = false;
+        wordGlobIndexList = [];
     };
     for (let index = 0; index < command.length; index += 1) {
         const char = command[index];
@@ -112,12 +143,12 @@ export function findUnquotedFlagGlobs(command) {
             continue;
         }
         if (GLOB_CHARACTER_SET.has(char)) {
-            isGlobInWord = true;
+            wordGlobIndexList.push(index);
         }
         word += char;
     }
     finishWord();
-    return found;
+    return { found, globIndexList };
 }
 
 function quoteValue(flagWord) {
@@ -139,8 +170,20 @@ function runHook() {
     if (typeof command !== 'string') {
         return 0;
     }
-    const found = findUnquotedFlagGlobs(command);
+    const { found, command: escaped } = escapeUnquotedFlagGlobs(command);
     if (found.length === 0) {
+        return 0;
+    }
+    if (findUnquotedFlagGlobs(escaped).length === 0) {
+        process.stdout.write(
+            JSON.stringify({
+                hookSpecificOutput: {
+                    hookEventName: 'PreToolUse',
+                    // The whole input object: updatedInput replaces it.
+                    updatedInput: { ...input.tool_input, command: escaped },
+                },
+            }),
+        );
         return 0;
     }
     process.stderr.write(

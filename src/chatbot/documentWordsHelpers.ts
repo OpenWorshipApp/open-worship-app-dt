@@ -24,6 +24,7 @@ import {
     fsDeleteDir,
     fsGetFileSize,
     fsReadFile,
+    fsReadFileBytes,
     getTempPath,
     pathBasename,
     pathDirname,
@@ -181,6 +182,68 @@ async function readConvertedCopyWords(filePath: string, kind: OfficeKindType) {
     }
 }
 
+/**
+ * A deck's or a Word file's words as the app's own reader reads them, a
+ * slide a block -- a SmartArt's boxes too, which the converter draws as a
+ * picture (2026-11-21, EC-787: an org chart deck, its every word in a
+ * SmartArt, could not be attached at all: _I cannot read it_).
+ */
+export function toOfficeReadBlocks(read: any): string[][] {
+    const toWords = (list: unknown) => {
+        return (Array.isArray(list) ? list : [])
+            .map((one) => {
+                return typeof one === 'string' ? one : one?.text;
+            })
+            .filter((one): one is string => {
+                return typeof one === 'string' && one.trim() !== '';
+            });
+    };
+    if (Array.isArray(read?.slides)) {
+        return read.slides
+            .map((slide: any) => {
+                return [
+                    ...toWords(slide?.lines),
+                    ...(Array.isArray(slide?.boxes) ? slide.boxes : []).flatMap(
+                        (box: any) => {
+                            return box?.kind === 'smartart'
+                                ? toWords(box?.words)
+                                : [];
+                        },
+                    ),
+                ];
+            })
+            .filter((block: string[]) => {
+                return block.length > 0;
+            });
+    }
+    const lines = toWords(read?.lines);
+    return lines.length === 0 ? [] : [lines];
+}
+
+// loaded only for a file the converter found no words in
+async function readOwnOfficeWords(filePath: string, kind: OfficeKindType) {
+    try {
+        const [
+            { openOfficePackage },
+            { readOfficeDocument, toOfficeReadResult },
+        ] = await Promise.all([
+            import('../ms-office/officePackageIoHelpers'),
+            import('../ms-office/officePackageEditHelpers'),
+        ]);
+        const opened = openOfficePackage(await fsReadFileBytes(filePath));
+        if ('reason' in opened) {
+            return null;
+        }
+        const document = await readOfficeDocument(opened.pkg, kind);
+        if ('reason' in document) {
+            return null;
+        }
+        return toWordsText(toOfficeReadBlocks(toOfficeReadResult(document, 0)));
+    } catch (_error) {
+        return null;
+    }
+}
+
 async function readPdfWords(filePath: string) {
     const result = await electronSendAsync<any>('main:app:pdf-to-chat-pages', {
         filePath,
@@ -223,9 +286,11 @@ export async function readDocumentWords(
         }
         const kind: OfficeKindType = extension === 'pptx' ? 'pptx' : 'docx';
         const preview = await readPreviewWords(filePath, kind);
-        return preview !== null
-            ? preview.words
-            : await readConvertedCopyWords(filePath, kind);
+        const words =
+            preview !== null
+                ? preview.words
+                : await readConvertedCopyWords(filePath, kind);
+        return words ?? (await readOwnOfficeWords(filePath, kind));
     } catch (error) {
         console.warn('The words of a document could not be read:', error);
         return null;

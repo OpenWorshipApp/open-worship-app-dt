@@ -19,6 +19,7 @@ import { notifyElementHighlight } from '../../helper/domHelpers';
 import { checkIsTypingTarget } from '../../presenting-control/presentingControlShortcutHelpers';
 import Slide from '../../app-document-list/Slide';
 import PptxSlide from '../../app-document-list/PptxSlide';
+import { toSlideViewIndex } from '../../app-document-list/slideViewIndexHelpers';
 import EventHandler from '../../event/EventHandler';
 import { handleError } from '../../helper/errorHelpers';
 
@@ -206,7 +207,7 @@ function toVarySlideViewIndex(
             return subSlide.id === target.id;
         });
         if (j !== -1) {
-            return PptxSlide.calcIndex(i, j) + 1;
+            return toSlideViewIndex(PptxSlide.calcIndex(i, j));
         }
     }
     return null;
@@ -306,22 +307,27 @@ export function handleNextItemSelecting({
         if (viewIndex !== null) {
             slidePreviewerMethods.handleSlideItemSelected(viewIndex, varySlide);
         }
+        focusNoteEditor(varySlide);
     }
-    for (let i = 0; i < foundList.length; i++) {
-        const { varySlide, screenId } = foundList[i];
+    // Handed to every screen now, in the same task as the key press. The
+    // screens took it a timer later -- 100ms more per screen, left over from
+    // when each step also smooth-scrolled a card -- and a press arriving
+    // before that stepped again from the slide that was leaving: the press was
+    // lost and the screens showed different slides (measured 2026-11-19, five
+    // Space presses 40-60ms apart moved two screens three slides). The screen
+    // counts a slide handed over as presented from this moment, though it is
+    // drawn a few awaits later (`presentingVarySlideData`).
+    for (const { varySlide, screenId } of foundList) {
         const screenManager = getScreenManagerByScreenId(screenId);
         if (screenManager === null) {
             continue;
         }
-        setTimeout(() => {
-            const { screenVaryAppDocumentManager } = screenManager;
-            screenVaryAppDocumentManager.varySlideData =
-                screenVaryAppDocumentManager.toSlideData(
-                    varySlide.filePath,
-                    varySlide.toJson(),
-                );
-            focusNoteEditor(varySlide);
-        }, i * 100);
+        const { screenVaryAppDocumentManager } = screenManager;
+        screenVaryAppDocumentManager.varySlideData =
+            screenVaryAppDocumentManager.toSlideData(
+                varySlide.filePath,
+                varySlide.toJson(),
+            );
     }
     return true;
 }

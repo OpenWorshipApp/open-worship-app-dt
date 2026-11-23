@@ -193,6 +193,18 @@ export function extractBibleCatalog() {
   return { books, versions, ...(language ? { language } : {}) };
 }
 
+// A page's own slips, which no book name holds (2026-11-21, robot run
+// 20261120-2021 F-24, read off Wordproject's Khmer index): a `<` or `>` left
+// over from its markup at either end, and a space typed before a combining
+// mark, which no word of any script can start a letter with. The names went
+// into an imported Bible as written.
+function toCleanBookName(name) {
+  return name
+    .replace(/^[\s<>]+|[\s<>]+$/g, '')
+    .replace(/\s+(?=\p{M})/gu, '')
+    .replace(/\s+/g, ' ');
+}
+
 export function toCompleteBibleBookList(books) {
   const map = new Map();
   for (const book of books ?? []) {
@@ -200,7 +212,7 @@ export function toCompleteBibleBookList(books) {
       typeof book.key === 'number' ? BIBLE_BOOK_KEYS[book.key - 1] : book.key;
     if (!BIBLE_BOOK_KEYS.includes(key) || typeof book.name !== 'string')
       continue;
-    const name = book.name.trim();
+    const name = toCleanBookName(book.name);
     if (!name || name.length > 160 || (map.has(key) && map.get(key) !== name))
       return null;
     map.set(key, name);

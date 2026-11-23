@@ -16,7 +16,13 @@ function genLabel(src: string) {
 
 // An animation has no "No Color": its picker never presses `null`.
 function renderPicker({ onPick, ...props }: PaintPickerPropsType) {
-    return <AnimationPickerComp {...props} onPick={onPick} />;
+    return (
+        <AnimationPickerComp
+            {...props}
+            onPick={onPick}
+            agentPlace="foreground"
+        />
+    );
 }
 
 /** Animation Show: the Background panel's Animations, over the slide. */

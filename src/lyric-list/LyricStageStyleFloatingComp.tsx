@@ -47,6 +47,11 @@ export default function LyricStageStyleFloatingComp({
         <div className="app app-floating-widget-portal" data-bs-theme={theme}>
             <FloatingWidgetComp
                 title={`${tran('Stage Style')} · ${tran('Stage')} ${stage}`}
+                // The panel's English name, as every floating panel carries
+                // one: a control inside it is scoped by it (`Panel > control`)
+                // and reports it as `inPanel` (F-33 / F-42 of robot run
+                // 20261120-2021).
+                widgetName="Stage Style"
                 persistKey="floating-widget-rect-lyric-stage-style"
                 onClose={() => {
                     closeLyricStageStyleFloating(ownerId);

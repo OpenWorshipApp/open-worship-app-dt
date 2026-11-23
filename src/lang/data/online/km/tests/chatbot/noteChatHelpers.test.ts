@@ -172,9 +172,7 @@ describe('a note put into Khmer is held to Khmer', () => {
     };
     const SEEN_LEFT = {
         english: [{ n: 3, text: 'Big idea' }],
-        stray: [
-            { n: 4, text: 'ព្រះអម្ចាស់ทรงដឹកនាំ', letters: ['ท', 'ร', 'ง'] },
-        ],
+        stray: [{ n: 4, text: 'ព្រះអម្ចាស់ทรงដឹកនាំ', letters: ['ท', 'ร', 'ง'] }],
     };
 
     test('the installed language says its script', () => {

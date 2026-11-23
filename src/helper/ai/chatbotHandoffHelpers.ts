@@ -21,12 +21,14 @@ import { askToEnableAI } from './aiEnableHelpers';
 import { getIsAIEnabled } from './aiHelpers';
 import { openChatbotPage } from '../domHelpers';
 import {
+    requestChatbotAnimation,
     requestChatbotAsk,
     requestChatbotBibleListPaste,
     requestChatbotFile,
     requestChatbotForeground,
     requestChatbotLookup,
     requestChatbotReport,
+    type AnimationAskType,
     type SelectionMentionType,
 } from './chatbotHandoffStoreHelpers';
 import type { ForegroundAskType } from './foregroundAskHelpers';
@@ -138,6 +140,21 @@ export async function openChatbotWithForeground(ask: ForegroundAskType) {
         return false;
     }
     requestChatbotForeground(ask);
+    openChatbotPage();
+    return true;
+}
+
+/**
+ * Opens the assistant on an ANIMATION editor -- the 🤖 in Customize or in
+ * the Shader Code panel: a tab of its own, under a card saying what can be
+ * changed, whose questions the assistant answers by changing that animation
+ * (`owa_animation_edit`). The same two questions first.
+ */
+export async function openChatbotWithAnimation(ask: AnimationAskType) {
+    if (!(await askToOpenChatbot())) {
+        return false;
+    }
+    requestChatbotAnimation(ask);
     openChatbotPage();
     return true;
 }

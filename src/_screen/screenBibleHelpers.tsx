@@ -38,7 +38,11 @@ import {
 // A Bible verse is marked far more often (the Reader follows it) and nothing
 // outside the layer draws that mark, so it fires nothing.
 export type ScreenLongTextManagerEventType =
-    'update' | 'text-style' | 'selected';
+    | 'update'
+    | 'text-style'
+    // A screen's own scale of the shared size (`textScale`).
+    | 'text-scale'
+    | 'selected';
 
 export const SCREEN_BIBLE_SETTING_PREFIX = 'screen-bible-';
 

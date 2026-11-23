@@ -169,7 +169,9 @@ positives and its confirmation. The moves that settle most leads:
   record the read: `--stamp-notes=<path,…>`. The ledger
   (`references/notes-reviewed.json`, the notes' twin of the manual's) is what
   lets the list reach 0: a note read against these words and this code is not
-  listed again until one of them moves. More than about eight due: readers
+  listed again until one of them moves. Read the ones listed **never read**
+  too (a note naming no file a commit could move, `AD-45`). More than about
+  eight due: readers
   that only propose, one writer (`scripts/apply-manual-edits.mjs`), as for the
   manual in §3.
 - **Runtime claims** (what a tool returns, what a window shows) get
@@ -194,8 +196,8 @@ Safe classes, fixed without asking:
 - A path, symbol, script, tool or env var that was **renamed or moved**. The
   rename must be in the history and the sentence's meaning unchanged.
 - A list that claims to be complete but **misses items**. Add them in the
-  list's own style, for example CLAUDE.md's `owa_*` list against the tools
-  `server.registerTool` registers.
+  list's own style, for example `rules/agent-tools.md`'s and the MCP
+  README's `owa_*` tools against the tools `server.registerTool` registers.
 - A **present-tense number** the code states, changed deliberately in a commit.
 - **Broken links**: the index against the notes, memory references, `[[…]]`
   links, anchors past a file's end. Re-aim a line anchor at a symbol, because line
@@ -265,7 +267,7 @@ dates as absolute dates, and keep the *why*.
 
 Run the audit again after the fixes. A drift run is done when every drift
 check prints 0 — `paths`, `symbols`, `tools`, `scripts`, `env`, `ids`,
-`memory`, `rules`, `skills` (wiring), `knowledge`, `manual`
+`memory`, `rules`, `skills` (wiring), `privacy`, `knowledge`, `manual`
 (labels, coverage files, recipes due, translations behind) and `staleness`
 (notes due a read) — or
 when each lead still printed is
@@ -283,7 +285,7 @@ a coverage row citing a file that is gone — and, since 2026-11-14 (`AD-31`), o
 a recipe id two headings carry, which `docs:gen` refuses too. `src/test-setup/agentDocsAudit.test.ts`
 holds the rest of the hard checks (`AD-21`) — `paths`, `symbols`, `tools`,
 `scripts`, `env`, `ids`, `memory`, `rules`, `skills`, front matter that does
-not parse as YAML included (`AD-20`) — so a document is failed the day it is
+not parse as YAML included (`AD-20`), and `privacy` (`AD-43`) — so a document is failed the day it is
 written wrong, not at the next run of this skill. The translations stay out of
 the gate on purpose: a manual edit must never wait for one.
 
@@ -417,16 +419,20 @@ restates the code, or a lead nobody confirmed.
 
 ## Resources
 
-- [scripts/audit-agent-docs.mjs](./scripts/audit-agent-docs.mjs): 15 checks
+- [scripts/audit-agent-docs.mjs](./scripts/audit-agent-docs.mjs): 16 checks
   over the docs. The drift checks are `paths`, `symbols`, `tools`, `scripts`,
-  `env`, `ids`, `memory`, `rules`, `skills`, `knowledge` and
+  `env`, `ids`, `memory`, `rules`, `skills`, `privacy` (a home path naming an
+  account, [scripts/homePathPrivacy.mjs](./scripts/homePathPrivacy.mjs)), `knowledge` and
   `manual` (the recipes and the coverage rows they are verified by). The
   leverage signals are `budget`, `coverage` and `prose-rules`; `staleness`
   is the notes due a read. `--stamp-manual=<ids | all>` and
   `--stamp-notes=<paths | @list>` are its only writes: the review ledgers;
   either is refused against uncommitted code unless `--allow-dirty` says the
   changes are the stamper's own, or `--at-head` records a read made against
-  the last commit.
+  the last commit. A note the hashes cannot clear (never read, or edited to
+  name other files since its read) is counted from its stamp, never from its
+  last edit ([scripts/noteStaleness.mjs](./scripts/noteStaleness.mjs),
+  `AD-42`, 2026-11-19): an edit is no read.
 - [scripts/apply-manual-edits.mjs](./scripts/apply-manual-edits.mjs): checks
   proposed manual or matrix edits (each `old` once, no overlap, every proof in
   the code), then writes them. A reader checks its own with
@@ -446,9 +452,11 @@ restates the code, or a lead nobody confirmed.
   errors by masked signature and session count, rejected calls, interrupts,
   hot reads and hot commands, from the local Claude Code transcripts.
 - [scripts/zsh-glob-guard.mjs](./scripts/zsh-glob-guard.mjs): the
-  `PreToolUse` Bash hook in `.claude/settings.json` (`AD-34`) that refuses an
+  `PreToolUse` Bash hook in `.claude/settings.json` (`AD-34`) that escapes an
   unquoted glob in a `--flag=value` word under zsh, which would abort the line
-  with "no matches found"; `src/test-setup/zshGlobGuard.test.ts` holds it.
+  with "no matches found" -- through `updatedInput`, with no permission
+  decision (`AD-35`, 2026-11-19; it refused the call until then);
+  `src/test-setup/zshGlobGuard.test.ts` holds it.
 - [references/checks.md](./references/checks.md): per check, its false
   positives, how to confirm, how to fix, and the reading checks no script does.
 - [references/leverage.md](./references/leverage.md): the seven lenses, with

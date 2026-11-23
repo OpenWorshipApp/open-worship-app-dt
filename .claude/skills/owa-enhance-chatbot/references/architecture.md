@@ -45,7 +45,7 @@ and the app silently gets no endpoint at all.
 
 Both MCP doors build the same server through `createOwaMcpServer()`, so a tool
 added for one is shipped to the other — unless the code registers it for one
-`door` only, as it does `owa_drop_files` for stdio.
+`door` only, as it does `owa_drop_files` and `owa_choose_app` for stdio.
 
 `server.mjs` also does two things that look optional and are not:
 
@@ -138,7 +138,7 @@ depend on.
 - The **entire head row belongs to the tab in front**, not the window, and all
   three of it are `<select>`s sharing one `.chat-pick` skin (on an Auto tab the
   third is plain text in that skin, **Auto pick**, `RenderAutoPickComp`): the *asking about*
-  switch (eight windows, from `tools/owa-devtools-mcp/botFocus.mjs` — the ONE
+  switch (nine windows, from `tools/owa-devtools-mcp/botFocus.mjs` — the ONE
   declaration the picker, both MCP tool schemas, the manual's focus filter and
   the session validator all read; it follows the opener window until the user
   picks one), the assistant switch, and the model picker (a fourth `<select>` in the row,
@@ -176,7 +176,7 @@ the real control advances the card (`lastAction: "user-did-it"`).
   the recipe’s own first step (the same sentence the drop rule below throws
   away) and overrules the page the caller asked for — a Settings recipe walked
   in the Presenter rings whatever word happens to match there.
-- Leading steps for a place the user is already in are dropped, in ALL eight
+- Leading steps for a place the user is already in are dropped, in ALL nine
   windows — `dropStepsAlreadyDone` reads the window’s names off
   `botFocus.mjs` (`label`, `openFind`) rather than testing for the reader and
   the presenter, which is all it did until 2026-09-02.

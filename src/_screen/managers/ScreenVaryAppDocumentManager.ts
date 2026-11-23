@@ -181,6 +181,13 @@ class ScreenVaryAppDocumentManager
 {
     static readonly eventNamePrefix: string = 'screen-vary-app-document-m';
     private _varySlideData: VarySlideScreenDataType | null = null;
+    // The slide of the newest `applyVarySlideData` still on its way, or
+    // `undefined` when none is (`presentingVarySlideData`).
+    private requestedVarySlideData: VarySlideScreenDataType | null | undefined =
+        undefined;
+    // Counts the applies, so one that finishes after a newer one was handed
+    // over knows it has been overtaken.
+    private applyRevision = 0;
     private _div: HTMLDivElement | null = null;
     private readonly canvasItemTransitions = new CanvasItemTransitions();
     // The stage layout this screen is showing (`St:` 1 and up), kept so the
@@ -237,6 +244,23 @@ class ScreenVaryAppDocumentManager
 
     get varySlideData() {
         return this._varySlideData;
+    }
+
+    /**
+     * The slide a step moves on from: the one last handed to this screen
+     * while it is still on its way, else the one it shows.
+     *
+     * A slide is drawn a few awaits after it is handed over (its stage, its
+     * transition and the stage look-ahead are read first). A Space press
+     * arriving in between used to step from the slide that was leaving, so
+     * the press was lost and two screens drifted apart (measured 2026-11-19:
+     * five presses 40-60ms apart moved two screens three slides). A slide a
+     * locked screen refuses stops counting as soon as the refusal is known.
+     */
+    get presentingVarySlideData() {
+        return this.requestedVarySlideData === undefined
+            ? this._varySlideData
+            : this.requestedVarySlideData;
     }
 
     async set_varySlideData(
@@ -340,6 +364,24 @@ class ScreenVaryAppDocumentManager
     async applyVarySlideData(
         targetVarySlideData: VarySlideScreenDataType | null,
     ) {
+        const revision = ++this.applyRevision;
+        this.requestedVarySlideData = targetVarySlideData;
+        try {
+            await this.applyVarySlideDataRevision(
+                targetVarySlideData,
+                revision,
+            );
+        } finally {
+            if (revision === this.applyRevision) {
+                this.requestedVarySlideData = undefined;
+            }
+        }
+    }
+
+    private async applyVarySlideDataRevision(
+        targetVarySlideData: VarySlideScreenDataType | null,
+        revision: number,
+    ) {
         if (
             targetVarySlideData === null ||
             targetVarySlideData.filePath === null ||
@@ -386,6 +428,11 @@ class ScreenVaryAppDocumentManager
                           return undefined;
                       }),
             ]);
+        // Overtaken while those were read: a newer slide was handed over, and
+        // drawing this one now would put the older slide back over it.
+        if (revision !== this.applyRevision) {
+            return;
+        }
         // A new object rather than writing `itemJson` back onto the argument:
         // the argument can be an entry of the memoized on-screen map (the
         // constructor seeds `_varySlideData` from it), and mutating it would
@@ -420,7 +467,9 @@ class ScreenVaryAppDocumentManager
      * layout. No-op when nothing is presented.
      */
     reapplyForStage() {
-        const varySlideData = this._varySlideData;
+        // A slide still on its way is the one presented: re-applying the one
+        // it replaces would overtake it and put the older slide back.
+        const varySlideData = this.presentingVarySlideData;
         if (varySlideData === null) {
             return;
         }
@@ -725,6 +774,8 @@ class ScreenVaryAppDocumentManager
      * Stepping a slide has to know where the run actually is — reading the
      * lagging copy made a quick second arrow press recompute "next" from the
      * slide that had already left the screen, and the projector looked stuck.
+     * The live slide is itself a few awaits late, so a slide handed over and
+     * still on its way counts too (`presentingVarySlideData`).
      *
      * Falls back to the persisted map when there is no live manager at all: a
      * window that draws no screen previews has nothing to ask.
@@ -736,7 +787,7 @@ class ScreenVaryAppDocumentManager
         }
         const dataList: [string, VarySlideScreenDataType][] = [];
         for (const instance of instanceList) {
-            const data = instance.varySlideData;
+            const data = instance.presentingVarySlideData;
             if (data === null) {
                 continue;
             }
@@ -1763,6 +1814,10 @@ class ScreenVaryAppDocumentManager
             this._div.replaceChildren();
             this._div = null;
         }
+        // An apply still on its way must not draw or persist a slide on a
+        // screen that is gone.
+        ++this.applyRevision;
+        this.requestedVarySlideData = undefined;
         this._varySlideData = null;
         super.delete();
     }

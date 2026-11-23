@@ -421,9 +421,10 @@ describe('bibleXMLHelpers', () => {
         );
         expect(messages).toContain('Downloading file...');
         expect(messages.at(-1)).toBeNull();
-        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+        // The temp file is gone a moment later: no "File saved at" (F-23).
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalledWith(
             'Download Completed',
-            'File saved at: /storage/temp-xml/kjv.xml',
+            expect.anything(),
         );
 
         mocks.initHttpRequestMock.mockRejectedValueOnce(new Error('offline'));

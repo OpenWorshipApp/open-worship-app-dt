@@ -292,12 +292,9 @@ describe('the language an answer is written in', () => {
                     ),
                 ).toBe('pt');
                 expect(
-                    pickReplyLanguage(
-                        'ตัวหนังสือเล็กเกินไป จะทำให้ใหญ่ขึ้นได้อย่างไร',
-                        {
-                            appLangCode,
-                        },
-                    ),
+                    pickReplyLanguage('ตัวหนังสือเล็กเกินไป จะทำให้ใหญ่ขึ้นได้อย่างไร', {
+                        appLangCode,
+                    }),
                 ).toBe('th');
             }
         },
@@ -365,12 +362,12 @@ describe('chips in the script of the answer', () => {
     });
 
     test('never a script nobody chose', () => {
-        expect(
-            checkIsChosenScript('请确认', 'ตัวหนังสือเล็กเกินไป', 'en'),
-        ).toBe(false);
-        expect(
-            checkIsChosenScript('ยังเล็กอยู่', 'Press the button', 'en'),
-        ).toBe(false);
+        expect(checkIsChosenScript('请确认', 'ตัวหนังสือเล็กเกินไป', 'en')).toBe(
+            false,
+        );
+        expect(checkIsChosenScript('ยังเล็กอยู่', 'Press the button', 'en')).toBe(
+            false,
+        );
     });
 });
 

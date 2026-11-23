@@ -379,6 +379,10 @@ export default function ControllerToolbarComp({
     return (
         <FloatingWidgetComp
             title={titleComp}
+            // The panel's English name, as every floating panel carries one:
+            // a control inside it is scoped by it (`Panel > control`) and
+            // reports it as `inPanel` (F-42 of robot run 20261120-2021).
+            widgetName="Presenting Control"
             persistKey={toPresentingSettingKey(WIDGET_RECT_SETTING_NAME)}
             onClose={onClose}
             isBodyHidden={!hasToolPanel}

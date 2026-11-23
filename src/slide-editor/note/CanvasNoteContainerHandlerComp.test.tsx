@@ -8,6 +8,10 @@ const h = vi.hoisted(() => ({
     resizeActors: [] as any[],
 }));
 
+vi.mock('../../lang/langHelpers', () => ({
+    tran: (text: string) => text,
+}));
+
 vi.mock('../../resize-actor/ResizeActorComp', () => ({
     default: (props: any) => {
         h.resizeActors.push(props);
@@ -90,23 +94,30 @@ describe('CanvasNoteContainerHandlerComp', () => {
         expect(actor.isHorizontal).toBe(true);
         expect(actor.flexSizeDefault).toEqual({ h1: ['1'], h2: ['1'] });
 
+        // Each pane is named as its header reads, never by the file's name
+        // or the slide's (F-20): the divider between them is announced by
+        // these two names.
         const documentPane = container.querySelector('[data-pane="h1"]')!;
         expect(documentPane.getAttribute('data-widget-name')).toBe(
-            'service.ows',
+            'Document Note',
         );
         expect(documentPane.textContent).toBe('/docs/service.ows');
         const slidePane = container.querySelector('[data-pane="h2"]')!;
-        expect(slidePane.getAttribute('data-widget-name')).toBe('Welcome');
+        expect(slidePane.getAttribute('data-widget-name')).toBe('Slide Note');
         expect(slidePane.textContent).toBe('/docs/service.ows#4');
+        expect(actor.dataInput.map((item: any) => item.widgetKey)).toEqual([
+            'Document Note',
+            'Slide Note',
+        ]);
     });
 
-    test('names an unnamed slide pane by the slide id', async () => {
+    test('names an unnamed slide pane by its header, not the slide id', async () => {
         await render({ id: 9, name: '' });
 
         expect(
             container
                 .querySelector('[data-pane="h2"]')!
                 .getAttribute('data-widget-name'),
-        ).toBe('9');
+        ).toBe('Slide Note');
     });
 });

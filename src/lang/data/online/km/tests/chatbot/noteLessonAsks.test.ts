@@ -40,9 +40,7 @@ describe('a preaching lesson asked for in Khmer', () => {
         // The study file stays the study file's.
         expect(readStudyFileAsk('សរសេរមេរៀនសិក្សាអំពី យ៉ូហាន ៣')).toBe(true);
         // Beside a lesson, a lesson asked in Khmer is left to the prompt.
-        expect(genNoteLessonHint('សរសេរមេរៀនមួយអំពីការអភ័យទោស', false)).toBe(
-            null,
-        );
+        expect(genNoteLessonHint('សរសេរមេរៀនមួយអំពីការអភ័យទោស', false)).toBe(null);
     });
 });
 
@@ -55,10 +53,7 @@ describe('the verses of a note asked to be checked in Khmer', () => {
         ]) {
             expect(checkIsNoteVerseCheckAsk(asked), asked).toBe(true);
         }
-        for (const asked of [
-            'បន្ថែមខគម្ពីរ យ៉ូហាន ៣:១៦',
-            'ពិនិត្យអក្ខរាវិរុទ្ធ',
-        ]) {
+        for (const asked of ['បន្ថែមខគម្ពីរ យ៉ូហាន ៣:១៦', 'ពិនិត្យអក្ខរាវិរុទ្ធ']) {
             expect(checkIsNoteVerseCheckAsk(asked), asked).toBe(false);
         }
     });

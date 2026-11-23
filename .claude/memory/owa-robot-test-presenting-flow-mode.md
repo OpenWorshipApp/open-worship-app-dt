@@ -29,7 +29,7 @@ runs P0..P10 in order, so a presenting flow run is auditable the same way a full
   sheet and driving the real `screen.html` target, which costs nothing extra here.
 - **Fixture discipline:** build `zz-robot-<runid>` and tear it down. The panel has no save
   button, so every gesture writes the user's real `.owpf` immediately.
-- **The rows most easily faked get their own report lines**: all 13 screen actions fired
+- **The rows most easily faked get their own report lines**: every screen action fired
   against a SHOWING screen (PL-72/74), the folded-sheet walk (PL-99), and the perf
   measurements with numbers (PL-63/70).
 - KB §14 was also corrected in the same pass: its run-player rules still said audio,
@@ -42,4 +42,4 @@ runs P0..P10 in order, so a presenting flow run is auditable the same way a full
   exercised 26% → 68%, the user's screen 0 never touched). Plan its teardown up front:
   the firewall refuses the mini screen ⋮ **Delete** (and **Clear All**), so the run
   clears it layer by layer, hides it, re-Solos screen 0 and asks the user to delete it.
-  The registry now has 18 screen-family actions (11 per-widget clears), not 13.
+  The registry has 22 screen-family actions (14 per-widget clears, and `Slide: Media Control`, added from a slide's own menu), not 13 — 18 on 2026-10-02.

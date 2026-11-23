@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-10, PL-29, PL-32, PL-33, PL-34, PL-35, PL-36, PL-37, PL-38, PL-39, PL-40, PL-41, PL-42, PL-43, PL-44, PL-45, PL-46, PL-47, PL-48, PL-49, PL-50, PL-51, PL-52, PL-53, PL-54, PL-55, PL-56, PL-57, PL-58, PL-59, PL-60, PL-61, PL-62, PL-63, PL-64, PL-65, PL-66, PL-67, PL-68, PL-69, PL-70, PL-71, PL-72, PL-73, PL-74, PL-75, PL-76, PL-81, PL-82, PL-83, PL-84, PL-85, PL-86, PL-87, PL-88, PL-89, PL-90, PL-91, PL-92, PL-93, PL-94, PL-95, PL-96, PL-101, PM-170]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-22 — Build a service presenting flow (a running order)
 
@@ -22,7 +22,7 @@ foreground presets — into one running order you can work down live.
    its row — in the Documents list, or in the Bible list — drag it over to the Presenting
    Flows list and let go on the row that shows the presenting flow’s name. It is added
    at the end. Anything you can present can go in:
-   - a **background** — a colour, image, video, camera or website;
+   - a **background** — a colour, gradient, pattern, animation, image, video, camera or website;
    - a **document** — a slide document or a **song** (a song is a document too): drag its row out of the Documents list;
    - a **single slide** — from the previewer, or from a document already in the presenting flow;
    - a **Bible verse** — from the Bible list;
@@ -63,8 +63,8 @@ foreground presets — into one running order you can work down live.
    element itself, on the document it belongs to, on the presenting flow, and on the
    **[en:tran:Presenting Flows]** heading — so you can see at a glance where you are in the running order.
 7. Not sure which "5.jpg" a line means? Right-click it → **[en:tran:Reveal Original]** — the app scrolls to the real item elsewhere in the window and
-   flashes it. This works on the slides inside an opened document too. A colour or a
-   camera has no original to point at, and the panel holding the original has to be
+   flashes it. This works on the slides inside an opened document too. A colour, a gradient,
+   a pattern, an animation or a camera has no original to point at, and the panel holding the original has to be
    open already.
 
 **What else a running order can do** — each has a page of its own:
@@ -84,5 +84,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-10` · `PL-29` · `PL-32` · `PL-33` · `PL-34` · `PL-35` · `PL-36` · `PL-37` · `PL-38` · `PL-39` · `PL-40` · `PL-41` · `PL-42` · `PL-43` · `PL-44` · `PL-45` · `PL-46` · `PL-47` · `PL-48` · `PL-49` · `PL-50` · `PL-51` · `PL-52` · `PL-53` · `PL-54` · `PL-55` · `PL-56` · `PL-57` · `PL-58` · `PL-59` · `PL-60` · `PL-61` · `PL-62` · `PL-63` · `PL-64` · `PL-65` · `PL-66` · `PL-67` · `PL-68` · `PL-69` · `PL-70` · `PL-71` · `PL-72` · `PL-73` · `PL-74` · `PL-75` · `PL-76` · `PL-81` · `PL-82` · `PL-83` · `PL-84` · `PL-85` · `PL-86` · `PL-87` · `PL-88` · `PL-89` · `PL-90` · `PL-91` · `PL-92` · `PL-93` · `PL-94` · `PL-95` · `PL-96` · `PL-101` · `PM-170`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

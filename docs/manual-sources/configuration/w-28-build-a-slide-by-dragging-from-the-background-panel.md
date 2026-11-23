@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ED-40, ED-41, ED-42, ED-43, ED-44, ED-21, ED-37, PM-06]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-28 — Build a slide by dragging from the Background panel
 
@@ -39,7 +39,9 @@ walking the Insert menu — just drag it out of the panel you are already browsi
    **repaints that box** — no new box is added. Drop it on **empty canvas** and you get a
    new coloured rectangle instead. That rectangle is an ordinary text box underneath, so
    you can double-click it and type into it later. A **locked** box (🔒) keeps its colour:
-   the app says _[en:tran:This item is locked]_ and adds nothing — unlock it first. 📸
+   the app says _[en:tran:This item is locked]_ and adds nothing — unlock it first. A gradient
+   or a pattern from **[en:tran:Fills]** dims the canvas too, but adds and changes nothing: a
+   box takes a colour alone. 📸
 5. Anything you drop in is an ordinary box: move it, resize it, reorder it, and **[en:tran:Undo]**
    (Ctrl+Z) takes it straight back out. Save with **Ctrl+S**.
 
@@ -59,5 +61,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ED-40` · `ED-41` · `ED-42` · `ED-43` · `ED-44` · `ED-21` · `ED-37` · `PM-06`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

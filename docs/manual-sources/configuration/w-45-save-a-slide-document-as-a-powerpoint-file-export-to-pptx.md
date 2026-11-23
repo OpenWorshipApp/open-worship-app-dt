@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [PL-106]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-45 — Save a slide document as a PowerPoint file (Export to PPTX)
 
@@ -47,6 +47,8 @@ PowerPoint file anyone can open.
 > file is a copy: changing it changes nothing in the app. A YouTube box becomes the
 > video's picture when the computer is online; a camera box, a camera background and a
 > live web page as a background cannot be exported, the same as printing leaves them out.
+> A gradient, a pattern or an animation behind a slide comes out as one plain colour, the
+> one it reads as from across the room.
 > PowerPoint on another computer uses the fonts THAT computer has, so for the same look
 > there install the same fonts (the lines break in the same places either way).
 
@@ -55,5 +57,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-106`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

@@ -361,9 +361,9 @@ grows the user's data dir run over run (17 copies / ≈635 MB had piled up by 20
 On failure,
 follow the triage list in coverage-matrix §MD before filing: an `HTTP Error 403` mid-
 transfer is usually YouTube throttling (retry once), whereas `No supported JavaScript
-runtime could be found` is a real Critical. A failed attempt also leaves an orphaned
-`temp-*.part` behind (known app bug — the error path does not remove partials); step 5
-takes it.
+runtime could be found` is a real Critical. A failed attempt left an orphaned
+`temp-*.part` behind until 2026-11-22 (fixed: any non-zero yt-dlp exit now sweeps the
+staging files); one left now is a regression to file. Step 5 still takes any it finds.
 
 ### S20 — Presenting Flow deep pass `[PL-10, PL-29, PL-32..76, PL-81..102]` — the whole run sheet
 

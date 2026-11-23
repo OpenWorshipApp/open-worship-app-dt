@@ -98,6 +98,10 @@ export const BIBLE_IMPORT_STEP_TOOL_NAME = 'owa-bible-import-step';
  * written in Latin letters by its own name (`otherNativeName`). The
  * languages the app is shown in come before those only typed.
  */
+// English names, for the examples when no language is installed to show one
+// in its own words; four, so three blanks always find one unused.
+const EXAMPLE_LANGUAGE_NAME_LIST = ['Spanish', 'French', 'German', 'Swahili'];
+
 export function genLanguageExampleWords() {
     const languageList = [
         ...listAssistantLanguages(),
@@ -109,18 +113,38 @@ export function genLanguageExampleWords() {
             language.nativeName !== language.name
         );
     });
+    // A language named "Thai" in English would repeat the word both
+    // sentences already hold.
+    const shownList = languageList.filter((language) => {
+        return language.name !== 'Thai';
+    });
     const first =
-        languageList.find((language) => {
+        shownList.find((language) => {
             return !language.isLatinScript;
-        }) ?? languageList[0];
-    const other = languageList.find((language) => {
+        }) ?? shownList[0];
+    const other = shownList.find((language) => {
         return language !== first && language.isLatinScript;
     });
-    return {
-        name: first?.name ?? 'Spanish',
-        nativeName: first?.nativeName ?? 'Spanish',
-        otherNativeName: other?.nativeName ?? first?.nativeName ?? 'Spanish',
+    // With no other language installed -- every fresh install, as only
+    // English ships -- no name in its own words is known, and every blank
+    // had been filled with "Spanish": "for example Thai, Spanish or Spanish"
+    // (F-30 of robot run 20261120-2021). Each blank now takes a word no
+    // other blank holds, English names standing in where nothing is known.
+    const usedList = ['Thai'];
+    const take = (word: string | undefined) => {
+        const chosen =
+            word !== undefined && !usedList.includes(word)
+                ? word
+                : EXAMPLE_LANGUAGE_NAME_LIST.find((name) => {
+                      return !usedList.includes(name);
+                  })!;
+        usedList.push(chosen);
+        return chosen;
     };
+    const name = take(first?.name);
+    const nativeName = take(first?.nativeName);
+    const otherNativeName = take(other?.nativeName);
+    return { name, nativeName, otherNativeName };
 }
 
 // The languages the language question offers as buttons: the one the app is
@@ -708,13 +732,25 @@ const TYPED_PRESS_END_PATTERN = new RegExp(
     `[.!${toCharClassSource(SENTENCE_END_MARKS)}]+$`,
 );
 
-function findTypedPress(actions: BotActionType[], typed: string) {
-    const said = typed
+function toTypedSaid(typed: string) {
+    return typed
         .normalize('NFKC')
         .replace(/\p{Cf}/gu, '')
         .toLowerCase()
         .replace(TYPED_PRESS_END_PATTERN, '')
         .trim();
+}
+
+function checkIsTypedYes(said: string) {
+    return (
+        /^(?:yes|yeah|yep|ok|okay|sure|go ahead|do it|install|agree|i do)$/.test(
+            said,
+        ) || checkIsLanguageWord(said, 'yes')
+    );
+}
+
+function findTypedPress(actions: BotActionType[], typed: string) {
+    const said = toTypedSaid(typed);
     const labelOf = (action: BotActionType) => {
         return toBibleImportEcho(action.label).toLowerCase();
     };
@@ -751,12 +787,7 @@ function findTypedPress(actions: BotActionType[], typed: string) {
             }) ?? null
         );
     }
-    if (
-        /^(?:yes|yeah|yep|ok|okay|sure|go ahead|do it|install|agree|i do)$/.test(
-            said,
-        ) ||
-        checkIsLanguageWord(said, 'yes')
-    ) {
+    if (checkIsTypedYes(said)) {
         return (
             actions.find((action) => {
                 return (
@@ -854,6 +885,12 @@ export function readBibleImportTypedReply(
     }
     const state = waiting.args as BibleImportStateType;
     if (state.awaits === 'key') {
+        // A "yes" with no suggested button to press is no short name: the
+        // Bible would have been called "yes" (F-29). It goes to the reader
+        // of ordinary words, which keeps the question and its buttons.
+        if (checkIsTypedYes(toTypedSaid(typed))) {
+            return null;
+        }
         return carry(state, { step: 'key', typed });
     }
     if (state.awaits === 'locale') {
@@ -1202,6 +1239,70 @@ function genKeyChoices(
  * is not a suggestion. A typed name is still checked the same way
  * (`genKeyReason`).
  */
+/**
+ * The language's key the TITLE writes as a word of its own -- `ASV` in
+ * _English ASV_ -- the longest when several do. Only keys of three letters
+ * or more, written exactly so: `findChatBibleKeyByName` reads names, and
+ * the Beblia collection titles its files `<Language> <short name>`, so the
+ * ASV had been offered as **NKJV (suggested)**, a press away from being
+ * installed under that name (F-29 of robot run 20261120-2021).
+ */
+function findLanguageKeyInTitle(title: string, keyList: string[]) {
+    const wordSet = new Set(title.split(/[^\p{L}\p{N}]+/u));
+    let best: string | null = null;
+    for (const key of keyList) {
+        if (
+            key.length >= 3 &&
+            wordSet.has(key) &&
+            (best === null || key.length > best.length)
+        ) {
+            best = key;
+        }
+    }
+    return best;
+}
+
+const YEAR_PATTERN = /(?<!\d)(?:1[5-9]|20)\d\d(?!\d)/g;
+
+function listYears(text: string) {
+    return toAsciiDigits(text).match(YEAR_PATTERN) ?? [];
+}
+
+/**
+ * The language's key whose NAME carries a year the title writes -- a file
+ * titled _… Version 1954 …_ and the edition the language names by 1954 in
+ * its own digits -- when exactly one key does: two editions of one year
+ * name neither. A title in another language seldom writes the language's
+ * name for the edition, but it does write the year (F-29 left the Khmer
+ * 1954 file unmarked until this read it).
+ */
+function findLanguageKeyByYear(
+    title: string,
+    keyList: string[],
+    locale: string | undefined,
+) {
+    const yearSet = new Set(listYears(title));
+    if (yearSet.size === 0) {
+        return null;
+    }
+    const matchList = keyList.filter((key) => {
+        const name = getChatBibleKeyName(key, locale);
+        return (
+            name !== null &&
+            listYears(name).some((year) => {
+                return yearSet.has(year);
+            })
+        );
+    });
+    return matchList.length === 1 ? matchList[0] : null;
+}
+
+/**
+ * The short names to offer, and whether the FIRST is suggested for a
+ * reason -- asked for by name, named by the title (a short name, a name or
+ * a year), the file's own -- rather
+ * than only being first in the language's list.
+ */
 function genKeyCandidates(state: BibleImportStateType) {
     const takenKeys = state.takenKeys ?? [];
     const locale = state.locale ?? state.locales?.[0]?.locale;
@@ -1223,19 +1324,23 @@ function genKeyCandidates(state: BibleImportStateType) {
     ) {
         add(state.wantedKey);
     }
-    const knownKey = findChatBibleKeyByName(state.title ?? '', locale);
-    if (knownKey !== null) {
-        add(knownKey);
-    }
     const languageKeyList = getChatBibleKeyList(locale).filter((key) => {
         return !checkIsTakenKey(key, takenKeys);
     });
+    const knownKey =
+        findChatBibleKeyByName(state.title ?? '', locale) ??
+        findLanguageKeyInTitle(state.title ?? '', languageKeyList) ??
+        findLanguageKeyByYear(state.title ?? '', languageKeyList, locale);
+    if (knownKey !== null) {
+        add(knownKey);
+    }
+    const hasSuggestion = keyList.length > 0 || languageKeyList.length === 0;
     if (languageKeyList.length > 0) {
         languageKeyList.forEach(add);
     } else {
         (state.keys ?? []).forEach(add);
     }
-    return keyList;
+    return { keyList, hasSuggestion };
 }
 
 function countSteps(state: BibleImportStateType) {
@@ -1249,7 +1354,8 @@ function genKeyStep(
     // The short names to offer, the one this language knows the edition by
     // first, then the file's own -- never one that already exists on this
     // computer (`genKeyCandidates`).
-    const keyList = genKeyCandidates(state).slice(0, 4);
+    const candidates = genKeyCandidates(state);
+    const keyList = candidates.keyList.slice(0, 4);
     return {
         text: [
             ...opening,
@@ -1275,8 +1381,13 @@ function genKeyStep(
                 // name in its language) is only as wide as a hover. A key the language
                 // names nowhere -- an imported file's own invention -- gets
                 // no title rather than one that says nothing.
+                // Only a key suggested for a reason says so: the first of a
+                // language's list is only first, and a typed "yes" presses
+                // whatever is marked.
                 return toAction(
-                    index === 0 ? `${key} (suggested)` : key,
+                    index === 0 && candidates.hasSuggestion
+                        ? `${key} (suggested)`
+                        : key,
                     { ...carry(state, { step: 'locale', key }) },
                     getChatBibleKeyName(
                         key,

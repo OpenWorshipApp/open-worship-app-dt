@@ -275,8 +275,21 @@ function toReplyList(raw: string, answerText = '') {
  * the marker is the answer, what follows it is machinery, and the machinery must
  * be impossible to see WHETHER OR NOT it parsed into anything usable.
  */
+// A frame word written in capitals with a space before its colon, as a
+// language that spaces its colons writes it (2026-11-21: a French answer
+// ended "OPTIONS :" over four lines, all drawn as words with no button).
+// Capitals only: in a sentence "options :" is a word of the answer.
+const SPACED_FRAME_COLON_PATTERN =
+    /(^|[\s>*_(])(OPTIONS|CHOICES|SHOWS|NEEDS)[ \t\u00A0\u202F]+(?=[:\uFF1A])/gmu;
+
+function toFrameLines(text: string) {
+    return String(text ?? '')
+        .replace(SPACED_FRAME_COLON_PATTERN, '$1$2')
+        .split('\n');
+}
+
 function cutTrailingFrame(text: string, marker: RegExp) {
-    const lines = String(text ?? '').split('\n');
+    const lines = toFrameLines(text);
     let looked = 0;
     for (let index = lines.length - 1; index >= 0; index--) {
         const line = lines[index];
@@ -315,7 +328,7 @@ const MAX_LISTED_OPTION_LENGTH = 80;
 const LISTED_OPTION_MARK_PATTERN = /^\s*(?:[-*•·]|\d{1,2}[.)])\s+/u;
 
 function cutListedFrame(text: string, marker: RegExp) {
-    const lines = String(text ?? '').split('\n');
+    const lines = toFrameLines(text);
     const listed: string[] = [];
     for (let index = lines.length - 1; index >= 0; index--) {
         const line = lines[index];

@@ -304,6 +304,35 @@ describe('what each change says', () => {
     expect(say('rename', 'bg.mp4')).toBe('renamed the media file "bg.mp4"');
   });
 
+  // EC-763: the deck named, its key in every language.
+  it('names the PowerPoint a slide document was made from', () => {
+    expect(
+      describeToolCall('owa_media_file', {
+        action: 'convert',
+        kind: 'document',
+        name: 'Easter.pptx',
+      }),
+    ).toBe('made a slide document from the PowerPoint "Easter.pptx"');
+    expect(
+      describeToolCall('owa_media_file', {
+        action: 'convert',
+        kind: 'document',
+        path: '/decks/Easter.pptx',
+      }),
+    ).toBe('made a slide document from the PowerPoint "/decks/Easter.pptx"');
+    expect(
+      describeToolNotice('owa_media_file', {
+        action: 'convert',
+        kind: 'document',
+        name: 'Easter.pptx',
+      }),
+    ).toEqual({
+      text: 'made a slide document from the PowerPoint "Easter.pptx"',
+      key: 'made a slide document from a PowerPoint',
+      detail: ['"Easter.pptx"'],
+    });
+  });
+
   it('says a foreground extra came off even when it cannot name which', () => {
     expect(
       describeToolNotice('owa_foreground', { action: 'stop', widget: 'odd' }),

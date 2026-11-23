@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-15, PM-16, PM-17, PM-18, PM-19, PM-20, PM-21, PM-22, PM-23, PM-24, PM-25, PM-28, PM-34, PM-128, PM-129, PM-130, PM-131, PM-132, PM-133, PM-146, PM-147, PM-150, PM-151, PM-152, PM-153, PM-158, PM-193, PM-194, PM-195, PM-196, KB-03, KB-07, CB-67]
 screenshots: 4
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -51,7 +51,7 @@ button:
   how many seconds the text stays and how its markdown is set: the first line
   becomes the title — **bold** for a song, a heading for a verse, a speaker,
   a sermon, a session or an announcement — and a song's or a sermon's lines
-  under it turn *italic* (and upright again with any other preset). With
+  under it turn _italic_ (and upright again with any other preset). With
   nothing typed yet (the box empty, or still its sample) a preset fills in an
   example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
   **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
@@ -161,7 +161,8 @@ button:
 - **[en:tran:Fill Show]** and **[en:tran:Animation Show]:** a colour, gradient or
   pattern, or a moving animation, shown _over_ the slide the way **[en:tran:Image Show]**
   shows a picture. Their tiles are the ones the Background panel's **[en:tran:Fills]**
-  and **[en:tran:Animations]** tabs offer, CSS and GLSL alike. Click a tile to put it up,
+  and **[en:tran:Animations]** tabs offer, CSS and GLSL alike, under the same
+  **[en:tran:Dark]** / **[en:tran:Light]** switch. Click a tile to put it up,
   click it again to take it off, or drag it onto the Mini Screen. The overlay is the
   shape of the screen, as wide as _Properties_ says and placed where it says, so a
   colour can sit in one corner over the live slide and an animation in the middle. It
@@ -237,11 +238,11 @@ button:
   **[en:tran:Urgent Alert]** (a faster one); [en:tran:Countdown] and [en:tran:Stopwatch]
   **[en:tran:Top Right]**, **[en:tran:Bottom Right]**, **[en:tran:Center]** (large, in
   the middle) and **[en:tran:Bottom Banner]**; [en:tran:Time] **[en:tran:Top Left]**, **[en:tran:Top Right]**, **[en:tran:Bottom Right]** and
-  **[en:tran:Center]**; the picture, screen and web shows
+  **[en:tran:Center]**; the picture, fill, animation, screen and web shows
   **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]**, **[en:tran:Center]** and a small corner;
   the camera **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]** and **[en:tran:Bottom Left]**.
   At the right of the _Presets_ name, in every component with words and a box
-  (all but the picture, screen and web shows), is **[en:tran:Dark]** /
+  (all but the picture, fill, animation, screen and web shows), is **[en:tran:Dark]** /
   **[en:tran:Light]** — light words on a dark box for a dark slide, or dark words
   on a light box for a light one. The side lit is read off the words' colour.
   Pressing the other one keeps both colours and only makes them lighter or
@@ -320,5 +321,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-15` · `PM-16` · `PM-17` · `PM-18` · `PM-19` · `PM-20` · `PM-21` · `PM-22` · `PM-23` · `PM-24` · `PM-25` · `PM-28` · `PM-34` · `PM-128` · `PM-129` · `PM-130` · `PM-131` · `PM-132` · `PM-133` · `PM-146` · `PM-147` · `PM-150` · `PM-151` · `PM-152` · `PM-153` · `PM-158` · `PM-193` · `PM-194` · `PM-195` · `PM-196` · `KB-03` · `KB-07` · `CB-67`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

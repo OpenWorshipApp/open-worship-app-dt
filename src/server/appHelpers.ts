@@ -34,6 +34,7 @@ export {
     genReturningEventName,
 } from './electronSendHelpers';
 import { TRANSITION_META_DOT_EXTENSION } from '../_screen/transitionOverrideHelpers';
+import { PPTX_BUILD_META_DOT_EXTENSION } from './pptxBuildOptionConstants';
 
 export function showFileOrDirExplorer(dir: string) {
     appProvider.messageUtils.sendData('main:app:reveal-path', dir);
@@ -197,12 +198,14 @@ export function pasteTextToInput(inputElement: HTMLInputElement, text: string) {
     );
 }
 
-// A document's side files: its attached backgrounds, the preview's, and its
-// slides' own transitions -- renamed and trashed with it.
+// A document's side files: its attached backgrounds, the preview's, its
+// slides' own transitions and a deck's build choices -- renamed and trashed
+// with it.
 const FILE_EXTENSIONS = [
     '.bg.json',
     '.preview.bg.json',
     TRANSITION_META_DOT_EXTENSION,
+    PPTX_BUILD_META_DOT_EXTENSION,
 ];
 export async function renameAllMaterialFiles(
     oldFileSource: FileSource,
@@ -328,6 +331,21 @@ function toYtDlpRuntimeArgs(extraBinPaths: ExtraBinPathsType) {
 }
 
 /**
+ * A background video plays on loop for a whole service on whatever machine
+ * the church has, so it is chosen for the decoder, not for the pixels. Left to
+ * itself yt-dlp takes the best stream: 3840x2160 AV1, 100 MB for one song,
+ * which an old machine decodes in software if at all. In order: H.264 with
+ * AAC (hardware decode nearly everywhere, an `.mp4`), then anything but AV1,
+ * each at 1080p or less (`<=?` lets a site that states no height through),
+ * then the single file, then yt-dlp's own choice rather than no download.
+ */
+const VIDEO_DOWNLOAD_FORMAT =
+    'bv*[height<=?1080][vcodec^=avc1]+ba[ext=m4a]' +
+    '/bv*[height<=?1080][vcodec!^=av01]+ba' +
+    '/b[height<=?1080]' +
+    '/bv*+ba/b';
+
+/**
  * The media helpers are installed on demand rather than bundled, so every
  * yt-dlp caller has to go through this first. Imported lazily: this module is on
  * the launch path and must not statically pull in the storage helpers and the
@@ -444,7 +462,9 @@ export function downloadVideoOrAudio(
                 let filePath: string | null = null;
                 const args = [videoOrAudioUrl, '-o', outputFormat];
                 args.push(...toYtDlpRuntimeArgs(extraBinPaths));
-                if (!isVideo) {
+                if (isVideo) {
+                    args.push('-f', VIDEO_DOWNLOAD_FORMAT);
+                } else {
                     args.push(
                         '-x',
                         '--audio-format',
@@ -488,19 +508,16 @@ export function downloadVideoOrAudio(
                             }
                         }
                     })
+                    // `error` is any non-zero exit, and a file on disk does not
+                    // make it a download: the path last read can be ONE stream
+                    // of a video's pair, or a merge or audio extraction cut
+                    // short. A video whose picture stream timed out was handed
+                    // over as its audio-only `.webm`, and its 54 MB `.part` was
+                    // left behind (2026-11-22).
                     .on('error', async (error) => {
                         handleError(error);
-                        if (
-                            filePath !== null &&
-                            (await fsCheckFileExist(filePath))
-                        ) {
-                            resolvedSuccess(filePath);
-                        } else {
-                            await cleanupTempArtifacts();
-                            reject(
-                                new Error('Download failed: ' + error.message),
-                            );
-                        }
+                        await cleanupTempArtifacts();
+                        reject(new Error('Download failed: ' + error.message));
                     })
                     .on('close', async () => {
                         showProgressBarMessage('all done');

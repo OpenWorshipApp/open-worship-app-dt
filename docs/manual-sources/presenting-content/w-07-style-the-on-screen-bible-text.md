@@ -2,10 +2,10 @@
 id: W-07
 title: "Style the on-screen Bible text"
 section: "Presenting content"
-verify: [PM-13, PM-14, PM-57, PM-159, PM-160, PM-161, PM-162, PM-167, SP-21]
+verify: [PM-13, PM-14, PM-57, PM-159, PM-160, PM-161, PM-162, PM-167, PM-200, PM-201, SP-21]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-07 — Style the on-screen Bible text
 
@@ -26,6 +26,9 @@ the edge or shadow that keeps them readable over a picture. A
    background. Press **[en:tran:Dark]** when the words go over a dark picture
    or video — they turn white — or **[en:tran:Light]** for a light background —
    they turn black. The look you had is kept and edged the other way round.
+   The arrow at the start of the line they are on folds the verse away and leaves
+   only that line, named **[en:tran:Preview]**; the panel opens folded until you
+   press it again.
 4. **Pick a look.** Each tile under the verse is two letters wearing it:
    **[en:tran:Normal]** is plain words; **[en:tran:Thin Outline]**,
    **[en:tran:Outline]** and **[en:tran:Heavy Outline]** edge the letters;
@@ -36,7 +39,14 @@ the edge or shadow that keeps them readable over a picture. A
    read over a busy picture. One press changes every screen at once, and the
    tile in use is ringed.
 5. **Change the size.** Drag **[en:tran:Font Size]**, or type a number in the
-   box beside it.
+   box beside it. That size is one for every screen. A screen that draws it too
+   big or too small — a smaller or a larger projector — takes a factor of its
+   own: press **[en:tran:Screen Scale]**, the fold right under these rows, and
+   each screen has a row (**[en:tran:Screen]: 0**, **[en:tran:Screen]: 1**, …,
+   its icon in the colour of its Mini Screen). Every screen starts at `1`; drag
+   or type from `0.1` to `10` — `2` draws that screen's words twice the size,
+   `0.5` half. The arrow at the end of a row puts it back to `1`. While any
+   screen is not at `1`, the folded title carries a dot.
 6. **Change the colour.** Press the small square at the end of the
    **[en:tran:Text Color]** row; a colour picker opens under it. Pick a colour
    and the words on the screen change at once. Press the square again to close
@@ -74,13 +84,13 @@ the edge or shadow that keeps them readable over a picture. A
    Right-click a saved tile for **[en:tran:Rename Preset]**,
    **[en:tran:Replace with Current Look]** and **[en:tran:Remove Preset]**.
 10. **[en:tran:Reset]**, at the bottom, goes back to plain words and keeps the
-   size. The font goes back to each Bible's own, and both highlight colours
-   to their own.
+    size. The font goes back to each Bible's own, and both highlight colours
+    to their own.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-13` · `PM-14` · `PM-57` · `PM-159` · `PM-160` · `PM-161` · `PM-162` · `PM-167` · `SP-21`
+`PM-13` · `PM-14` · `PM-57` · `PM-159` · `PM-160` · `PM-161` · `PM-162` · `PM-167` · `PM-200` · `PM-201` · `SP-21`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

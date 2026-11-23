@@ -1581,6 +1581,89 @@ describe('ScreenLongTextManager coverage', () => {
         expect(open.checkIsLongTextSource('song-2')).toBe(true);
     });
 
+    test("a screen's own text scale is stored, announced and sent to that screen alone", async () => {
+        const base = createScreenManagerBase(414);
+        const otherBase = createScreenManagerBase(415);
+        const manager = new ScreenLongTextManager(base);
+        const otherManager = new ScreenLongTextManager(otherBase);
+        const stored = new Map<string, string>();
+        mocks.getSetting.mockImplementation((key: string) => {
+            return stored.get(key);
+        });
+        mocks.setSetting.mockImplementation((key: string, value: string) => {
+            stored.set(key, value);
+        });
+        mocks.removeSetting.mockImplementation((key: string) => {
+            stored.delete(key);
+        });
+        const instanceEvents: string[] = [];
+        const staticEvents: string[] = [];
+        const instanceListener = manager.registerEventListener(
+            ['text-scale'],
+            () => {
+                instanceEvents.push('text-scale');
+            },
+        );
+        const staticListener = ScreenLongTextManager.registerEventListener(
+            ['text-scale'],
+            () => {
+                staticEvents.push('text-scale');
+            },
+        );
+        try {
+            expect(manager.textScale).toBe(1);
+
+            manager.textScale = 2.5;
+            expect(mocks.setSetting).toHaveBeenCalledWith(
+                'screen-bible-text-scale-414',
+                '2.5',
+            );
+            expect(manager.textScale).toBe(2.5);
+            expect(otherManager.textScale).toBe(1);
+            expect(base.sendScreenMessage).toHaveBeenCalledTimes(1);
+            expect(base.sendScreenMessage).toHaveBeenCalledWith(
+                {
+                    screenId: 414,
+                    type: 'bible-screen-view-text-style',
+                    data: { textStyle: ScreenLongTextManager.textStyle },
+                },
+                true,
+            );
+            expect(otherBase.sendScreenMessage).not.toHaveBeenCalled();
+            // Listeners run on microtasks (`EventHandler.addPropEvent`).
+            await new Promise((resolve) => {
+                setTimeout(resolve, 25);
+            });
+            // Its own renderer and preview, and the panel listing them all.
+            expect(instanceEvents).toEqual(['text-scale']);
+            expect(staticEvents).toEqual(['text-scale']);
+
+            // Clamped as it is read: what is stored is what is drawn.
+            manager.textScale = 50;
+            expect(stored.get('screen-bible-text-scale-414')).toBe('10');
+
+            // The same value again is not another write nor another message.
+            mocks.setSetting.mockClear();
+            base.sendScreenMessage.mockClear();
+            manager.textScale = 10;
+            expect(mocks.setSetting).not.toHaveBeenCalled();
+            expect(base.sendScreenMessage).not.toHaveBeenCalled();
+
+            // Back to 1 is no setting at all.
+            manager.textScale = 1;
+            expect(mocks.removeSetting).toHaveBeenCalledWith(
+                'screen-bible-text-scale-414',
+            );
+            expect(stored.has('screen-bible-text-scale-414')).toBe(false);
+            expect(manager.textScale).toBe(1);
+        } finally {
+            manager.unregisterEventListener(instanceListener);
+            ScreenLongTextManager.unregisterEventListener(staticListener);
+            manager.delete();
+            otherManager.delete();
+        }
+    });
+
     test('deleting a screen drops its line sync and lets go of its Reader hooks', () => {
         const base = createScreenManagerBase(413);
         const manager = new ScreenLongTextManager(base);
@@ -1595,6 +1678,10 @@ describe('ScreenLongTextManager coverage', () => {
 
         expect(mocks.removeSetting).toHaveBeenCalledWith(
             'screen-bible-line-sync-413',
+        );
+        // A reused screen id must not come up at the deleted screen's scale.
+        expect(mocks.removeSetting).toHaveBeenCalledWith(
+            'screen-bible-text-scale-413',
         );
         expect(manager.screenViewData).toBeNull();
         expect(manager.div).toBeNull();

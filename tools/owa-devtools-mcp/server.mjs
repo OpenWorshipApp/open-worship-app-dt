@@ -18,6 +18,7 @@ import { BrowserManager } from 'chrome-devtools-mcp/build/src/BrowserManager.js'
 import { NO_CONFIG_DISCOVERY_ENV } from 'chrome-devtools-mcp/build/src/config/ConfigLocator.js';
 import { ConfigParser } from 'chrome-devtools-mcp/build/src/config/ConfigParser.js';
 import { puppeteer } from 'chrome-devtools-mcp/build/src/third_party/index.js';
+import { pageIdSchema } from 'chrome-devtools-mcp/build/src/tools/ToolDefinition.js';
 import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
 
 import { guardAppChoice, STDIO_SERVER_INSTRUCTIONS } from './appChoice.mjs';
@@ -53,6 +54,28 @@ export function restoreSdkToolCalls(server) {
   server.server.removeRequestHandler('tools/list');
   server._toolHandlersInitialized = false;
   server.setToolRequestHandlers();
+}
+
+const PAGE_ID_DESCRIPTION =
+  'Targets a specific page by the id list_pages prints; left out, the page select_page chose.';
+
+/**
+ * chrome-devtools-mcp 1.12 REQUIRES `pageId` on every page tool
+ * (`pageIdRouting`, on by default), though its handler already runs a call
+ * without one on the selected page (`routedPageId` -> `getSelectedMcpPage`):
+ * only the schema refuses it. Agents that `select_page` and then call
+ * `wait_for`, `take_snapshot` or `list_console_messages` were refused
+ * "pageId: expected number, received undefined" -- 9 calls in 3 sessions by
+ * 2026-11-19 (`AD-39`). The field stays, so a caller that names a page still
+ * gets that page; routing off instead would have refused it, the schemas
+ * being strict. Every page tool spreads this one object when the server is
+ * built, so it is changed before `McpServer.from`, once.
+ */
+export function makePageIdOptional(schema = pageIdSchema) {
+  if (schema.pageId.safeParse(undefined).success) {
+    return;
+  }
+  schema.pageId = schema.pageId.optional().describe(PAGE_ID_DESCRIPTION);
 }
 
 /**
@@ -126,6 +149,7 @@ export async function createOwaMcpServer({
   // browser tools -- on Chromium 128 it hung every one of them, and its
   // console has Node. See `devToolsTargets.mjs`.
   skipDevToolsTargets(puppeteer);
+  makePageIdOptional();
   const browserManager = new BrowserManager(config, { logFile });
   const mcpServer = await McpServer.from(config, { browserManager, logFile });
   const { server } = mcpServer;

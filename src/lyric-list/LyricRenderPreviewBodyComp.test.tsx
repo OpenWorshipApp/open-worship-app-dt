@@ -11,6 +11,27 @@ const h = vi.hoisted(() => ({
     lyricManager: null as any,
     showAppContextMenu: vi.fn(),
     openEditor: vi.fn(),
+    isPagePresenter: true,
+    // Each render's props, so a test can tell what the row drives.
+    editingMenuProps: [] as any[],
+    // What the real menu renders while the song has no history: nothing.
+    isEditingMenuEmpty: false,
+}));
+
+vi.mock('../server/appProvider', () => ({
+    default: {
+        get isPagePresenter() {
+            return h.isPagePresenter;
+        },
+    },
+}));
+vi.mock('../editing-manager/editingHelpers', () => ({
+    FileEditingMenuComp: (props: any) => {
+        h.editingMenuProps.push(props);
+        return h.isEditingMenuEmpty
+            ? null
+            : createElement('div', { className: 'editing-menu' });
+    },
 }));
 
 vi.mock('../context-menu/ContextMenuDotsButtonComp', () => ({
@@ -78,6 +99,9 @@ function getSongElement() {
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
     h.lyricManager = genLyricManager();
+    h.isPagePresenter = true;
+    h.editingMenuProps = [];
+    h.isEditingMenuEmpty = false;
     container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
@@ -106,6 +130,48 @@ describe('LyricRenderPreviewBodyComp', () => {
         });
         root = createRoot(container);
         expect(h.lyricManager.openLyricPreviewer.container).toBeNull();
+    });
+
+    test('a re-render leaves the mounted song alone', async () => {
+        await renderBody();
+        await renderBody();
+        await renderBody();
+        const openLyric = h.lyricManager.openLyricPreviewer;
+        expect(openLyric.container).toBe(getSongElement());
+        expect(openLyric.mount).toHaveBeenCalledTimes(1);
+    });
+
+    test('never starts a mount while another is still running', async () => {
+        // The real `mount()` appends the song's root at once and only counts
+        // as mounted later; two of them overlapping left a root behind, and
+        // the song was drawn twice from then on.
+        const openLyric = h.lyricManager.openLyricPreviewer;
+        let runningCount = 0;
+        let maxRunningCount = 0;
+        const finishList: (() => void)[] = [];
+        openLyric.mount.mockImplementation(async () => {
+            runningCount++;
+            maxRunningCount = Math.max(maxRunningCount, runningCount);
+            await new Promise<void>((resolve) => {
+                finishList.push(resolve);
+            });
+            runningCount--;
+        });
+        // Closed and opened again before the first mount has finished.
+        await renderBody();
+        act(() => {
+            root.unmount();
+        });
+        root = createRoot(container);
+        await renderBody();
+        while (finishList.length > 0) {
+            await act(async () => {
+                finishList.shift()!();
+            });
+        }
+        expect(openLyric.mount).toHaveBeenCalledTimes(2);
+        expect(maxRunningCount).toBe(1);
+        expect(openLyric.container).toBe(getSongElement());
     });
 
     test('a right-click offers Reload and Edit for this song', async () => {
@@ -147,5 +213,68 @@ describe('LyricRenderPreviewBodyComp', () => {
         const [, items] = h.showAppContextMenu.mock.calls[0];
         items[1].onSelect();
         expect(h.openEditor).toHaveBeenCalledWith(nextManager.lyric);
+    });
+
+    describe('history row (Undo / Redo / Discard changed / Save)', () => {
+        function getRow() {
+            return container.querySelector(
+                '.app-lyric-render-preview-editing-menu',
+            );
+        }
+
+        test('on the Presenter it sits above the scrolled words, driving the song', async () => {
+            await renderBody();
+            const row = getRow()!;
+            expect(row.querySelector('.editing-menu')).not.toBeNull();
+            // Outside the scroll area, so scrolling the song never takes it
+            // away; the words and the sticky dots are in the next sibling.
+            const scrollArea = row.nextElementSibling!;
+            expect(scrollArea.contains(getSongElement())).toBe(true);
+            expect(scrollArea.querySelector('#dots')).not.toBeNull();
+            expect(row.contains(getSongElement())).toBe(false);
+            const props = h.editingMenuProps.at(-1);
+            expect(props.editableDocument).toBe(h.lyricManager.lyric);
+            // The Stage Previewer owns the song's global Ctrl+S: a second
+            // registration would save twice.
+            expect(props.isSaveShortcutGlobal).toBeFalsy();
+        });
+
+        test('the row drives the song the context holds now', async () => {
+            await renderBody();
+            const nextManager = genLyricManager();
+            h.lyricManager = nextManager;
+            await renderBody();
+            expect(h.editingMenuProps.at(-1).editableDocument).toBe(
+                nextManager.lyric,
+            );
+        });
+
+        test('with no history the row is left empty, for CSS to hide', async () => {
+            h.isEditingMenuEmpty = true;
+            await renderBody();
+            expect(getRow()!.childElementCount).toBe(0);
+        });
+
+        test('off the Presenter there is no row', async () => {
+            h.isPagePresenter = false;
+            await renderBody();
+            expect(getRow()).toBeNull();
+            expect(h.editingMenuProps).toEqual([]);
+            // The song is still mounted and its menu still there.
+            expect(h.lyricManager.openLyricPreviewer.container).toBe(
+                getSongElement(),
+            );
+            expect(container.querySelector('#dots')).not.toBeNull();
+        });
+
+        test('a right-click on the row is not the song menu', async () => {
+            await renderBody();
+            await act(async () => {
+                getRow()!.dispatchEvent(
+                    new MouseEvent('contextmenu', { bubbles: true }),
+                );
+            });
+            expect(h.showAppContextMenu).not.toHaveBeenCalled();
+        });
     });
 });

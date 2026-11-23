@@ -22,6 +22,7 @@ import {
     genHtmlForegroundTime,
     genHtmlForegroundVideo,
     genHtmlForegroundWeb,
+    FOREGROUND_MARQUEE_CLASS,
 } from '../screenForegroundHelpers';
 import { getForegroundDataListOnScreenSetting } from '../screenHelpers';
 import { checkIsPresenterCopySilenced } from '../screenSoundHelpers';
@@ -267,9 +268,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         }
     >();
     private messageLayoutFrameId: number | null = null;
+    private marqueeLayoutFrameId: number | null = null;
     private isListeningToFonts = false;
     private readonly handleFontsLoaded = () => {
         this.scheduleMessageLayout();
+        if (this.checkHasMarquee()) {
+            this.scheduleMarqueeLayout();
+        }
     };
     foregroundData: ForegroundDataType;
     rendererMap: Map<string, (data: any) => void>;
@@ -786,6 +791,14 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         if (this.messageLayoutFrameId !== null) {
             return;
         }
+        this.listenToFontLoading();
+        this.messageLayoutFrameId = globalThis.requestAnimationFrame(() => {
+            this.messageLayoutFrameId = null;
+            this.layOutMessages();
+        });
+    }
+
+    private listenToFontLoading() {
         if (!this.isListeningToFonts && globalThis.document?.fonts) {
             this.isListeningToFonts = true;
             document.fonts.addEventListener(
@@ -793,10 +806,56 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
                 this.handleFontsLoaded,
             );
         }
-        this.messageLayoutFrameId = globalThis.requestAnimationFrame(() => {
-            this.messageLayoutFrameId = null;
-            this.layOutMessages();
+    }
+
+    /** `layOutMarquees` on the next frame, once however many changes land. */
+    scheduleMarqueeLayout() {
+        if (this.marqueeLayoutFrameId !== null) {
+            return;
+        }
+        this.listenToFontLoading();
+        this.marqueeLayoutFrameId = globalThis.requestAnimationFrame(() => {
+            this.marqueeLayoutFrameId = null;
+            this.layOutMarquees();
         });
+    }
+
+    /**
+     * Every session's marquee at one edge in a band of its OWN: the first one
+     * up keeps the edge and each later one sits just inside the one before,
+     * by their real heights. Each session owns its own entry per screen
+     * (`putSessionData`), so two sessions' bottom marquees are up together --
+     * and, each pinned to the edge, they had scrolled one over the other in
+     * the same band (F-38 of robot run 20261120-2021). The two roots
+     * (`isBehind`) stack apart, as they are drawn apart.
+     */
+    layOutMarquees() {
+        const listKeyList = [
+            ['marqueeTopDataList', 'top'],
+            ['marqueeBottomDataList', 'bottom'],
+        ] as const;
+        for (const [listKey, edge] of listKeyList) {
+            const dataList = this.foregroundData[listKey];
+            if (!Array.isArray(dataList)) {
+                continue;
+            }
+            const offsetMap = new Map<boolean, number>();
+            for (const data of dataList) {
+                const element =
+                    this.containerMapper
+                        .get(data)
+                        ?.container.querySelector<HTMLElement>(
+                            `.${FOREGROUND_MARQUEE_CLASS}`,
+                        ) ?? null;
+                if (element === null || !element.isConnected) {
+                    continue;
+                }
+                const isBehind = data.isBehind === true;
+                const offset = offsetMap.get(isBehind) ?? 0;
+                element.style[edge] = `${offset}px`;
+                offsetMap.set(isBehind, offset + element.offsetHeight);
+            }
+        }
     }
 
     /**
@@ -1155,7 +1214,18 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             this.screenManagerBase,
             position,
         );
-        const divContainer = this.createDivContainer(data, handleRemoving);
+        const divContainer = this.createDivContainer(
+            data,
+            async (container) => {
+                await handleRemoving();
+                // The band it leaves closes the moment it is gone: the layout
+                // a change books runs while this one is still sliding out.
+                container.remove();
+                if (this.checkHasMarquee()) {
+                    this.scheduleMarqueeLayout();
+                }
+            },
+        );
         divContainer!.appendChild(element);
     }
     renderMarqueeTop(data: ForegroundMarqueeDataType) {
@@ -1949,6 +2019,16 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         if ((this.foregroundData.messageDataList?.length ?? 0) > 0) {
             this.scheduleMessageLayout();
         }
+        if (this.checkHasMarquee()) {
+            this.scheduleMarqueeLayout();
+        }
+    }
+
+    private checkHasMarquee() {
+        return (
+            (this.foregroundData.marqueeTopDataList?.length ?? 0) > 0 ||
+            (this.foregroundData.marqueeBottomDataList?.length ?? 0) > 0
+        );
     }
 
     applyForegroundDataWithSyncGroup(
@@ -1973,6 +2053,13 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
             });
             if (key === 'messageDataList' && newData !== oldData) {
                 this.scheduleMessageLayout();
+            }
+            if (
+                (key === 'marqueeTopDataList' ||
+                    key === 'marqueeBottomDataList') &&
+                newData !== oldData
+            ) {
+                this.scheduleMarqueeLayout();
             }
         }
         this.saveForegroundData();
@@ -2011,6 +2098,10 @@ export default class ScreenForegroundManager extends ScreenEventHandler<ScreenFo
         if (this.messageLayoutFrameId !== null) {
             globalThis.cancelAnimationFrame(this.messageLayoutFrameId);
             this.messageLayoutFrameId = null;
+        }
+        if (this.marqueeLayoutFrameId !== null) {
+            globalThis.cancelAnimationFrame(this.marqueeLayoutFrameId);
+            this.marqueeLayoutFrameId = null;
         }
         if (this.isListeningToFonts) {
             this.isListeningToFonts = false;

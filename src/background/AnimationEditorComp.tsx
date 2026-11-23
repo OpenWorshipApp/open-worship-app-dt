@@ -1,5 +1,6 @@
 import AppRangeComp, { type AppRangeDefaultType } from '../others/AppRangeComp';
 import BlendModeSelectComp from '../others/BlendModeSelectComp';
+import AnimationChatbotButtonComp from './AnimationChatbotButtonComp';
 import { toValidBlendMode } from '../helper/blendModeHelpers';
 import { tran } from '../lang/langHelpers';
 import {
@@ -62,17 +63,18 @@ function EffectSelectComp({
                 value={animation.name}
                 onChange={(event) => {
                     const name = event.currentTarget.value;
-                    if (animation.engine === 'css') {
-                        onChange({
-                            ...animation,
-                            name: name as CssAnimationNameType,
-                        });
-                        return;
-                    }
                     if (name === 'custom') {
                         return;
                     }
                     // A built-in again: a person's own code goes with it.
+                    if (animation.engine === 'css') {
+                        onChange({
+                            ...animation,
+                            name: name as CssAnimationNameType,
+                            code: null,
+                        });
+                        return;
+                    }
                     onChange({
                         ...animation,
                         name: name as GlslAnimationNameType,
@@ -81,13 +83,22 @@ function EffectSelectComp({
                 }}
             >
                 {animation.engine === 'css'
-                    ? CSS_ANIMATION_NAME_LIST.map((name) => {
-                          return (
-                              <option key={name} value={name}>
-                                  {tranCssAnimationName(name)}
-                              </option>
-                          );
-                      })
+                    ? [
+                          ...(animation.name === 'custom'
+                              ? [
+                                    <option key="custom" value="custom">
+                                        {tranCssAnimationName('custom')}
+                                    </option>,
+                                ]
+                              : []),
+                          ...CSS_ANIMATION_NAME_LIST.map((name) => {
+                              return (
+                                  <option key={name} value={name}>
+                                      {tranCssAnimationName(name)}
+                                  </option>
+                              );
+                          }),
+                      ]
                     : [
                           ...(animation.name === 'custom'
                               ? [
@@ -191,7 +202,8 @@ function AnimationColorsComp({
  * _have to allow customizing and preset_) -- its effect, colours (each
  * with its own see-through), speed, how much of it there is (a CSS one) or
  * how finely it is drawn (a shader), how solid the whole is and how it
- * blends with what is under it. A shader's code opens in Edit Code. It only
+ * blends with what is under it. Its code opens in Edit Code: a shader's
+ * GLSL, or a CSS animation's own style sheet (2026-11-19). It only
  * says what changed: the picker around it keeps the draft and puts it up,
  * after a pause, on the screen it belongs to.
  */
@@ -199,11 +211,14 @@ export default function AnimationEditorComp({
     animation,
     onChange,
     onCodeEditing,
+    chatbotEditorId,
 }: Readonly<{
     animation: AnimationType;
     onChange: (animation: AnimationType) => void;
-    /** Opens the shader's code; a CSS animation has none. */
+    /** Opens the animation's code: Shader Code or CSS Code. */
     onCodeEditing?: () => void;
+    /** Its picker's handle for the help window's assistant, when it has one. */
+    chatbotEditorId?: string;
 }>) {
     const label = tran('Customize');
     const speedLabel = tran('Speed');
@@ -214,6 +229,9 @@ export default function AnimationEditorComp({
             <div className="fill-picker-head">
                 <i className="bi bi-sliders" aria-hidden="true" />
                 <span>{label}</span>
+                {chatbotEditorId === undefined ? null : (
+                    <AnimationChatbotButtonComp editorId={chatbotEditorId} />
+                )}
             </div>
             <EffectSelectComp animation={animation} onChange={onChange} />
             <AnimationColorsComp animation={animation} onChange={onChange} />

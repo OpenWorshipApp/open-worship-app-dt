@@ -8,10 +8,12 @@ import {
     toValidBlendMode,
 } from '../helper/blendModeHelpers';
 import {
+    toCoveredColor,
     toFillHexColor,
     toFillSrc,
     type FillGradientType,
 } from './fillValueHelpers';
+import { checkCssCodeProblem } from './cssCodeCheckHelpers';
 
 /**
  * What a screen's ANIMATION background holds (2026-11-15, the user:
@@ -24,6 +26,7 @@ import {
  * `src` keeps working:
  *
  * - a CSS animation: `css?name=aurora&colors=0B1026-4C1D95-0EA5E9&speed=normal&density=normal`;
+ * - a person's own CSS animation: `css?code=<base64url>&colors=...&speed=...&density=...`;
  * - a built-in shader: `glsl?name=plasma&colors=...&speed=normal&quality=normal`;
  * - a person's own shader: `glsl?code=<base64url>&colors=...&speed=...&quality=...`;
  *
@@ -36,14 +39,20 @@ import {
  * screen is drawn over another one, a Screen Show, whose frame takes it
  * (`screenShowFrameHelpers`).
  *
- * No CSS is ever read from a value: a CSS animation is one of the effects
- * named here, BUILT from parts each checked on its own
- * (`cssAnimationLayerHelpers`), so a run sheet from somebody else's computer
- * can carry no `url()` onto a projector. A shader's code IS read from a
- * value -- that is what makes it creative -- but it runs on the graphics card
- * alone, in WebGL, with no way to the network, the files or the page; it is
- * checked for its size and its characters here and compiled by the screen,
- * which falls back to a still gradient of the colours when it cannot run it
+ * A built-in CSS animation is one of the effects named here, BUILT from
+ * parts each checked on its own (`cssAnimationLayerHelpers`). A person's
+ * own CSS animation (2026-11-19, the goal _chatbot can help handle css and
+ * glsl code editing_) IS read from a value -- a style sheet for the boxes
+ * the app draws (`cssCodeAnimationHelpers`) -- and kept only when
+ * `checkCssCodeProblem` passes it: no `url()`, `@import` or escape, so a run
+ * sheet from somebody else's computer still carries no address onto a
+ * projector, and keyframes that move only transform and opacity. It is
+ * drawn in a shadow root of its own box, where its rules reach nothing else
+ * on the screen. A shader's code is read from a value too -- that is what
+ * makes it creative -- but it runs on the graphics card alone, in WebGL,
+ * with no way to the network, the files or the page; it is checked for its
+ * size and its characters here and compiled by the screen, which falls back
+ * to a still gradient of the colours when it cannot run it
  * (`glslAnimationRuntime`).
  *
  * Pure, and imports nothing but leaf value helpers: the screen window, the
@@ -62,6 +71,12 @@ export const CSS_ANIMATION_NAME_LIST = [
     'clouds',
     'cross',
     'embers',
+    'leaves',
+    'fireworks',
+    'petals',
+    'candles',
+    'confetti',
+    'hearts',
 ] as const;
 export type CssAnimationNameType = (typeof CSS_ANIMATION_NAME_LIST)[number];
 
@@ -80,6 +95,12 @@ export const GLSL_ANIMATION_NAME_LIST = [
     'snow',
     'sunrise',
     'stars',
+    'leaves',
+    'fireworks',
+    'petals',
+    'candles',
+    'confetti',
+    'hearts',
 ] as const;
 export type GlslAnimationNameType = (typeof GLSL_ANIMATION_NAME_LIST)[number];
 
@@ -102,7 +123,9 @@ const MAX_CODE_SRC_LENGTH =
 
 export type CssAnimationType = {
     engine: 'css';
-    name: CssAnimationNameType;
+    /** `custom` when `code` is a person's own style sheet. */
+    name: CssAnimationNameType | 'custom';
+    code: string | null;
     /** The first is the ground, the others the light moving over it. */
     colors: AppColorType[];
     speed: AnimationSpeedType;
@@ -130,6 +153,14 @@ export const ANIMATION_SPEED_FACTOR_MAP: Record<AnimationSpeedType, number> = {
     normal: 1,
     fast: 2,
 };
+
+/**
+ * A moment into an animation, in seconds as it would run at `normal`, where
+ * every built-in has something to show: the still a shader's tile draws
+ * (`glslStillRenderer`), and where a saved picture or video starts
+ * (`animationExportHelpers`).
+ */
+export const ANIMATION_STILL_TIME_SECONDS = 6;
 
 /**
  * What a shader's quality costs: the share of the screen's pixels it draws
@@ -170,24 +201,38 @@ export function checkGlslCodeProblem(code: unknown): string | null {
     return null;
 }
 
-export function encodeGlslCode(code: string): string {
+/** A person's code, shader or style sheet, as a value carries it. */
+export function encodeAnimationCode(code: string): string {
     return btoa(code)
         .replaceAll('+', '-')
         .replaceAll('/', '_')
         .replace(/=+$/, '');
 }
 
-export function decodeGlslCode(encoded: string): string | null {
+function decodeAnimationCode(
+    encoded: string,
+    checkProblem: (code: string) => string | null,
+): string | null {
     if (!/^[A-Za-z0-9_-]+$/.test(encoded)) {
         return null;
     }
     try {
         const base64 = encoded.replaceAll('-', '+').replaceAll('_', '/');
         const code = atob(base64 + '='.repeat((4 - (base64.length % 4)) % 4));
-        return checkGlslCodeProblem(code) === null ? code : null;
+        return checkProblem(code) === null ? code : null;
     } catch {
         return null;
     }
+}
+
+export const encodeGlslCode = encodeAnimationCode;
+
+export function decodeGlslCode(encoded: string): string | null {
+    return decodeAnimationCode(encoded, checkGlslCodeProblem);
+}
+
+export function decodeCssCode(encoded: string): string | null {
+    return decodeAnimationCode(encoded, checkCssCodeProblem);
 }
 
 function parseQuery(src: string, kind: string) {
@@ -271,17 +316,23 @@ function parseLook(map: Map<string, string>) {
 
 function parseCssAnimation(src: string): CssAnimationType | null {
     const map = parseQuery(src, 'css');
-    if (map === null || map.has('code')) {
+    if (map === null || map.has('name') === map.has('code')) {
+        // One of the two, never both and never neither.
         return null;
     }
-    const name = toOneOf(CSS_ANIMATION_NAME_LIST, map.get('name'), 'aurora');
+    const encodedCode = map.get('code');
+    const code = encodedCode === undefined ? null : decodeCssCode(encodedCode);
+    const name =
+        encodedCode === undefined
+            ? toOneOf(CSS_ANIMATION_NAME_LIST, map.get('name'), 'aurora')
+            : 'custom';
     const colors = toAnimationColors(map.get('colors'));
     const speed = toOneOf(ANIMATION_SPEED_LIST, map.get('speed'), 'normal');
     const density = toOneOf(ANIMATION_LEVEL_LIST, map.get('density'), 'normal');
     const look = parseLook(map);
     if (
-        !map.has('name') ||
         name === null ||
+        (encodedCode !== undefined && code === null) ||
         colors === null ||
         speed === null ||
         density === null ||
@@ -289,7 +340,7 @@ function parseCssAnimation(src: string): CssAnimationType | null {
     ) {
         return null;
     }
-    return { engine: 'css', name, colors, speed, density, ...look };
+    return { engine: 'css', name, code, colors, speed, density, ...look };
 }
 
 function parseGlslAnimation(src: string): GlslAnimationType | null {
@@ -363,17 +414,17 @@ function toLookQuery(animation: AnimationType) {
 /** The one way an animation is written, so two equal ones are equal strings. */
 export function toAnimationSrc(animation: AnimationType): string {
     const colors = toBareColors(animation.colors);
+    const head =
+        animation.name === 'custom'
+            ? `code=${encodeAnimationCode(animation.code ?? '')}`
+            : `name=${animation.name}`;
     if (animation.engine === 'css') {
         return (
-            `css?name=${animation.name}&colors=${colors}` +
+            `css?${head}&colors=${colors}` +
             `&speed=${animation.speed}&density=${animation.density}` +
             toLookQuery(animation)
         );
     }
-    const head =
-        animation.name === 'custom'
-            ? `code=${encodeGlslCode(animation.code ?? '')}`
-            : `name=${animation.name}`;
     return (
         `glsl?${head}&colors=${colors}` +
         `&speed=${animation.speed}&quality=${animation.quality}` +
@@ -414,8 +465,7 @@ export function compareAnimationSrc(src1: unknown, src2: unknown): boolean {
 /**
  * The still picture an animation stands for wherever it does not move -- a
  * printed page, a PowerPoint slide, a run sheet's colour chip, the screen
- * when it cannot run a shader -- and the colour the text-contrast check
- * judges it by: its colours as one gradient, ground first.
+ * when it cannot run a shader: its colours as one gradient, ground first.
  */
 export function toAnimationStillFill(
     animation: AnimationType,
@@ -429,11 +479,85 @@ export function toAnimationStillFill(
     };
 }
 
-export function toAnimationStillFillSrc(animation: AnimationType): string {
-    return toFillSrc(toAnimationStillFill(animation));
+/**
+ * How much of the frame an effect's own colours cover, near enough, read
+ * off its samples' stills -- the rest is its ground, the first colour, which
+ * the words on a screen sit on. Null for a shader that mixes all its colours
+ * over the whole frame.
+ */
+const CSS_COLOR_COVER_MAP: Record<CssAnimationNameType, number> = {
+    aurora: 0.4,
+    bokeh: 0.2,
+    rays: 0.4,
+    waves: 0.5,
+    stars: 0.1,
+    breathe: 0.6,
+    snow: 0.1,
+    clouds: 0.5,
+    cross: 0.3,
+    embers: 0.15,
+    leaves: 0.1,
+    fireworks: 0.1,
+    petals: 0.1,
+    candles: 0.15,
+    confetti: 0.1,
+    hearts: 0.1,
+};
+const GLSL_COLOR_COVER_MAP: Record<GlslAnimationNameType, number | null> = {
+    plasma: null,
+    flow: null,
+    mesh: null,
+    aurora: 0.45,
+    waves: 0.5,
+    rays: 0.45,
+    clouds: 0.55,
+    cross: 0.35,
+    flames: 0.6,
+    glass: null,
+    ripples: null,
+    snow: 0.1,
+    sunrise: 0.6,
+    stars: 0.1,
+    leaves: 0.12,
+    fireworks: 0.1,
+    petals: 0.12,
+    candles: 0.15,
+    confetti: 0.12,
+    hearts: 0.1,
+};
+
+/**
+ * The one colour an animation reads as from across the room, which the
+ * Bible text-contrast check judges it by (`ScreenBackgroundManager`): its
+ * ground, with its other colours over as much of it as its effect covers.
+ * Judged as one even gradient of all its colours, a dark night with a few
+ * bright sparks read as light, and the check turned white words black on
+ * it (2026-11-19, `Thanksgiving - Fireworks`). A person's own code, whose
+ * cover nobody knows, is still judged as that gradient.
+ */
+export function toAnimationReadColor(animation: AnimationType): AppColorType {
+    const [ground, ...others] = animation.colors;
+    let cover: number | null = null;
+    if (animation.name !== 'custom') {
+        cover =
+            animation.engine === 'css'
+                ? CSS_COLOR_COVER_MAP[animation.name]
+                : GLSL_COLOR_COVER_MAP[animation.name];
+    }
+    return toCoveredColor(
+        ground,
+        others,
+        cover ?? others.length / animation.colors.length,
+    );
 }
 
-const CSS_ENGLISH_NAME_MAP: Record<CssAnimationNameType, string> = {
+/** `toAnimationReadColor` as a fill, for the text-contrast check. */
+export function toAnimationReadFillSrc(animation: AnimationType): string {
+    return toFillSrc({ kind: 'solid', color: toAnimationReadColor(animation) });
+}
+
+const CSS_ENGLISH_NAME_MAP: Record<CssAnimationNameType | 'custom', string> = {
+    custom: 'custom',
     aurora: 'aurora',
     bokeh: 'bokeh',
     rays: 'light rays',
@@ -444,6 +568,12 @@ const CSS_ENGLISH_NAME_MAP: Record<CssAnimationNameType, string> = {
     clouds: 'clouds',
     cross: 'cross',
     embers: 'embers',
+    leaves: 'falling leaves',
+    fireworks: 'fireworks',
+    petals: 'petals',
+    candles: 'candlelight',
+    confetti: 'confetti',
+    hearts: 'hearts',
 };
 const GLSL_ENGLISH_NAME_MAP: Record<GlslAnimationNameType | 'custom', string> =
     {
@@ -461,6 +591,12 @@ const GLSL_ENGLISH_NAME_MAP: Record<GlslAnimationNameType | 'custom', string> =
         snow: 'snowfall',
         sunrise: 'sunrise',
         stars: 'starry night',
+        leaves: 'falling leaves',
+        fireworks: 'fireworks',
+        petals: 'petals',
+        candles: 'candlelight',
+        confetti: 'confetti',
+        hearts: 'hearts',
         custom: 'custom',
     };
 

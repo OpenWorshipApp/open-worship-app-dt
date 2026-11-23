@@ -126,6 +126,7 @@ function item(overrides: Record<string, unknown> = {}) {
     return {
         isAppDocument: false,
         isDisabled: false,
+        isScreenReachable: true,
         isAudio: false,
         isAction: false,
         itemFilePath: '/item',
@@ -277,7 +278,21 @@ describe('PresentingFlowItemComp interactions', () => {
         const parked = await render(item({ isDisabled: true }));
         state.rowProps.onDragStart(event());
         expect(dragStore.onDropped).toBeNull();
+        expect(dragStore.isScreenRefused).toBe(true);
         await act(async () => parked.root.unmount());
+
+        // A whole document reaches no screen (the run walks its slides): still
+        // draggable to reorder, refused by every screen card (F-13).
+        const wholeDocument = await render(
+            item({ isAppDocument: true, isScreenReachable: false }),
+        );
+        state.rowProps.onDragStart(event());
+        expect(presentingFlowDraggingStore.current).not.toBeNull();
+        expect(dragStore.onDropped).toBeNull();
+        expect(dragStore.isScreenRefused).toBe(true);
+        state.rowProps.onDragEnd();
+        expect(dragStore.isScreenRefused).toBe(false);
+        await act(async () => wholeDocument.root.unmount());
     });
 
     test('moves or attaches another listed item and ignores invalid row drags', async () => {

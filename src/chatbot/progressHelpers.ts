@@ -740,6 +740,22 @@ export function describeToolStep(name: string, args: any): string {
                 },
                 false,
             );
+        // An attached PowerPoint or Word file, named by its `file` (EC-761):
+        // read before every question, changed in one call.
+        case 'owa_office_edit':
+            return fillWords(
+                args?.action === 'edit'
+                    ? tran('Changing “{name}”')
+                    : tran('Reading “{name}”'),
+                {
+                    name:
+                        toStepQuote(
+                            typeof args?.file === 'string'
+                                ? args.file.split(/[\\/]/).pop()
+                                : null,
+                        ) ?? '…',
+                },
+            );
         case 'owa_bible_item':
         case 'owa_bible_note':
         case 'owa_undo':

@@ -31,6 +31,8 @@ import {
     toBotImages,
     toImageMediaType,
     toReusableAttachments,
+    checkIsMediaName,
+    genMediaAttachment,
 } from './attachmentHelpers';
 
 // The one rule this module exists to keep: bytes live in memory, bounded, for
@@ -651,6 +653,36 @@ describe('the number an attachment is called by', () => {
 
 // "And accept files like markdown pdf": a PDF goes along with a problem
 // report for the people who can open it.
+// 2026-11-21: a video or a sound is put on a slide, never looked at.
+describe('a video or a sound attached', () => {
+    test('is known by its name', () => {
+        expect(checkIsMediaName('Intro.MP4')).toBe(true);
+        expect(checkIsMediaName(' bell.wav ')).toBe(true);
+        expect(checkIsMediaName('Hymn.m4a')).toBe(true);
+        expect(checkIsMediaName('clip.mkv')).toBe(false);
+        expect(checkIsMediaName('Intro.mp4.exe')).toBe(false);
+    });
+
+    test('holds its path and size, no bytes, and says it cannot be watched', () => {
+        const video = genMediaAttachment('Intro.mp4', 2 * 1024 * 1024, '/v/i');
+        expect(video).toMatchObject({
+            kind: 'media',
+            mimeType: 'video/*',
+            filePath: '/v/i',
+        });
+        expect(getAttachmentData(video.id)).toBeNull();
+        expect(toAttachedText(video)).toBe('');
+        expect(toBotImages([video])).toEqual([]);
+        expect(toAskedOfModel('put this on slide 2', [video])).toContain(
+            'a video called "Intro.mp4"',
+        );
+        const sound = genMediaAttachment('bell.mp3', 1000, '/s/b');
+        expect(sound.mimeType).toBe('audio/*');
+        expect(sound.summary).toContain('a sound file called "bell.mp3"');
+        expect(sound.summary).toContain('do not guess what is in it');
+    });
+});
+
 describe('a file that is carried, not read', () => {
     test('is a PDF, by its name', () => {
         expect(checkIsCarriedFileName('Order of Service.PDF')).toBe(true);

@@ -3,7 +3,7 @@ id: W-07
 title: "Mettre en forme le texte biblique à l'écran"
 section: "Présenter du contenu"
 lang: fr
-translatedFrom: fc5d124964d6713a
+translatedFrom: 8b1467ea8bfdd0a3
 ---
 # W-07 — Mettre en forme le texte biblique à l'écran
 
@@ -24,6 +24,9 @@ le contour ou l'ombre qui les garde lisibles par-dessus une image. Un
    arrière-plan. Appuyez sur **[en:tran:Dark]** quand les mots passent sur une image ou une vidéo
    sombre — ils deviennent blancs — ou sur **[en:tran:Light]** pour un arrière-plan clair —
    ils deviennent noirs. Le style que vous aviez est gardé, avec le contour dans l'autre sens.
+   La flèche au début de la ligne où ils se trouvent replie le verset et ne laisse
+   que cette ligne, nommée **[en:tran:Preview]** ; le panneau s'ouvre replié jusqu'à ce que
+   vous appuyiez de nouveau dessus.
 4. **Choisissez un style.** Chaque vignette sous le verset montre deux lettres qui portent ce style :
    **[en:tran:Normal]** donne des mots simples ; **[en:tran:Thin Outline]**,
    **[en:tran:Outline]** et **[en:tran:Heavy Outline]** entourent les lettres d'un contour ;
@@ -34,7 +37,14 @@ le contour ou l'ombre qui les garde lisibles par-dessus une image. Un
    lire par-dessus une image chargée. Un seul appui change tous les écrans à la fois, et la
    vignette utilisée est entourée.
 5. **Changez la taille.** Faites glisser **[en:tran:Font Size]**, ou tapez un nombre dans la
-   case à côté.
+   case à côté. Cette taille est la même pour tous les écrans. Un écran qui la dessine trop
+   grande ou trop petite — un projecteur plus petit ou plus grand — prend un facteur qui lui est
+   propre : appuyez sur **[en:tran:Screen Scale]**, la section repliable juste sous ces rangées, et
+   chaque écran y a sa rangée (**[en:tran:Screen]: 0**, **[en:tran:Screen]: 1**, …,
+   son icône de la couleur de son mini-écran). Chaque écran commence à `1` ; faites glisser
+   ou tapez une valeur de `0.1` à `10` — `2` dessine les mots de cet écran deux fois plus grands,
+   `0.5` moitié moins. La flèche au bout d'une rangée la remet à `1`. Tant qu'un
+   écran n'est pas à `1`, le titre replié porte un point.
 6. **Changez la couleur.** Appuyez sur le petit carré au bout de la
    rangée **[en:tran:Text Color]** ; un sélecteur de couleur s'ouvre en dessous. Choisissez une couleur
    et les mots à l'écran changent aussitôt. Appuyez de nouveau sur le carré pour fermer

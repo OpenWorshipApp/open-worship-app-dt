@@ -96,7 +96,7 @@ function RenderLanguageNameComp({
 
 function RenderEnglishRowComp() {
     return (
-        <li className="list-group-item d-flex align-items-center gap-2">
+        <li className="list-group-item d-flex align-items-center gap-2 app-selectable-text">
             <div className="form-check form-switch m-0">
                 <input
                     className="form-check-input"
@@ -285,7 +285,7 @@ function RenderCatalogRowComp({
         );
     }
     return (
-        <li className="list-group-item d-flex align-items-center gap-2">
+        <li className="list-group-item d-flex align-items-center gap-2 app-selectable-text">
             <div className="flex-grow-1 app-overflow-hidden">
                 <RenderLanguageNameComp
                     nativeName={entry.nativeName}

@@ -3,7 +3,7 @@ id: W-28
 title: "Construire une diapositive en faisant glisser depuis le panneau Arrière-plan"
 section: "Configuration"
 lang: fr
-translatedFrom: dcddcdbaa510032f
+translatedFrom: 4e42ca37a4a7c1a0
 ---
 # W-28 — Construire une diapositive en faisant glisser depuis le panneau Arrière-plan
 
@@ -39,7 +39,8 @@ panneau **[en:tran:Background]** du bas visible.
    canevas** et vous obtenez à la place un nouveau rectangle coloré. Ce rectangle est au fond une boîte de
    texte ordinaire : vous pouvez double-cliquer dessus et y taper du texte plus tard. Une boîte
    **verrouillée** (🔒) garde sa couleur : l'application dit _[en:tran:This item is locked]_ et n'ajoute
-   rien — déverrouillez-la d'abord. 📸
+   rien — déverrouillez-la d'abord. Un dégradé ou un motif de **[en:tran:Fills]** fait lui aussi
+   s'assombrir le canevas, mais n'ajoute et ne change rien : une boîte ne prend qu'une couleur. 📸
 5. Tout ce que vous déposez est une boîte ordinaire : déplacez-la, redimensionnez-la, changez son ordre,
    et **[en:tran:Undo]** (Ctrl+Z) la retire aussitôt. Enregistrez avec **Ctrl+S**.
 

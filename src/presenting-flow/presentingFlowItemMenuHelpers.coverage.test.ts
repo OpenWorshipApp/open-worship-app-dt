@@ -140,6 +140,21 @@ describe('presenting-flow item menus', () => {
         expect(model.setItemColorNote).toHaveBeenCalledWith(1, '#456');
     });
 
+    test('offers no Reveal Original on a damaged entry (F-31)', () => {
+        // Its original could not be read, so the press could only do nothing.
+        const damaged = item({ isError: true, isScreenReachable: false });
+        const menu = genPresentingFlowItemContextMenuItems(
+            flow(),
+            damaged,
+            0,
+            2,
+        );
+        const names = menu.map((one) => one.menuElement);
+        expect(names).not.toContain('Reveal Original');
+        // What it can still have done to it stays: it can be taken away.
+        expect(names).toContain('Remove from Presenting Flow');
+    });
+
     test('builds run-action labels, fires them, and applies successful re-arming', async () => {
         const model = flow();
         const clock = item({

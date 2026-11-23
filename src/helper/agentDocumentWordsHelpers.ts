@@ -205,7 +205,10 @@ async function readPdf(filePath: string): Promise<ReadDocumentType | null> {
     };
 }
 
-async function genSlidePageHtml(slide: any) {
+// A slide drawn on its own page the way printing draws it, for the capture
+// window -- also how a slide document made from a PowerPoint is compared
+// with it (`pptxSlideDocumentHelpers.ts`).
+export async function genSlidePageHtml(slide: any) {
     const [{ genSlideHtml }, { collectFontFaceCss }] = await Promise.all([
         import('../app-document-presenter/items/SlideRendererComp'),
         import('./printCssHelpers'),

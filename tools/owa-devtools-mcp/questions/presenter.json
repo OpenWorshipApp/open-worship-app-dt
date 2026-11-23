@@ -4,7 +4,7 @@
     "window": "presenter.html",
     "focus": "presenter",
     "description": "The main window the app opens on: content libraries on the left, the working area in the middle, the mini screen the audience sees on the right.",
-    "updated": "2026-11-15",
+    "updated": "2026-11-20",
     "sections": [
         {
             "id": "orientation",
@@ -235,7 +235,11 @@
                         "create song",
                         "blank song",
                         "add song",
-                        "write"
+                        "write",
+                        "open lyric file",
+                        "ol.md",
+                        "import song file",
+                        "export song file"
                     ],
                     "resources": {
                         "recipe": "W-15",
@@ -487,7 +491,9 @@
                         "no transition",
                         "cyan transition icon",
                         "transition icon buttons",
-                        "background attachment icon"
+                        "background attachment icon",
+                        "powerpoint transition",
+                        "pptx animation"
                     ],
                     "resources": {
                         "recipe": "W-48",
@@ -684,6 +690,26 @@
                         "related": ["W-23"],
                         "find": "Documents",
                         "guide": true
+                    }
+                },
+                {
+                    "id": "pptx-omit-background",
+                    "text": "How do I show my own background behind PowerPoint slides?",
+                    "kind": "howto",
+                    "keywords": [
+                        "omit background",
+                        "powerpoint background",
+                        "pptx background",
+                        "slide background",
+                        "transparent slides",
+                        "without background",
+                        "remove powerpoint background",
+                        "keep powerpoint background"
+                    ],
+                    "resources": {
+                        "recipe": "W-03",
+                        "related": ["W-08"],
+                        "find": "Omit Background"
                     }
                 },
                 {
@@ -940,6 +966,60 @@
                     "resources": {
                         "recipe": "W-57",
                         "related": ["W-15"],
+                        "find": "Open in Chatbot"
+                    }
+                },
+                {
+                    "id": "change-office-file-with-assistant",
+                    "text": "Can the assistant change my PowerPoint or Word file?",
+                    "kind": "howto",
+                    "keywords": [
+                        "change my powerpoint",
+                        "edit my powerpoint",
+                        "edit a powerpoint file",
+                        "change a word file",
+                        "edit a word file",
+                        "edit a word document",
+                        "colour of my powerpoint",
+                        "color of my powerpoint",
+                        "powerpoint background colour",
+                        "powerpoint background color",
+                        "picture in my powerpoint",
+                        "photo in my powerpoint",
+                        "picture to my powerpoint",
+                        "photo to my powerpoint",
+                        "slide numbers in my powerpoint",
+                        "footer in my powerpoint",
+                        "animation in my powerpoint",
+                        "table in my powerpoint",
+                        "chart in my powerpoint",
+                        "shape in my powerpoint",
+                        "gradient powerpoint background",
+                        "pattern powerpoint background",
+                        "theme fonts in my powerpoint",
+                        "theme colors in my powerpoint",
+                        "smartart in my powerpoint",
+                        "picture from a link in my powerpoint",
+                        "picture from the internet in my powerpoint",
+                        "logo on every slide of my powerpoint",
+                        "slide master in my powerpoint",
+                        "smartart colour in my powerpoint",
+                        "convert smartart to shapes",
+                        "make smartart a cycle",
+                        "smartart layout in my powerpoint",
+                        "make smartart a pyramid",
+                        "make smartart a venn diagram",
+                        "smartart hierarchy org chart",
+                        "add a box to smartart",
+                        "remove a box from smartart",
+                        "move a box in smartart",
+                        "smartart layout like another slide",
+                        "change words on every slide everywhere",
+                        "powerpoint file is open"
+                    ],
+                    "resources": {
+                        "recipe": "W-65",
+                        "related": ["W-62"],
                         "find": "Open in Chatbot"
                     }
                 }
@@ -1465,7 +1545,10 @@
                         "readable",
                         "too small",
                         "bigger",
-                        "smaller"
+                        "smaller",
+                        "screen scale",
+                        "each screen",
+                        "one screen bigger"
                     ],
                     "resources": {
                         "recipe": "W-07",
@@ -1717,7 +1800,22 @@
                         "flames",
                         "aurora",
                         "starfield",
-                        "blend mode"
+                        "blend mode",
+                        "animation category",
+                        "christmas animation",
+                        "falling snow",
+                        "pin an animation",
+                        "pinned animations",
+                        "fireworks",
+                        "confetti",
+                        "falling leaves",
+                        "candlelight",
+                        "light animation",
+                        "dark animation",
+                        "animation light mode",
+                        "animation dark mode",
+                        "pale animation",
+                        "bright animated background"
                     ],
                     "resources": {
                         "recipe": "W-08",
@@ -1738,11 +1836,48 @@
                         "mainimage",
                         "my own shader",
                         "custom shader",
-                        "copy code"
+                        "copy code",
+                        "chatbot shader",
+                        "assistant shader",
+                        "fix my shader",
+                        "chatbot animation",
+                        "css code",
+                        "custom css",
+                        "css animation code",
+                        "write css animation",
+                        "chatbot css",
+                        "animation code",
+                        "effect code",
+                        "built-in animation code"
                     ],
                     "resources": {
                         "recipe": "W-08",
                         "passage": "Short shaders written for Shadertoy",
+                        "find": "Background > Animations",
+                        "guide": true
+                    }
+                },
+                {
+                    "id": "background-animation-export",
+                    "text": "Can I save an animation as a picture or a video?",
+                    "kind": "howto",
+                    "keywords": [
+                        "save animation",
+                        "animation as image",
+                        "animation as picture",
+                        "animation as video",
+                        "animation to png",
+                        "animation to mp4",
+                        "export animation",
+                        "save as video",
+                        "save as image",
+                        "animation video file",
+                        "background video from animation",
+                        "make a video background"
+                    ],
+                    "resources": {
+                        "recipe": "W-08",
+                        "passage": "keep the animation as a file",
                         "find": "Background > Animations",
                         "guide": true
                     }

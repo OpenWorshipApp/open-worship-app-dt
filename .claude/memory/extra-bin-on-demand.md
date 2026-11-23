@@ -52,7 +52,7 @@ app whose whole point is running on weak church hardware.
   whose `info.json` `platform` names this OS is moved in by `moveLegacyExtraBinPack`
   (called by `checkIsExtraBinInstalled` and `installExtraBin`); another OS's is left.
 - Runtime paths come from `src/helper/extra-bin/extraBinHelpers.ts`
-  (`<appLocalStorage.defaultStorage>/extra-bin/<platform>/{yt,ffmpeg/bin,qjs}`), and the renderer
+  (`<appLocalStorage.defaultStorageDirPath>/extra-bin/<platform>/{yt,ffmpeg/bin,qjs}`), and the renderer
   hands the yt-dlp path to `appProvider.ytUtils.getYTHelper(path)` —
   `electron/client/ytUtils.ts` resolves nothing any more and caches keyed on the path.
   Anything reaching for `bin-helper/yt|ffmpeg|qjs` is stale by definition.

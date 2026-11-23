@@ -259,6 +259,7 @@ vi.mock('../app-document-presenter/items/appDocumentHelpers', () => ({
 }));
 
 vi.mock('../helper/domHelpers', () => ({
+    escapeSelectorValue: (value: string) => value,
     notifyElementHighlight: mocks.notifyElementHighlightMock,
     openPopupWindow: mocks.openPopupWindowMock,
     setParamFileFullName: mocks.setParamFileFullNameMock,
@@ -652,11 +653,18 @@ describe('AppDocument slide mutations', () => {
         expect(mocks.notifyElementHighlightMock).toHaveBeenCalledTimes(1);
     });
 
-    test('a highlighted slide is found by its id among the cards', async () => {
+    test('a highlighted slide is found by its document and id among the cards', async () => {
+        // Another document's card with the same id comes first: ids restart
+        // at 0 in every document, so it must not be the one found (F-21).
+        const otherCard = document.createElement('div');
+        otherCard.className = 'data-vary-app-document-item';
+        otherCard.dataset.varyAppDocumentFilePath = '/other.ows';
+        otherCard.dataset.varyAppDocumentItemId = '12';
         const card = document.createElement('div');
         card.className = 'data-vary-app-document-item';
+        card.dataset.varyAppDocumentFilePath = DOC_PATH;
         card.dataset.varyAppDocumentItemId = '12';
-        document.body.append(card);
+        document.body.append(otherCard, card);
         const appDocument = new AppDocument(DOC_PATH);
 
         appDocument.notifyNewSlidesAdded([12, 13]);
@@ -667,6 +675,8 @@ describe('AppDocument slide mutations', () => {
         expect(getters).toHaveLength(2);
         expect(getters[0]()).toBe(card);
         expect(getters[1]()).toBeNull();
+        otherCard.remove();
+        card.remove();
     });
 
     test('addSlides numbers new slides after the highest id, in this file, and announces each', async () => {

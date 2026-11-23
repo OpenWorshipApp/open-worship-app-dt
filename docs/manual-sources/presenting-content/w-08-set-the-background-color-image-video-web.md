@@ -2,10 +2,10 @@
 id: W-08
 title: "Set the background (color / image / video / web)"
 section: "Presenting content"
-verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, PM-181, PM-182, PM-183, PM-184, PM-185, PM-186, PM-187, PM-188, PM-189, PM-190, PM-191, PM-192, PM-195, KB-04]
-screenshots: 5
+verify: [PM-26, PM-27, PM-28, PM-29, PM-30, PM-31, PM-32, PM-33, PM-101, PM-114, PM-144, PM-145, PM-181, PM-182, PM-183, PM-184, PM-185, PM-186, PM-187, PM-188, PM-189, PM-190, PM-191, PM-192, PM-195, PM-197, PM-198, PM-199, PM-203, KB-04]
+screenshots: 6
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-08 — Set the background (color / image / video / web)
 
@@ -42,6 +42,30 @@ workflowsVersion: "2026-11-15"
      Every tile is still; rest the pointer on one to see it move, and click it to put it on
      the screen. Only the screen moves: the Mini Screen and every preview show one still
      frame. 📸
+   - **[en:tran:Category]**, above the tiles, picks the occasion they are made for: a
+     Sunday service, **[en:tran:Christmas]**, **[en:tran:Thanksgiving]**, a wedding, a
+     season, a theme — 57 of them, in six groups. A category shows every effect of both
+     kinds in its colours, the ones it is known by first and those in more than one look:
+     **[en:tran:Christmas]** opens on four snowfalls of each kind (**[en:tran:Snowfall]**,
+     _Snowfall 2_ … _Snowfall 4_), then starry nights and candles. A solemn day leaves out
+     **[en:tran:Fireworks]**, **[en:tran:Confetti]** and **[en:tran:Hearts]**; a summer one
+     leaves out snow. Besides snow, stars, light rays, clouds, waves, a cross and the rest,
+     both kinds draw **[en:tran:Falling Leaves]**, **[en:tran:Fireworks]**,
+     **[en:tran:Petals]**, **[en:tran:Candlelight]**, **[en:tran:Confetti]** and
+     **[en:tran:Hearts]**. The list keeps the category you chose; until you have chosen one, it
+     opens on the category of the animation the screen holds.
+   - **[en:tran:Dark]** / **[en:tran:Light]** at the top, as on **[en:tran:Fills]**, swaps
+     every category's tiles between deep grounds that white words read on and pale ones that
+     black words read on — the same effects in the same order, in the occasion's light
+     colours. A Light tile's name ends in _(Light)_: _Christmas - Snowfall (Light)_. It opens
+     on the side of the animation the screen holds, and moves by itself only when a tile of
+     the other side goes up.
+   - Pin a tile to keep it at hand whatever the category or side: the pin at its top corner (it shows
+     under the pointer), or **[en:tran:Pin]** in its right-click menu. It joins
+     **[en:tran:Pinned]** above **[en:tran:Category]**, in the order you pinned them, on the
+     Background tab and on **[en:tran:Animation Show]** alike, Dark and Light tiles together
+     whichever side is shown; pressing a pinned tile does not change the category. **[en:tran:Unpin]** takes it out. Thirty can be pinned; then
+     the pin says **[en:tran:Unpin one to pin another]**.
    - **[en:tran:Customize]**, beside the tiles while a screen holds an animation, changes its
      **[en:tran:Effect]**, its colors (the first is the **[en:tran:Background Color]**, each
      with its own **[en:tran:Opacity]**), **[en:tran:Speed]**, **[en:tran:Density]** (CSS)
@@ -49,14 +73,47 @@ workflowsVersion: "2026-11-15"
      animation's **[en:tran:Opacity]** and its **[en:tran:Blend Mode]** with what is behind
      the screen; the screen follows half a second after you stop. **[en:tran:Save as Preset]**
      keeps it as a button under **[en:tran:Presets]**.
-   - A shader's **[en:tran:Edit Code]** opens **[en:tran:Shader Code]**: its code beside a
-     moving preview. A mistake shows under the preview with its line, and
-     **[en:tran:Apply]** waits until there is none; **[en:tran:Reset]** puts the code back
-     as it was. Short shaders written for Shadertoy (a `mainImage`, no textures) can be
-     pasted in.
+   - **[en:tran:Edit Code]** opens the code of the animation picked beside a moving
+     preview: **[en:tran:Shader Code]** for a shader, **[en:tran:CSS Code]** for a CSS
+     animation — a built-in one's too. While it is open it follows the animation: click
+     another tile of its kind, or pick another **[en:tran:Effect]**, and that one's code
+     comes in (a tile of the other kind closes it); a
+     color, the speed or the density changes nothing in it. A mistake shows under the
+     preview, and **[en:tran:Apply]** waits until there is none; **[en:tran:Reset]** puts
+     back the code of the animation picked. Short shaders written for Shadertoy (a
+     `mainImage`, no textures) can be pasted in.
+   - **[en:tran:CSS Code]** opens on the CSS effect picked, written as CSS (Light Rays as
+     its sheets of rays, Clouds as its clouds), or on a **[en:tran:Custom CSS]**
+     animation's own code. Applied, the animation is **[en:tran:Custom CSS]**: as it
+     stands, it looks as the effect did; changed, it is yours. The CSS styles boxes the
+     app draws: `.scene` (the whole picture), six `.layer` inside it and dots (`.dot`)
+     inside each layer, as many as the **[en:tran:Density]** says (`--density` is 0, 1 or
+     2); use `var(--color-1)` to `var(--color-4)`, or `var(--accent)` — a color after the
+     first, the next one for each layer and dot in turn — and the color wells still change
+     it. To stay light on an old computer and safe on the screen, it may load nothing (no
+     `url()` or `@import`) and its `@keyframes` may only move, turn, grow or fade
+     (`transform`, `opacity`) — the error line says what to change.
+   - The 🤖 (**[en:tran:Open in Chatbot]**) at the end of the **[en:tran:Customize]** row,
+     and in the code panel's title bar, opens the help window on that animation: it says
+     what the assistant can change and offers three things to ask, such as
+     **[en:tran:Make it slower]**, **[en:tran:Explain the shader code]** or, for a CSS one,
+     **[en:tran:Explain the CSS code]**. Ask in your own words: the assistant changes what
+     Customize changes, and writes or fixes the code in its panel, putting it on the
+     screen only once it works.
    - Right-click a tile → **[en:tran:Copy Code]** to take the animation somewhere else: a
      CSS one as a whole web page (paste it into a page file of your own in the Web Editor,
      W-15, and the **[en:tran:Webs]** tab shows it), a shader as its code.
+   - **[en:tran:Save as image] (PNG)** and **[en:tran:Save as video] (MP4)**, the two
+     buttons right of the **[en:tran:Customize]** preview, keep the animation as a file.
+     Each asks for its **[en:tran:Resolution]** (the usual sizes, your screens' own, or
+     **[en:tran:Custom]**); a video asks too for its **[en:tran:Duration]** in seconds
+     and its **[en:tran:Frame Rate]** (24, 30 or 60). The file goes into the folder of the
+     session in use on **[en:tran:Images]** or **[en:tran:Videos]** — from
+     **[en:tran:Animation Show]**, on **[en:tran:Image Show]** or **[en:tran:Video Show]** —
+     named after the animation and its size, ready to put up; with no folder set there it
+     says so and saves nothing. A picture keeps the see-through parts. A video is drawn
+     frame by frame, its toast counting **[en:tran:Exporting]** up to 100% with a
+     **[en:tran:Stop]** that leaves no file behind. 📸
    - **[en:tran:Images] / [en:tran:Videos]:** **click** an item to make it the live background;
      click the same item again to take it off. 📸
    - **[en:tran:Cameras]:** pick a connected camera device.
@@ -105,9 +162,10 @@ youth service's; Default's are the ones **[en:tran:Fill Show]** and **[en:tran:A
 offer too (W-09). Removing a session forgets its saved ones and its show. Once a screen holds the
 tab's kind, the row also carries the slide show: press **[en:tran:Start Slide Show]** (▶) and,
 every so many seconds — the number beside it — each screen holding one moves on to the next tile
-of the row the one up is in: the next shader, the next CSS animation, the next gradient or
-pattern on the side **[en:tran:Dark]** / **[en:tran:Light]** shows, or the session's next saved
-one when the one up is among them. How the screen had it fitted and styled goes with it. A colour
+of the row the one up is in: the session's next saved one when the one up is among them, else
+the next **[en:tran:Pinned]** one when it is pinned, else the next shader or CSS animation of
+its category on its side, in the order the tiles are drawn, or the next gradient or pattern on the side
+**[en:tran:Dark]** / **[en:tran:Light]** it is on. How the screen had it fitted and styled goes with it. A colour
 from the palette, or a tile changed in **[en:tran:Customize]**, belongs to no row and stays where
 it is. A screen has one background, so a tab runs one show: starting it in another session stops
 the first, and the blue ▶ moves to that session's button. **[en:tran:Clear Background]**
@@ -116,7 +174,7 @@ the first, and the blue ▶ moves to that session's button. **[en:tran:Clear Bac
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `PM-181` · `PM-182` · `PM-183` · `PM-184` · `PM-185` · `PM-186` · `PM-187` · `PM-188` · `PM-189` · `PM-190` · `PM-191` · `PM-192` · `PM-195` · `KB-04`
+`PM-26` · `PM-27` · `PM-28` · `PM-29` · `PM-30` · `PM-31` · `PM-32` · `PM-33` · `PM-101` · `PM-114` · `PM-144` · `PM-145` · `PM-181` · `PM-182` · `PM-183` · `PM-184` · `PM-185` · `PM-186` · `PM-187` · `PM-188` · `PM-189` · `PM-190` · `PM-191` · `PM-192` · `PM-195` · `PM-197` · `PM-198` · `PM-199` · `PM-203` · `KB-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

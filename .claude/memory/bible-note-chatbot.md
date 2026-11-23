@@ -53,7 +53,7 @@ What is not obvious from the code:
   `checkLosesWords` now refuses another kind with fewer than half the words.
   The prompt says a heading is a NEW block.
 - **A saved conversation had kept only three buttons per message**; every
-  document card has five. `MAX_REPLY_COUNT` in `chatSessionHelpers.ts` is 5.
+  document card has five. `MAX_REPLY_COUNT` in `chatSessionHelpers.ts` is 6 (the sixth since EC-583, 2026-11-14).
 - The editor's own guide (`bible-note:ui/…`) answers only a search aimed at
   `focus: 'bibleNote'`; a note ask forces that focus. **A guide page offers
   no walkthrough at all**: `owa_guide_start` refuses demo mode for a page,

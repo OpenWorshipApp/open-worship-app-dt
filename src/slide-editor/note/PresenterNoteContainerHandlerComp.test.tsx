@@ -136,9 +136,10 @@ describe('PresenterNoteContainerHandlerComp', () => {
         expect(actor.isHorizontal).toBe(true);
         expect(actor.flexSizeDefault).toEqual({ h1: ['1'], h2: ['1'] });
 
+        // Named as its header reads, not by the file (F-20).
         const documentPane = container.querySelector('[data-pane="h1"]')!;
         expect(documentPane.getAttribute('data-widget-name')).toBe(
-            'service.ows',
+            'Document Note',
         );
         expect(documentPane.textContent).toBe('/docs/service.ows');
         const slidesPane = container.querySelector('[data-pane="h2"]')!;

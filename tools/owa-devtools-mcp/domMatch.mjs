@@ -45,9 +45,23 @@ const MAX_FIND_UI_MATCHES = 20;
 // a row that opens on a double-click still selects itself on the first. A
 // user does both all day and no tool could do either (every list row's menu,
 // opening a document, playing a clip -- W-08's step nobody could demo).
+//
+// A left press is the WHOLE of a mouse's press (2026-11-21, F-3 of robot run
+// 20261120-2021): pointerdown, mousedown, pointerup, mouseup, click.
+// A click alone missed every control that acts on the button going down: the
+// Bible Lookup's verse strip picks a verse on mousedown and applies it on the
+// body's mouseup, so \`owa_click "Verse 16"\` answered didChange: false while a
+// real click picked it. The right press stays the one contextmenu the app's
+// row menus open on.
+//
+// \`how.modifiers\` holds keys down through every event of it (F-9 of the same
+// run): a screen card's version menu adds a second Bible only on Shift+click
+// (\`screenBibleHelpers.tsx\`), and no tool could send one. The developer's
+// door alone passes it.
 export const PRESS_AT_CENTRE_SOURCE = `((element, how) => {
     const button = how && how.button === 'right' ? 'right' : 'left';
     const clicks = how && how.clicks === 2 ? 2 : 1;
+    const held = how && Array.isArray(how.modifiers) ? how.modifiers : [];
     if (typeof element.matches === 'function' && element.matches(':disabled')) {
         element.click();
         return null;
@@ -58,21 +72,34 @@ export const PRESS_AT_CENTRE_SOURCE = `((element, how) => {
     // No 'view' member, as pressElementLikeButton passes none: a realm
     // other than the element's own can refuse it, and nothing reads it.
     const view = element.ownerDocument.defaultView ?? window;
-    const send = (type, detail, buttonCode) => {
-        element.dispatchEvent(new MouseEvent(type, {
+    const send = (type, detail, buttonCode, buttons) => {
+        const isPointer = type.startsWith('pointer') &&
+            typeof PointerEvent === 'function';
+        const Event = isPointer ? PointerEvent : MouseEvent;
+        element.dispatchEvent(new Event(type, {
             bubbles: true, cancelable: true, composed: true,
-            detail: detail, button: buttonCode,
+            detail: detail, button: buttonCode, buttons: buttons || 0,
             clientX: x, clientY: y,
             screenX: (view.screenX || 0) + x, screenY: (view.screenY || 0) + y,
+            pointerId: 1, pointerType: 'mouse', isPrimary: true,
+            shiftKey: held.includes('shift'), ctrlKey: held.includes('ctrl'),
+            altKey: held.includes('alt'), metaKey: held.includes('meta'),
         }));
     };
     if (button === 'right') {
         send('contextmenu', 0, 2);
         return { x, y, button };
     }
-    send('click', 1, 0);
+    const pressOnce = (detail) => {
+        send('pointerdown', 0, 0, 1);
+        send('mousedown', detail, 0, 1);
+        send('pointerup', 0, 0, 0);
+        send('mouseup', detail, 0, 0);
+        send('click', detail, 0, 0);
+    };
+    pressOnce(1);
     if (clicks === 2) {
-        send('click', 2, 0);
+        pressOnce(2);
         send('dblclick', 2, 0);
     }
     return clicks === 2 ? { x, y, clicks } : { x, y };
@@ -551,12 +578,27 @@ export const DOM_MATCH_RUNTIME = `
         // in nearMisses -- so a Bible Find result could not be dragged by
         // the very words its refusal named (2026-10-22, DD-05). That many
         // characters from the start of the label is its name, not a guess.
-        const asked = String(needle).replace(/\\s+/g, ' ').trim().toLowerCase();
+        const asked = String(needle).replace(/\\s+/g, ' ').trim()
+            .replace(/\\u2026$/, '').trimEnd().toLowerCase();
         return asked.length >= HANDED_OUT_CUT_MIN &&
             shown.length > asked.length &&
             shown.toLowerCase().startsWith(asked);
     };
     const HANDED_OUT_CUT_MIN = 58;
+    // A label handed out long is cut at a WORD and says so with an
+    // ellipsis: cut mid-word it named another control -- a Khmer verse
+    // title "...select verse 10" (in Khmer digits) came out as "...select
+    // verse 1" (F-4 of robot run 20261120-2021). Never shorter than the
+    // press bar's minimum, so the words handed out stay pressable;
+    // \`parseNeedle\` drops the ellipsis when they come back.
+    const cutHandedOut = (label, max) => {
+        if (label.length <= max) {
+            return label;
+        }
+        const space = label.lastIndexOf(' ', max);
+        const end = space >= HANDED_OUT_CUT_MIN ? space : max;
+        return label.slice(0, end).trimEnd() + '\\u2026';
+    };
 
     // What a caller is SHOWN, as against what is matched on. A title that
     // carries its shortcut beside an aria-label that does not -- "Clear All
@@ -566,7 +608,34 @@ export const DOM_MATCH_RUNTIME = `
     // All [F6]", and a model reads a label back as the words to press. The
     // bare part stays in labelPartsOf, where the exact-name tie-breaker
     // above reads it; only the words handed OUT drop the shorter twin.
+    // What a LIST calls a control: its label, or -- when that is past what a
+    // list can carry because a TITLE is a passage (a Bible View heading's,
+    // under the mouse) -- its names that fit. A control whose OWN words are
+    // past it is a paragraph, not a control, and is left off as before:
+    // named by its title alone, every verse row would have been listed as
+    // "Click to open" (F-4 of robot run 20261120-2021). '' = leave it off.
+    const LISTED_LABEL_MAX = 120;
+    const listedLabelOf = (element, label) => {
+        if (label.length <= LISTED_LABEL_MAX) {
+            return label;
+        }
+        if (
+            element.tagName !== 'SELECT' &&
+            !element.hasAttribute('data-widget-name') &&
+            shownTextOf(element).replace(/\\s+/g, ' ').trim().length >
+                LISTED_LABEL_MAX
+        ) {
+            return '';
+        }
+        const short = shownPartsOf(element).filter((part) => {
+            return part.length <= LISTED_LABEL_MAX;
+        }).join(' ');
+        return short.length <= LISTED_LABEL_MAX ? short : '';
+    };
     const shownLabelOf = (element) => {
+        return shownPartsOf(element).join(' ');
+    };
+    const shownPartsOf = (element) => {
         const parts = labelPartsOf(element);
         return parts.filter((part) => {
             const bare = normaliseLabelPart(part);
@@ -581,7 +650,15 @@ export const DOM_MATCH_RUNTIME = `
                 return other.length > part.length &&
                     normaliseLabelPart(other) === bare;
             });
-        }).join(' ');
+        });
+    };
+
+    // The words handed out for one control: its short names when a title
+    // is a passage, else all of them (cut by the caller).
+    const handedOutLabelOf = (element) => {
+        const shown = shownLabelOf(element);
+        const listed = listedLabelOf(element, shown);
+        return listed.length > 0 ? listed : shown;
     };
 
     // A named PLACE rather than a thing to press: a resizable panel, a
@@ -882,11 +959,12 @@ export const DOM_MATCH_RUNTIME = `
         const words = text.split(' ');
         const last = words[words.length - 1];
         if (words.length < 2 || !KIND_NOUNS.includes(last)) {
-            return { text, isRegionWanted: false };
+            return { text, isRegionWanted: false, noun: null };
         }
         return {
             text: words.slice(0, -1).join(' '),
             isRegionWanted: REGION_NOUNS.includes(last),
+            noun: last,
         };
     };
 
@@ -896,19 +974,24 @@ export const DOM_MATCH_RUNTIME = `
     // the last arrow is the parent path to sit inside.
     const parseNeedle = (raw) => {
         const whole = String(raw ?? '').toLowerCase()
-            .replace(/\\s+/g, ' ').trim();
+            .replace(/\\s+/g, ' ').trim().replace(/\\u2026$/, '').trimEnd();
         const cut = whole.split(/\\s*(?:>|\\u00bb)\\s*/).filter((one) => {
             return one.length > 0;
         });
         const asked = cut[cut.length - 1] ?? '';
         const target = dropKindNoun(asked);
-        const scope = cut.length > 1
-            ? dropKindNoun(cut.slice(0, -1).join(' ')).text
+        const scopeParts = cut.length > 1
+            ? dropKindNoun(cut.slice(0, -1).join(' '))
             : null;
+        const scope = scopeParts === null ? null : scopeParts.text;
+        const isScoped = scope !== null && scope.length > 0;
         return {
             text: target.text,
             asked,
-            scope: scope !== null && scope.length > 0 ? scope : null,
+            scope: isScoped ? scope : null,
+            // The kind noun the scope lost ("list" of "Presenting Flow
+            // List"), for \`checkIsInScope\`.
+            scopeNoun: isScoped ? scopeParts.noun : null,
             isRegionWanted: target.isRegionWanted,
         };
     };
@@ -930,7 +1013,30 @@ export const DOM_MATCH_RUNTIME = `
         ) {
             return 0;
         }
-        return matchTier(lowered, parsed.text);
+        const whole = matchTier(lowered, parsed.text);
+        // The label is the parts JOINED, and one part can be a sentence: a
+        // Bible View heading's title carries its whole passage while the
+        // mouse is over it, so the joined label outgrew every tier's length
+        // and the reference written on it matched nothing -- "nothing on
+        // screen" beside its un-hovered twins (F-4 of robot run
+        // 20261120-2021). Each part is one of the control's names, tried on
+        // its own -- only when the joined label is long and holds the asked
+        // words at all, so the common miss costs nothing more.
+        if (
+            whole === 0 ||
+            lowered.length <= parsed.text.length * 6 + 30 ||
+            !lowered.includes(tokensOf(parsed.text)[0] ?? parsed.text)
+        ) {
+            return whole;
+        }
+        let best = whole;
+        for (const part of labelPartsOf(element)) {
+            const tier = matchTier(part.toLowerCase(), parsed.text);
+            if (tier !== -1 && (best === -1 || tier < best)) {
+                best = tier;
+            }
+        }
+        return best;
     };
 
     // A scope NAMES a panel, so it has to fit one -- tier 3 ("every word of
@@ -942,10 +1048,38 @@ export const DOM_MATCH_RUNTIME = `
     // point of writing a scope is to say which of two look-alikes is meant,
     // and a press on the wrong one is the one outcome it exists to prevent.
     const SCOPE_MAX_TIER = 2;
-    const checkIsInScope = (path, scope) => {
+    // A scope that lost its kind noun ("Presenting Flow List" is read as
+    // "presenting flow", as "the Background panel" is "background") still
+    // names ONE panel: a name that stops at those words, or goes on with
+    // that noun, is it; a name that goes on with ANOTHER word is another
+    // panel. Once the run sheet's floating preview was named "Presenting
+    // Flow Preview", "Presenting Flow List > <a line>" reached the preview's
+    // copy of that line whenever the sheet was closed in the tree.
+    const checkIsNounKept = (lowered, scope, noun) => {
+        const at = lowered.indexOf(scope);
+        if (at === -1) {
+            return true;
+        }
+        const rest = lowered.slice(at + scope.length);
+        // The scope's last word goes on in the name ("documents" of
+        // "Documents"): the same word, not another one after it.
+        if (rest.length > 0 && checkIsWordChar(rest[0])) {
+            return true;
+        }
+        const next = tokensOf(rest)[0];
+        return next === undefined || next === noun;
+    };
+    const checkIsInScope = (path, scope, scopeNoun = null) => {
         return path.some((name) => {
-            const tier = matchTier(name.toLowerCase(), scope);
-            return tier !== -1 && tier <= SCOPE_MAX_TIER;
+            const lowered = name.toLowerCase();
+            const tier = matchTier(lowered, scope);
+            if (tier === -1 || tier > SCOPE_MAX_TIER) {
+                return false;
+            }
+            return (
+                scopeNoun === null ||
+                checkIsNounKept(lowered, scope, scopeNoun)
+            );
         });
     };
 
@@ -1269,7 +1403,11 @@ export const DOM_MATCH_RUNTIME = `
                 }
                 let isInScope = false;
                 if (scope !== null) {
-                    isInScope = checkIsInScope(scopePathOf(element), scope);
+                    isInScope = checkIsInScope(
+                        scopePathOf(element),
+                        scope,
+                        parsed.scopeNoun,
+                    );
                     // A scope the caller wrote down is a requirement, not a
                     // hint: "Background > Videos" must never answer with the
                     // Videos of another panel, which is the whole reason the
@@ -1353,8 +1491,8 @@ export const DOM_MATCH_RUNTIME = `
         }
         const scored = new Map();
         for (const element of collect()) {
-            const label = shownLabelOf(element);
-            if (label.length === 0 || label.length > 120) {
+            const label = listedLabelOf(element, shownLabelOf(element));
+            if (label.length === 0) {
                 continue;
             }
             if (visibilityOf(element) === 'gone') {
@@ -1367,7 +1505,7 @@ export const DOM_MATCH_RUNTIME = `
             if (score === 0) {
                 continue;
             }
-            const key = label.slice(0, 60);
+            const key = cutHandedOut(label, 60);
             const current = scored.get(key);
             if (current === undefined || score > current) {
                 scored.set(key, score);
@@ -1544,7 +1682,11 @@ export const DOM_MATCH_RUNTIME = `
             }
             if (
                 parsed.scope !== null &&
-                !checkIsInScope(scopePathOf(other), parsed.scope)
+                !checkIsInScope(
+                    scopePathOf(other),
+                    parsed.scope,
+                    parsed.scopeNoun,
+                )
             ) {
                 continue;
             }
@@ -1593,7 +1735,7 @@ export const DOM_MATCH_RUNTIME = `
         // to ask for exactly the one it meant.
         const inPanel = containerPathOf(element)[0] ?? null;
         return {
-            label: shownLabelOf(element).slice(0, 80),
+            label: cutHandedOut(handedOutLabelOf(element), 80),
             inPanel,
             where: vertical === 'middle' && horizontal === 'center'
                 ? 'in the middle of the window'
@@ -1614,7 +1756,7 @@ export const DOM_MATCH_RUNTIME = `
             // words on the one to press FIRST.
             revealBy: opener === null
                 ? undefined
-                : shownLabelOf(opener).slice(0, 80),
+                : cutHandedOut(handedOutLabelOf(opener), 80),
             isEnabled: element.disabled !== true &&
                 element.getAttribute('aria-disabled') !== 'true',
             position: {
@@ -1777,8 +1919,8 @@ export const DOM_MATCH_RUNTIME = `
                 continue;
             }
             const rect = element.getBoundingClientRect();
-            const label = labelOf(element);
-            if (label.length === 0 || label.length > 120) {
+            const label = listedLabelOf(element, labelOf(element));
+            if (label.length === 0) {
                 continue;
             }
             if (needle.length > 0 && !label.toLowerCase().includes(needle)) {
@@ -1833,7 +1975,7 @@ export const DOM_MATCH_RUNTIME = `
     };
 
     window.__owaDomMatch = {
-        collect, labelOf, labelPartsOf, shownLabelOf, matchTier, tierOf,
+        collect, labelOf, labelPartsOf, shownLabelOf, listedLabelOf, matchTier, tierOf,
         checkIsControl,
         visibilityOf, revealHidden, releaseHidden,
         checkIsNamedExactly, checkIsTextBox, findBest, findListRegion,
@@ -1875,11 +2017,14 @@ export function genClickExpression(
   finds,
   timeoutMs = 1500,
   settleMs = 250,
-  { guard = null, button = 'left', clicks = 1 } = {},
+  { guard = null, button = 'left', clicks = 1, modifiers = [] } = {},
 ) {
   const how = {
     button: button === 'right' ? 'right' : 'left',
     clicks: clicks === 2 ? 2 : 1,
+    modifiers: (Array.isArray(modifiers) ? modifiers : []).filter((one) => {
+      return ['shift', 'ctrl', 'alt', 'meta'].includes(one);
+    }),
   };
   return `(async () => {
         const dm = ${DOM_MATCH_RUNTIME};
@@ -2101,6 +2246,7 @@ export function genClickExpression(
             // assumes.
             button: how.button === 'right' ? 'right' : undefined,
             clicks: how.clicks === 2 ? 2 : undefined,
+            modifiers: how.modifiers.length > 0 ? how.modifiers : undefined,
             // Only when it happened, and said in the words the
             // answer needs: this control is not on their screen
             // until they put the mouse over that part of it.
@@ -2436,11 +2582,51 @@ export function genDragExpression(
         };
         // \`after\` is the top band of the NEXT row: this app's rows read a
         // Ctrl drop as "put it at my position" top edge or bottom alike, so
-        // the row's own bottom band would land the thing BEFORE it. With no
-        // next row the bottom band is all there is.
+        // the row's own bottom band would land the thing BEFORE it.
+        //
+        // A run sheet's line is wrapped with what it holds (its CCs, a
+        // document's slides), so its row has NO next sibling and \`after\`
+        // had landed before the line (F-35 of robot run 20261120-2021). The
+        // wrapper carries the line's number, and the line after it is the
+        // next number in the same sheet. After the LAST line there is no
+        // band at all that means "after", so that is refused in words
+        // (F-37) rather than dropped before it.
         const targetRow = target.element.closest('[draggable="true"]') ??
             target.element;
-        const nextRow = place === 'after' ? targetRow.nextElementSibling : null;
+        const lineAttr = 'data-presenting-flow-line';
+        const lineOf = (row) => {
+            const line = row.closest('[' + lineAttr + ']');
+            return line !== null &&
+                line.querySelector('[draggable="true"]') === row
+                ? line
+                : null;
+        };
+        const nextRowOf = (row) => {
+            const line = lineOf(row);
+            if (line === null) {
+                return row.nextElementSibling;
+            }
+            const number = Number(line.getAttribute(lineAttr));
+            const sheet = line.closest('.presenting-flow-file') ??
+                line.parentElement;
+            const nextLine = sheet?.querySelector(
+                '[' + lineAttr + '="' + (number + 1) + '"]',
+            ) ?? null;
+            return nextLine?.querySelector('[draggable="true"]') ?? null;
+        };
+        const nextRow = place === 'after' ? nextRowOf(targetRow) : null;
+        if (place === 'after' && nextRow === null && lineOf(targetRow) !== null) {
+            return {
+                dragged: null,
+                reason:
+                    'that is the last line of its run sheet, and a line ' +
+                    'dropped on a line goes BEFORE it, edge or not. To add ' +
+                    'something at the end, drop it on the run sheet\\'s own ' +
+                    'name while the sheet is closed; to move a line to the ' +
+                    'end, right-click it and choose Move to Bottom.',
+                match: dm.describe(target.element),
+            };
+        }
         const landing = nextRow ?? target.element;
         const aimAt = () => {
             const rect = landing.getBoundingClientRect();
@@ -2478,6 +2664,11 @@ export function genDragExpression(
                 coveredBy: dm.describe(document.elementFromPoint(to.x, to.y)),
             };
         }
+        // Read NOW, in view where the drop lands: read after the drop, a
+        // list that redrew the row described a node gone from the page --
+        // a 0x0 box at 0,0, not visible -- which reads as a drop onto
+        // nothing (F-37 of robot run 20261120-2021).
+        const onto = dm.describe(target.element);
         const from = centreOf(dragged);
         // What dragstart writes into. Chromium seals a drag's data the
         // moment dragstart RETURNS and empties it again once the drop's
@@ -2573,7 +2764,7 @@ export function genDragExpression(
         const opened = layers.findOpened(layersBefore);
         return {
             dragged: dm.describe(dragged),
-            onto: dm.describe(target.element),
+            onto,
             place,
             carried: [...new Set(carried)],
             accepted,
@@ -2745,18 +2936,28 @@ export function genScrollExpression(
         const dm = ${DOM_MATCH_RUNTIME};
         const to = ${JSON.stringify(wanted)};
         const finds = ${JSON.stringify(finds)};
-        // The runtime's own rule (\`checkIsScroller\`), with its size floor:
-        // a 30 px box that happens to overflow is not the list.
-        const isScroller = (element) => {
+        // A box NAMED by the caller -- a row in it, or the panel itself --
+        // is held to a smaller floor than a guess: the Reader split five
+        // ways gives each Bible View a list under 200 by 100, and a verse
+        // row in one answered "nothing here scrolls" (F-7 of robot run
+        // 20261120-2021). It must really scroll up and down, though: an
+        // overflow: hidden box can be moved by a script and by nobody else.
+        const isNamedScroller = (element) => {
             if (element === null || element === undefined ||
                 element.getBoundingClientRect === undefined) {
                 return false;
             }
             const rect = element.getBoundingClientRect();
-            return rect.width >= 200 && rect.height >= 100 &&
-                element.scrollHeight > element.clientHeight + 4;
+            if (rect.width < 60 || rect.height < 40 ||
+                element.scrollHeight <= element.clientHeight + 4) {
+                return false;
+            }
+            const overflow = getComputedStyle(element).overflowY;
+            return overflow === 'auto' || overflow === 'scroll' ||
+                overflow === 'overlay';
         };
         let anchor = null;
+        let twins = null;
         if (Array.isArray(finds) && finds.length > 0) {
             const found = await dm.waitForBest(finds, ${timeoutMs}, {});
             if (found.element === null) {
@@ -2767,22 +2968,50 @@ export function genScrollExpression(
                 };
             }
             anchor = found.element;
+            // Five panes are all called "Bible View": the name alone picks
+            // one of them, which is no aim. Said, so the caller can name the
+            // one it means by something only that one shows.
+            if (typeof dm.twinsOf === 'function') {
+                const asked = finds.find((one) => {
+                    return dm.checkIsNamedExactly(
+                        anchor, dm.parseNeedle(one).text,
+                    );
+                });
+                if (asked !== undefined) {
+                    const counted = dm.twinsOf(anchor, asked);
+                    if (counted.count > 1) {
+                        twins = { count: counted.count, asked };
+                    }
+                }
+            }
         }
         let region = null;
         if (anchor !== null) {
             let node = anchor;
             while (node !== null && node !== document.body) {
-                if (isScroller(node)) {
+                if (isNamedScroller(node)) {
                     region = node;
                     break;
                 }
                 node = node.parentElement;
             }
             if (region === null) {
-                // A panel named: the list is INSIDE it. Containers only --
-                // every node of a Bible pane is thousands of layout reads.
-                region = [...anchor.querySelectorAll('div, ul, section')]
-                    .find(isScroller) ?? null;
+                // Nothing above it scrolls: the list is BESIDE it -- a
+                // pane's header over its verses -- or INSIDE it, a panel
+                // named. Looked for in each box from the anchor out to its
+                // own panel, nearest first, so a header finds ITS pane's
+                // list and never the next pane's. Containers only -- every
+                // node of a Bible pane is thousands of layout reads.
+                const panel = anchor.closest('[data-widget-name]');
+                let box = anchor;
+                while (box !== null && region === null) {
+                    region = [...box.querySelectorAll('div, ul, section')]
+                        .find(isNamedScroller) ?? null;
+                    if (box === panel || box === document.body) {
+                        break;
+                    }
+                    box = box.parentElement;
+                }
             }
         }
         if (region === null) {
@@ -2821,8 +3050,12 @@ export function genScrollExpression(
             if (!region.contains(element) || !checkIsInView(element)) {
                 continue;
             }
-            const label = dm.shownLabelOf(element);
-            if (label.length === 0 || label.length > 120 || seen.has(label)) {
+            const shown = dm.shownLabelOf(element);
+            // A page holding an older runtime has no listedLabelOf yet.
+            const label = typeof dm.listedLabelOf === 'function'
+                ? dm.listedLabelOf(element, shown)
+                : (shown.length > 120 ? '' : shown);
+            if (label.length === 0 || seen.has(label)) {
                 continue;
             }
             seen.add(label);
@@ -2832,9 +3065,18 @@ export function genScrollExpression(
             }
         }
         const panel = region.closest('[data-widget-name]');
+        const twinNote = twins === null ? {} : {
+            twins: twins.count,
+            note: twins.count + ' places are called "' + twins.asked +
+                '"; this scrolled the one ' + dm.describe(region).where +
+                '. To scroll another, name something only it shows -- a ' +
+                'row in it, or its title as a scope: "' + twins.asked +
+                ' > <its title>".',
+        };
         return {
             scrolled: panel === null ? region.tagName.toLowerCase()
                 : panel.getAttribute('data-widget-name'),
+            ...twinNote,
             to,
             from: before,
             now: after,
@@ -3107,7 +3349,11 @@ export function genFindUiExpression(text, isHighlighting) {
                 const scopePath = typeof dm.scopePathOf === 'function'
                     ? dm.scopePathOf(element)
                     : dm.containerPathOf(element);
-                isInScope = dm.checkIsInScope(scopePath, asked.scope);
+                isInScope = dm.checkIsInScope(
+                    scopePath,
+                    asked.scope,
+                    asked.scopeNoun,
+                );
                 if (!isInScope) {
                     continue;
                 }

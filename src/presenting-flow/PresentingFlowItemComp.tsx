@@ -6,6 +6,7 @@ import { dragStore } from '../helper/dragHelpers';
 import { useStateSettingBooleanSynced } from '../helper/settingHelpers';
 import type PresentingFlow from './PresentingFlow';
 import type PresentingFlowItem from './PresentingFlowItem';
+import { PRESENTING_FLOW_LINE_ATTR } from './presentingFlowCcHelpers';
 import PresentingFlowCcRowsComp from './PresentingFlowCcRowsComp';
 import type { PresentingFlowCcHostType } from './PresentingFlowCcRowsComp';
 import PresentingFlowDocumentSlidesComp from './PresentingFlowDocumentSlidesComp';
@@ -119,7 +120,14 @@ export default function PresentingFlowItemComp({
         // A parked row is still DRAGGABLE — reordering the run sheet is how it
         // is tidied away, and taking that off would be the one thing disabling
         // must not cost — it just carries no screen payload with it.
-        dragStore.onDropped = currentItem.isDisabled
+        //
+        // Nor does a line no screen can show (a whole document: the run walks
+        // its slides one by one) -- and a screen card refuses either drag
+        // outright rather than accept it and do nothing (F-13).
+        const isScreenRefused =
+            currentItem.isDisabled || !currentItem.isScreenReachable;
+        dragStore.isScreenRefused = isScreenRefused;
+        dragStore.onDropped = isScreenRefused
             ? null
             : handlePresentingFlowItemScreenDropping.bind(null, currentItem);
         event.dataTransfer.setData('text', currentItem.title);
@@ -130,6 +138,7 @@ export default function PresentingFlowItemComp({
     const handleDraggingEnd = useCallback(() => {
         presentingFlowDraggingStore.current = null;
         dragStore.onDropped = null;
+        dragStore.isScreenRefused = false;
     }, []);
 
     // The two things a drag hovering this row can do, and the modifiers that
@@ -289,7 +298,7 @@ export default function PresentingFlowItemComp({
     }, [presentingFlow, index, presentingFlowItem]);
 
     return (
-        <div>
+        <div {...{ [PRESENTING_FLOW_LINE_ATTR]: index + 1 }}>
             {/* The element and its CCs are ONE thing to point at: they go to a
                 screen together, so hovering any of them lights all of them. A
                 container of their own rather than the wrapper below, which also

@@ -1006,7 +1006,11 @@
             "peut-on",
             "est-il possible",
             "est-ce possible",
-            "existe-t-il"
+            "existe-t-il",
+            "que faire",
+            "quoi faire",
+            "que fais-je",
+            "on fait quoi"
         ],
         "done": [
             "hier",

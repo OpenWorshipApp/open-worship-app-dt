@@ -45,6 +45,28 @@ describe('parseAnswerOptions', () => {
         expect(parsed.text).toBe('No screen is showing right now.');
     });
 
+    // 2026-11-21: a language that spaces its colons wrote "OPTIONS :" over
+    // four listed lines, all drawn as words with no button.
+    test('a frame word in capitals with a space before its colon', () => {
+        expect(
+            parseAnswerOptions(
+                'Done.\n\nOPTIONS :\n\nMove the cross\n\nShow it in the list',
+            ),
+        ).toEqual({
+            text: 'Done.',
+            options: ['Move the cross', 'Show it in the list'],
+        });
+        expect(parseAnswerOptions('Done.\nOPTIONS : Yes | No').options).toEqual(
+            ['Yes', 'No'],
+        );
+        // a sentence's own word is no frame
+        const sentence = 'You have two options : move it or make it smaller.';
+        expect(parseAnswerOptions(sentence)).toEqual({
+            text: sentence,
+            options: [],
+        });
+    });
+
     // The whole point of the frame: a model that half complies must not be
     // able to print its own machinery at a volunteer.
     test('a malformed line is still removed from the answer', () => {

@@ -234,9 +234,7 @@ describe('what the card gathered for a passage', () => {
     it('tells the cross references with a button for each verse named', () => {
         const answer = genCrossRefsAnswer(GEN_8, FACTS);
         expect(answer.text).toContain('to 1180 other verses');
-        expect(answer.text).toContain(
-            '- **លោកុប្បត្តិ ៩:១៥** (verses 1, 21, 22)',
-        );
+        expect(answer.text).toContain('- **លោកុប្បត្តិ ៩:១៥** (verses 1, 21, 22)');
         // A reference with no title is named by its key.
         expect(answer.text).toContain('- **ISA 54:9** (verses 21, 22)');
         // Past three verses, counted.

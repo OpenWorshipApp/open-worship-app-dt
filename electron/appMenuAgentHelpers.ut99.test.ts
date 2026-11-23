@@ -82,7 +82,7 @@ describe('appMenuAgentHelpers', () => {
         ]);
         const byPath = Object.fromEntries(listed.map((one) => [one.path, one]));
         expect(byPath['File'].hasSubmenu).toBe(true);
-        expect(byPath['File > Quit'].refused).toContain('closes or hides');
+        expect(byPath['File > Quit'].refused).toContain('closes the app');
         expect(byPath['View > Relaunch'].refused).toContain(
             'closes and reopens',
         );
@@ -132,7 +132,7 @@ describe('appMenuAgentHelpers', () => {
     test('refuses what takes the app down, a submenu, and a greyed-out item', () => {
         const { menu, click } = genMenu();
         for (const [item, words] of [
-            ['File > Quit', 'closes or hides'],
+            ['File > Quit', 'closes the app'],
             ['View > Relaunch', 'closes and reopens'],
             ['View > Toggle Developer Tools', 'Developer Tools'],
             ['File', 'opens a menu'],

@@ -67,6 +67,10 @@ export async function* readDroppedFiles(
     yield* fileList;
 }
 
+/**
+ * A dropped file is TAKEN by the caller, COPIED into the list's folder, or
+ * SKIPPED -- a kind this list does not hold.
+ */
 function checkAndCopyFiles(
     {
         checkIsValidFile,
@@ -78,11 +82,14 @@ function checkAndCopyFiles(
     dirPath: string,
     file: DroppedFileType | string,
 ) {
+    if (takeFile?.(file)) {
+        return 'taken';
+    }
     const isString = typeof file === 'string';
-    if (!takeFile?.(file) && checkIsValidFile(isString ? file : file.name)) {
+    if (checkIsValidFile(isString ? file : file.name)) {
         return fsCopyFilePathToPath(file, dirPath);
     }
-    return null;
+    return 'skipped';
 }
 
 export function genOnDrop({
@@ -116,8 +123,9 @@ export function genOnDrop({
             return;
         }
         const promises = [];
+        const skippedNameList: string[] = [];
         for await (const file of readDroppedFiles(event)) {
-            const copyingPromise = checkAndCopyFiles(
+            const result = checkAndCopyFiles(
                 {
                     checkIsValidFile,
                     takeFile: takeDroppedFile,
@@ -125,9 +133,20 @@ export function genOnDrop({
                 dirSource.dirPath,
                 file,
             );
-            if (copyingPromise !== null) {
-                promises.push(copyingPromise);
+            if (result === 'skipped') {
+                skippedNameList.push(file.name);
+            } else if (result !== 'taken') {
+                promises.push(result);
             }
+        }
+        // A file of a kind this list does not hold had been skipped with no
+        // word, and the drop read as broken (F-25 of robot run
+        // 20261120-2021): one toast names every file left out.
+        if (skippedNameList.length > 0) {
+            showSimpleToast(
+                tran('Unsupported file type!'),
+                skippedNameList.join(', '),
+            );
         }
         await Promise.all(promises);
     };

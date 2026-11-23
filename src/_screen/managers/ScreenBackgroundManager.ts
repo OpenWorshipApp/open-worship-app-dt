@@ -25,7 +25,7 @@ import {
     checkIsAnimationSeeThrough,
     checkIsAnimationSrc,
     parseAnimation,
-    toAnimationStillFillSrc,
+    toAnimationReadFillSrc,
 } from '../../background/animationValueHelpers';
 import { withCurrentBackgroundType } from '../../background/backgroundFillLegacyHelpers';
 import {
@@ -178,13 +178,14 @@ class ScreenBackgroundManager
         if (backgroundSrc?.type === 'fill') {
             this.addPropEvent('fill-set', backgroundSrc.src);
         } else if (backgroundSrc?.type === 'animation') {
-            // Judged by its colours as one gradient, as a fill is -- unless
-            // it is see-through, when nobody can say what the words sit on.
+            // Judged by the one colour it reads as, its ground with its
+            // other colours over as much as its effect covers -- unless it
+            // is see-through, when nobody can say what the words sit on.
             const animation = parseAnimation(backgroundSrc.src);
             if (animation !== null && !checkIsAnimationSeeThrough(animation)) {
                 this.addPropEvent(
                     'fill-set',
-                    toAnimationStillFillSrc(animation),
+                    toAnimationReadFillSrc(animation),
                 );
             }
         }

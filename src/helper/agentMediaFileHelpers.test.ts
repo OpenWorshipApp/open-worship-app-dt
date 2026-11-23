@@ -145,6 +145,7 @@ vi.mock('./agentBackupHelpers', () => ({
         `"${fileName}" is ${Math.round(size / 1048576)} MB, too big for the copy an undo needs`,
     genNoBackupReason: (error: unknown) => String(error),
     genUndoField: () => ({ undoId: 'backup-id' }),
+    findAgentFreeName: async (_dir: string, name: string) => `${name} (2)`,
     listAgentFiles: async (_dir: string, mimetypeName: string) =>
         (state.files[mimetypeName] ?? []).map((filePath: string) => ({
             filePath,
@@ -154,8 +155,11 @@ vi.mock('./agentBackupHelpers', () => ({
                 ?.replace(/\.[^.]+$/, ''),
             fullName: filePath.split('/').at(-1),
         })),
-    toAgentFilePath: (dir: string, name: string) =>
-        state.outsideNames.includes(name) ? null : `${dir}/${name}`,
+    // As the real one: the extension, when given, after the name.
+    toAgentFilePath: (dir: string, name: string, extension?: string) =>
+        state.outsideNames.includes(name)
+            ? null
+            : `${dir}/${extension === undefined ? name : `${name}.${extension}`}`,
     renameAgentFile: (...args: any[]) => mocks.renameAgentFile(...args),
     runWithAgentBackup: (...args: any[]) => mocks.runWithAgentBackup(...args),
     snapshotAgentFile: async (filePath: string) => {
@@ -174,6 +178,20 @@ vi.mock('./agentBackupHelpers', () => ({
 }));
 vi.mock('./agentBackupPlanHelpers', () => ({
     AGENT_BACKUP_MAX_BLOB_BYTES: 1000,
+}));
+const convertMocks = vi.hoisted(() => ({
+    convertPptxToSlides: vi.fn(),
+    createWithContent: vi.fn(),
+}));
+vi.mock('./pptxSlideDocumentHelpers', () => ({
+    convertPptxToSlides: (...args: any[]) =>
+        convertMocks.convertPptxToSlides(...args),
+}));
+vi.mock('../app-document-list/AppDocument', () => ({
+    default: {
+        createWithContent: (...args: any[]) =>
+            convertMocks.createWithContent(...args),
+    },
 }));
 
 import { NoBackupError } from './agentBackupHelpers';
@@ -804,7 +822,7 @@ describe('owa_media_file refusals and failures', () => {
             isError: true,
             reason:
                 'Unknown action. Use list, info, create, update, rename, ' +
-                'delete or import.',
+                'delete, import or convert.',
         });
         state.readError = new Error('read failed');
         await expect(
@@ -815,5 +833,167 @@ describe('owa_media_file refusals and failures', () => {
             }),
         ).resolves.toEqual({ isError: true, reason: 'read failed' });
         expect(mocks.handleError).toHaveBeenCalledWith(state.readError);
+    });
+});
+
+// EC-763: a PowerPoint made into a slide document. The converter and the
+// document maker are the boundaries; what the worker decides is what is
+// tested -- which file, which name, the backup, and what it answers.
+describe('owa_media_file convert', () => {
+    const SLIDES = [{ id: 1 }, { id: 2 }, { id: 3, isDisabled: true }];
+
+    beforeEach(() => {
+        state.files.pptx = ['/documents/Easter.pptx'];
+        convertMocks.convertPptxToSlides.mockResolvedValue({
+            slides: SLIDES,
+            width: 1280,
+            height: 720,
+            pptxSlideCount: 2,
+            stepSlideCount: 1,
+            hiddenSlideCount: 0,
+            missingFonts: ['Calibri'],
+            leftOut: {
+                pictures: [],
+                videoSlides: [2],
+                audioSlides: [],
+                transitionSlides: [],
+                unreadSlides: [],
+            },
+            likeness: {
+                percent: 99.6,
+                lowestSlide: 2,
+                lowestPercent: 98.2,
+                measuredSlides: [1, 2, 3],
+                slidePercents: [],
+            },
+        });
+        convertMocks.createWithContent.mockImplementation(
+            async (dirPath: string, name: string) => ({
+                filePath: `${dirPath}/${name}.ows`,
+                fireUpdateEvent: mocks.fireUpdateEvent,
+            }),
+        );
+    });
+
+    test('makes a slide document of a PowerPoint in Documents, behind a backup', async () => {
+        const result: any = await handleAgentMediaFileRequest({
+            action: 'convert',
+            kind: 'document',
+            name: 'Easter.pptx',
+        });
+        expect(convertMocks.convertPptxToSlides).toHaveBeenCalledWith(
+            '/documents/Easter.pptx',
+            'sample',
+        );
+        expect(convertMocks.createWithContent).toHaveBeenCalledWith(
+            '/documents',
+            'Easter',
+            SLIDES,
+        );
+        expect(mocks.runWithAgentBackup).toHaveBeenCalledWith(
+            'Made the slide document “Easter” from the PowerPoint “Easter.pptx”',
+            [
+                {
+                    type: 'file',
+                    filePath: '/documents/Easter.ows',
+                    text: null,
+                    kind: 'slide',
+                },
+            ],
+            expect.any(Function),
+        );
+        expect(mocks.fireUpdateEvent).toHaveBeenCalled();
+        expect(result).toMatchObject({
+            created: 'Easter',
+            from: 'Easter.pptx',
+            filePath: '/documents/Easter.ows',
+            slideCount: 3,
+            pptxSlideCount: 2,
+            stepSlideCount: 1,
+            size: '1280x720',
+            likeness: { percent: 99.6, lowestSlide: 2 },
+            missingFonts: ['Calibri'],
+            // Only what was left out is said.
+            leftOut: { videoSlides: [2] },
+            undoId: 'backup-id',
+        });
+        expect(result.renamedTo).toBeUndefined();
+    });
+
+    test('takes the next free name, never writes over a document', async () => {
+        state.disk['/documents/Easter.ows'] = '{}';
+        const result: any = await handleAgentMediaFileRequest({
+            action: 'convert',
+            kind: 'document',
+            name: 'Easter.pptx',
+        });
+        expect(result).toMatchObject({
+            created: 'Easter (2)',
+            renamedTo: 'Easter (2)',
+            filePath: '/documents/Easter (2).ows',
+        });
+    });
+
+    test('reads a PowerPoint at a disk path, under the name asked, measured as asked', async () => {
+        const result: any = await handleAgentMediaFileRequest({
+            action: 'convert',
+            kind: 'document',
+            path: '/downloads/Sermon.pptx',
+            newName: 'Sunday',
+            likeness: 'all',
+        });
+        expect(convertMocks.convertPptxToSlides).toHaveBeenCalledWith(
+            '/downloads/Sermon.pptx',
+            'all',
+        );
+        expect(result).toMatchObject({
+            created: 'Sunday',
+            from: 'Sermon.pptx',
+            filePath: '/documents/Sunday.ows',
+        });
+    });
+
+    test('refuses what is no PowerPoint, before anything is read or made', async () => {
+        for (const [request, reason] of [
+            [
+                { kind: 'image', name: 'sunrise.jpg' },
+                'Only a PowerPoint is converted',
+            ],
+            [{ kind: 'document', name: 'Order.pdf' }, 'is not a PowerPoint'],
+            [
+                { kind: 'document', path: '/downloads/missing.pptx' },
+                'There is no file at "/downloads/missing.pptx".',
+            ],
+            [
+                { kind: 'document', name: 'Easter.pptx', newName: '../x' },
+                'A name is required.',
+            ],
+        ] as const) {
+            const result: any = await handleAgentMediaFileRequest({
+                action: 'convert',
+                ...request,
+            });
+            expect(result.isError, reason).toBe(true);
+            expect(result.reason).toContain(reason);
+        }
+        expect(convertMocks.convertPptxToSlides).not.toHaveBeenCalled();
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
+    });
+
+    test('a deck the converter cannot read is said, and nothing is made', async () => {
+        convertMocks.convertPptxToSlides.mockResolvedValue({
+            reason: 'The PowerPoint could not be read.',
+        });
+        await expect(
+            handleAgentMediaFileRequest({
+                action: 'convert',
+                kind: 'document',
+                name: 'Easter.pptx',
+            }),
+        ).resolves.toEqual({
+            isError: true,
+            reason: 'The PowerPoint could not be read.',
+        });
+        expect(mocks.runWithAgentBackup).not.toHaveBeenCalled();
     });
 });

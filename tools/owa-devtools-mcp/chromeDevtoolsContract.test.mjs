@@ -14,7 +14,13 @@ import {
 import { VERSION } from 'chrome-devtools-mcp/build/src/version.js';
 import { afterEach, describe, expect, test, vi } from 'vitest';
 
-import { closeBrowserWithServer, restoreSdkToolCalls } from './server.mjs';
+import { pageIdSchema } from 'chrome-devtools-mcp/build/src/tools/ToolDefinition.js';
+
+import {
+  closeBrowserWithServer,
+  makePageIdOptional,
+  restoreSdkToolCalls,
+} from './server.mjs';
 
 // The REAL chrome-devtools-mcp, nothing mocked. `server.mjs` reaches into
 // its build folder, and every other test of that file mocks those paths --
@@ -168,6 +174,38 @@ describe('chrome-devtools-mcp, as server.mjs uses it', () => {
     });
     expect(names).toContain('owa_probe');
     expect(probe.error?.message).toMatch(/owa_probe not found/);
+  }, 30_000);
+
+  // `server.mjs` relaxes the one `pageIdSchema` every page tool spreads
+  // (`AD-39`); the version that moves it, or stops spreading it, fails here.
+  test('builds every page tool from pageIdSchema, and takes no pageId once it is optional', async () => {
+    const listTakeSnapshot = async () => {
+      const config = parseConfig({ [NO_CONFIG_DISCOVERY_ENV]: '1' });
+      config.resolved.usageStatistics = false;
+      const browserManager = new BrowserManager(config, {});
+      const { server } = await McpServer.from(config, { browserManager });
+      const tool = server._registeredTools.take_snapshot;
+      const result = {
+        isEmptyAllowed: tool.inputSchema.safeParse({}).success,
+        isPageIdAllowed: tool.inputSchema.safeParse({ pageId: 2 }).success,
+      };
+      await server.close();
+      return result;
+    };
+    const original = pageIdSchema.pageId;
+    try {
+      expect(await listTakeSnapshot()).toEqual({
+        isEmptyAllowed: false,
+        isPageIdAllowed: true,
+      });
+      makePageIdOptional();
+      expect(await listTakeSnapshot()).toEqual({
+        isEmptyAllowed: true,
+        isPageIdAllowed: true,
+      });
+    } finally {
+      pageIdSchema.pageId = original;
+    }
   }, 30_000);
 
   test("serves our tools and its own once tools/call is the SDK's again", async () => {

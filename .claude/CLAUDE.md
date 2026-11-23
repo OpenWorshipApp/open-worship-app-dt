@@ -164,31 +164,21 @@ number: the project's `./.mcp.json` registers `owa-devtools` →
 itself (same thing per-user, if that file is missing:
 `claude mcp add owa-devtools -- node tools/owa-devtools-mcp/bin.mjs`). Its tools
 arrive as `mcp__owa-devtools__*`: the chrome-devtools tools the firewall does
-not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS app-level ones —
-`owa_app_state`, `owa_find_ui`, `owa_list_ui`, `owa_click`, `owa_type`,
-`owa_goto_page`, `owa_list_screens`, `owa_hide_screens`, `owa_help_search` /
-`owa_help_page`, `owa_list_questions`, `owa_tran`, `owa_guide_start` / `_step`
-/ `_status`, `owa_screenshot`, `owa_pick_element`, `owa_highlight_selector`,
-`owa_read_website`, `owa_lyric_validate`, `owa_lyric_file`, `owa_slide_file`,
-`owa_present_bible`, `owa_foreground` / `_edit`, `owa_screen_edit` (the
-screens' own controls), `owa_bible_item` / `_note` /
-`_xml`, `owa_bible_suggest`, `owa_find_verse`, `owa_lookup_record`,
-`owa_resource_file`,
-`owa_presenting_flow`, `owa_undo`, the one-document editors `owa_lyric_edit` /
-`owa_slide_edit` / `owa_presenting_flow_edit` / `owa_note_edit`, and — the developer's, withheld from the
-chatbot's model — `owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
-`owa_media_file`, `owa_language` (the help window's own offer to install a
-language, pressed by the person), and on the stdio door alone `owa_drop_files` (real fixture
-files dropped from the disk onto a control; the robot test's drag block) and
-`owa_choose_app` (with several apps running the stdio server drives NONE until
-one is chosen by pid — ask the user which; `owa_app_state`'s `versionCheck`
-says whether the server is the app's version).
+not hide (`list_pages`, `take_snapshot`, `click`, …) PLUS the app's own
+`owa_*` tools, every one described in `rules/agent-tools.md` and tabled in
+`tools/owa-devtools-mcp/README.md`. Some are the developer's, withheld from
+the chatbot's model (`owa_press_key`, `owa_drag`, `owa_menu`, `owa_scroll`,
+…), and two answer on the stdio door alone: `owa_drop_files` (real fixture
+files dropped from the disk onto a control) and `owa_choose_app` (with several
+apps running the stdio server drives NONE until one is chosen by pid — ask the
+user which; `owa_app_state`'s `versionCheck` says whether the server is the
+app's version).
 Reach for those first: `owa_find_ui` locates (and optionally outlines) a control
 by its visible text, `owa_list_ui` enumerates the visible controls of a window,
 `owa_click` / `owa_type` act on a control by its label (`owa_click` right-
 or double-clicks with `button` / `clicks`; `owa_press_key`, `owa_drag` and
 `owa_menu` press a shortcut, drag by label and use the menu bar), `owa_goto_page`
-switches the main window between presenter, reader and editor, and `owa_app_state`
+switches the main window between presenter, reader, editor and Screen Mirror, and `owa_app_state`
 reports which window, page, language and theme are live — all without a
 snapshot. `owa_hide_screens` takes content
 off a projector, so confirm with the user before calling it. For a client pinned
@@ -392,22 +382,10 @@ that OPENS a panel carries the same words as the panel it opened.
   hand, remember a control can be real, clickable and invisible at once.
   How a walkthrough step hovers, types into a range or runs a demo:
   `.claude/rules/agent-tools.md`.
-- **Verifying file-drop features.** Synthetic `DragEvent` drops can't exercise
-  `readDroppedFiles` (`src/others/droppingFileHelpers.ts`) — `webkitGetAsEntry()`
-  returns null for programmatic `DataTransfer`s. The drag-over mimetype gate IS
-  testable synthetically (dispatch `dragover` with a typed `File`; canvas opacity
-  0.5 = accepted). For the drop pipeline, get the live `CanvasController` by
-  walking React fibers up from a shadow-pierced `.slide-canvas-editor` until
-  `memoizedProps.value` has `.addNewItems` + `.canvas`, then call the controller
-  method directly. A real `video/webm` `File` can be synthesized in-page via
-  canvas `captureStream()` + `MediaRecorder`. Restore with the Undo toolbar
-  button only (see below). What DOES drive the whole real pipeline: dispatch a
-  plain bubbling `Event('drop')` and `Object.defineProperty` a fabricated
-  `dataTransfer` onto it — `{items: [{kind: 'file', webkitGetAsEntry: () => ({
-isFile: true }), getAsFile: () => file}]}` — since React only forwards the
-  property. Stamp `appFilePath` on the `File` (the electron preload does this
-  for real drops) and handlers that resolve a real path, e.g. the presenting flow
-  archive import, run end to end against a real file on disk.
+- **Verifying file-drop features.** A page-built `DragEvent` cannot carry a
+  file (`webkitGetAsEntry()` is null): drop real fixture files with
+  `owa_drop_files`. Driving the drop pipeline by hand instead: memory
+  `drag-payload-written-in-dragstart`.
 - **Never "Discard changed" during automated QA.** Only ever use Undo/Redo
   (non-destructive, reversible) to probe or restore editor state. The toolbar's
   "Discard changed" → "Yes" resets the document to its last-saved-on-disk state
@@ -445,7 +423,9 @@ isFile: true }), getAsFile: () => file}]}` — since React only forwards the
 
 Printing slides to PDF — the hidden window, fonts, one slide per page and why
 scaling must use `zoom` — is in `.claude/rules/printing.md`. Screen Mirror,
-virtual displays, intercom and casting are in `.claude/rules/screen-mirror.md`.
+virtual displays, intercom and casting are in `.claude/rules/screen-mirror.md`;
+the Background panel's fills, animations and capture window in
+`.claude/rules/background.md`.
 
 ## Codebase patterns
 

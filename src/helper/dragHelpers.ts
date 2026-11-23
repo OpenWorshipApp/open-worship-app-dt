@@ -28,10 +28,19 @@ import { foregroundDragDeserialize } from '../presenter-foreground/foregroundDra
 
 export const dragStore: {
     onDropped?: ((event: any) => void) | ((event: any) => Promise<void>) | null;
+    /**
+     * The drag under way carries nothing a SCREEN can show -- a run sheet's
+     * whole-document line or a parked one, still draggable to reorder the
+     * sheet -- so a screen card declines its dragover rather than take a drop
+     * that does nothing (F-13 of robot run 20261120-2021). Cleared with
+     * `onDropped` when the drag ends.
+     */
+    isScreenRefused?: boolean;
 } = {};
 
 function clearDragStoreOnDropped() {
     dragStore.onDropped = null;
+    dragStore.isScreenRefused = false;
 }
 
 export function handleDragStart(

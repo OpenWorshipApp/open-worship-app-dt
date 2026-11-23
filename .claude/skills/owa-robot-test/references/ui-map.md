@@ -145,7 +145,7 @@ also be found by `[data-react-comp-name="PresentingFlowRowComp"]` etc.
   - Documents tab: slide thumbnails container; footer has a size range slider
     (`.app-range`) and the current document path.
   - Foreground **launcher** (`ForegroundFloatingComp`, a `Foreground` tab beside these two): a
-    menu of the 13 components, each opening in its own floating panel (`persistKey`
+    menu of the 15 components, each opening in its own floating panel (`persistKey`
     `floating-widget-rect-foreground-<key>`).
 - **Fullscreen toggle** (presenter header, top-right): icon `bi bi-arrows-fullscreen` /
   `bi bi-fullscreen-exit`.

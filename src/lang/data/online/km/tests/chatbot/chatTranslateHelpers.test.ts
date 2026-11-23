@@ -25,9 +25,7 @@ describe('the translator asks', () => {
             ' តើខ្ញុំបង្ហាញខគម្ពីរយ៉ាងដូចម្តេច? ',
             KHMER,
         );
-        expect(ask.startsWith('តើខ្ញុំបង្ហាញខគម្ពីរយ៉ាងដូចម្តេច?\n\n')).toBe(
-            true,
-        );
+        expect(ask.startsWith('តើខ្ញុំបង្ហាញខគម្ពីរយ៉ាងដូចម្តេច?\n\n')).toBe(true);
         expect(ask).toContain('from Khmer into English');
         // BN-23 (2026-11-08): a line to add to a note came to the model as
         // its English, and was written into the Khmer note in English.
@@ -54,9 +52,9 @@ describe("the church's own words", () => {
 
     it('reads a short word of a spaceless script only where it stands alone', () => {
         // "ព្រះ" (God) is inside "ព្រះគម្ពីរ" (Bible): not a second word.
-        expect(
-            listUsedTerms('តើព្រះគម្ពីរមានប៉ុន្មាន?', KHMER, 'language'),
-        ).toEqual(['ព្រះគម្ពីរ = Bible']);
+        expect(listUsedTerms('តើព្រះគម្ពីរមានប៉ុន្មាន?', KHMER, 'language')).toEqual([
+            'ព្រះគម្ពីរ = Bible',
+        ]);
     });
 });
 

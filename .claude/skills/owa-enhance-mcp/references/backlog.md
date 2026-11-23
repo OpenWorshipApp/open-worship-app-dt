@@ -6,6 +6,85 @@ evidence, so a future run can weigh it without re-deriving it.
 
 Status: `open` · `doing` · `done` · `wontfix` (with a reason).
 
+### MC-68 — `owa_click` presses the first of two controls with the same name, where the card refuses · open 2026-11-20
+
+Found from the chatbot skill (`EC-763`'s window check, a scratch dev
+instance). Two answers in one help-window tab each carried **Undo this
+change**; `owa_click "Undo this change"` pressed the FIRST, the older
+answer's, already undone (the window said _That was already undone._ and
+changed nothing), not the newest one the caller meant. The walkthrough card
+refuses such a press and names where the twins sit (`twinsOf`, `guide.mjs`
+921); `owa_click` and `owa_type` never call it, and take no index or scope
+that tells two answers apart (an answer card has no panel name). Harmless
+here, only because Undo by id is checked; the same press on two
+same-named controls that act would land on whichever comes first in the
+page. Options to weigh: refuse with the twins' panels and positions as the
+card does (a `nth` or position argument then costs the model schema
+tokens), or prefer the twin nearest the newest content. Not done: the
+window run undid its change through `owa_undo` by id instead.
+
+### MC-67 — a press that reloads or closes its own window is a press, not an error · done 2026-11-20
+
+Filed from the agent-docs skill (`AD-04`, open since 2026-10-08). A press
+whose effect takes its own window away -- Settings' **Apply Settings**, a
+language install or switch, which reload every window -- killed the
+read-back the press answers with, and CDP's `Runtime.evaluate` failed with
+_Inspected target navigated or closed_, returned as the tool's error: in
+7 of 40 local sessions on 2026-10-08, still 3 of 40 (×9, all `owa_click`)
+on 2026-11-20, an agent pressing again or calling a press that worked a
+failure. `pressOrWindowGone` (`owaTools.mjs`) wraps the press of
+`owa_click`, `owa_type`, `owa_press_key` and `owa_menu`: that error (or
+_Execution context was destroyed_) answers `{pressed, isWindowGone: true,
+unverified}`, the sentence saying the window reloaded or closed, to check
+`owa_app_state` and not to press again for it; every other failure is still
+the tool's error. **Cost to the model:** none -- no schema or description
+changed. Held by `owaTools.test.mjs` (fails with the check off). **Seen
+live** on a scratch dev instance through a fresh stdio server pinned to its
+port: **Apply Settings** in `setting.html` answered `isWindowGone` in 30 ms,
+the window back afterwards; the same press as a raw evaluate failed with the
+CDP error. AD-04's other signature, `owa_screenshot` _UnknownVizError_, was
+not seen in the 40 sessions to 2026-11-20 (1 error in 177 calls): nothing to
+file.
+
+### MC-66 — `owa_inspect`: the developer's read of the page by selector · done 2026-11-19
+
+Filed from the agent-docs skill (`AD-40`). With `evaluate_script` refused, a
+question a snapshot does not answer -- a pane's height, the class a fold
+sets, which component drew a box -- went to hand-written `Runtime.evaluate`
+over raw CDP: 10 of 40 local sessions by 2026-11-19, ~27 calls, three of
+them stopped by Claude Code's own classifier as going around a safety
+control. `owa_inspect` (`inspect.mjs`) takes a `selector` (as data, never
+code), an optional `page`, `styles` (property names only, 12 at most) and
+`limit` (20 at most), searches open shadow roots too, and answers the count
+and, per match, tag, class, box, shown / hidden / gone (`checkVisibility`,
+as `domMatch.mjs` reads it), words cut at 200, role, title, aria states,
+`data-widget-name` and the dev component stamps -- never what a field or an
+editable holds. Nothing is pressed, so it is not an acting call and raises
+no banner. Registered on both doors (one server, two callers), withheld from
+the chatbot's model (`modelTools.mjs`). **Cost to the model:** none -- 26
+tools, ~8 464 of the 8 480 ratchet; stdio lists 78, 42 withheld. **Seen
+live** through a fresh stdio server against the running app, read-only:
+13 widget panes with their heights, an input listed with no value, a broken
+selector and a style name with a `;` each refused in a sentence.
+
+### MC-65 — chrome-devtools' `pageId` optional again, and a refused `filePath` says where to write · done 2026-11-19
+
+Filed from the agent-docs skill (`AD-39`). chrome-devtools-mcp 1.12 made
+`pageId` REQUIRED on every page tool (`pageIdRouting`, on by default, the
+schemas `.strict()`), so a call without it was refused -- 9 calls in 3
+sessions by 2026-11-19 -- although `routedPageId` already falls back to the
+page `select_page` chose. `makePageIdOptional` (`server.mjs`) makes the
+shared `pageIdSchema` field optional, with a description saying so, before
+`McpServer.from` builds the tools; an explicit `pageId` still routes, and
+routing stays on. And a `filePath` outside the client's roots and the temp
+folder (a session scratchpad under `/private/tmp`: 7 of 40 sessions) now
+answers the refusal plus `ROOTS_REFUSAL_HINT` (`firewall.mjs`
+`explainRootsRefusal`): where it may be written instead. **Cost to the
+model:** none (it is offered no chrome-devtools tool). Held by
+`chromeDevtoolsContract.test.mjs` against the real package. **Seen live**
+through a fresh stdio server: `take_snapshot {}` answered the selected page,
+a scratchpad `filePath` refused with the hint.
+
 ### MC-64 — the server outside the checkout: npm `open-worship-app-mcp` and an executable in the extra-bin pack, one behaviour · done 2026-11-13
 
 The user: _add `npm run build-open-worship-app-mcp` to bundle all owa-mcp … to

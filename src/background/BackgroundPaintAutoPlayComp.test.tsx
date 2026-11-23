@@ -20,6 +20,8 @@ const state = vi.hoisted(() => ({
         isUntilMediaEnd: false,
     } as any,
     saved: [] as string[],
+    pinned: [] as string[],
+    pinnedKinds: [] as string[],
     savedSuffixes: [] as string[],
     applied: [] as {
         runners: any[];
@@ -73,6 +75,10 @@ vi.mock('./paintShowSavedHelpers', () => ({
         state.savedSuffixes.push(suffix);
         return state.saved;
     },
+    readPaintPinnedSrcList: (kind: string) => {
+        state.pinnedKinds.push(kind);
+        return state.pinned;
+    },
 }));
 vi.mock('../slide-auto-play/SlideAutoPlayComp', () => ({
     default: (props: any) => {
@@ -89,10 +95,10 @@ import BackgroundPaintAutoPlayComp, {
     useBackgroundPaintAutoPlaySync,
 } from './BackgroundPaintAutoPlayComp';
 import { FILL_BUILT_IN_GRADIENT_MAP } from './fillBuiltInHelpers';
-import { GLSL_ANIMATION_SAMPLE_LIST } from './animationBuiltInHelpers';
+import { listAnimationCategorySrcs } from './animationBuiltInHelpers';
 
 const GRADIENTS = FILL_BUILT_IN_GRADIENT_MAP.dark;
-const SHADERS = GLSL_ANIMATION_SAMPLE_LIST.map((sample) => sample.src);
+const SHADERS = listAnimationCategorySrcs('christmas', 'glsl');
 
 function genManager() {
     return { applyBackgroundSrcWithSyncGroup: vi.fn() };
@@ -116,6 +122,8 @@ beforeEach(() => {
         isUntilMediaEnd: false,
     };
     state.saved = [];
+    state.pinned = [];
+    state.pinnedKinds = [];
     state.savedSuffixes = [];
     state.applied = [];
     state.notified = 0;
@@ -168,7 +176,7 @@ describe('one step of a Fills or Animations show', () => {
         );
     });
 
-    it('steps back when asked, through the shaders for an animation', () => {
+    it("steps back when asked, through its category's shaders for an animation", () => {
         const manager = genManager();
         state.managers.set(0, manager);
         state.showing = [['0', { type: 'animation', src: SHADERS[1] }]];
@@ -176,6 +184,19 @@ describe('one step of a Fills or Animations show', () => {
         vi.advanceTimersByTime(0);
         expect(manager.applyBackgroundSrcWithSyncGroup).toHaveBeenCalledWith(
             expect.objectContaining({ type: 'animation', src: SHADERS[0] }),
+        );
+        expect(state.pinnedKinds).toEqual(['animation']);
+    });
+
+    it('walks the pinned ones when one of them is up', () => {
+        const manager = genManager();
+        state.managers.set(0, manager);
+        state.pinned = [SHADERS[5], GRADIENTS[0], SHADERS[2]];
+        state.showing = [['0', { type: 'animation', src: SHADERS[5] }]];
+        expect(tickBackgroundPaint('animation', '')).toBe(true);
+        vi.advanceTimersByTime(0);
+        expect(manager.applyBackgroundSrcWithSyncGroup).toHaveBeenCalledWith(
+            expect.objectContaining({ type: 'animation', src: GRADIENTS[0] }),
         );
     });
 

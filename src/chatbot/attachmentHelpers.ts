@@ -42,7 +42,10 @@ export type ChatAttachmentKindType =
     | 'file'
     // A SESSION of a foreground component (2026-11-09): which one, never its
     // words -- the window reads them before every question.
-    | 'foreground';
+    | 'foreground'
+    // A video or a sound from disk (2026-11-21): its name and path alone,
+    // never read here -- what an open PowerPoint can play on a slide.
+    | 'media';
 
 /**
  * What is stored ON the message, and so written to disk. No bytes, ever -- see
@@ -483,6 +486,42 @@ function toFileSummary(attachment: ChatAttachmentType) {
     );
 }
 
+// A video or a sound a slide can play (`owa_office_edit`'s `media`): the
+// kinds PowerPoint embeds.
+const MEDIA_FILE_PATTERN = /\.(?:mp4|m4v|mov|wmv|avi|mp3|m4a|wav|wma)$/i;
+
+export function checkIsMediaName(fileName: string) {
+    return MEDIA_FILE_PATTERN.test(fileName.trim());
+}
+
+/**
+ * A video or a sound attached from disk: named, measured and never read --
+ * the window cannot watch or hear it, and a film is no file to hold in a
+ * help window's memory. Its path is what an open PowerPoint's change puts
+ * on a slide; the tool reads the bytes then, size asked first.
+ */
+export function genMediaAttachment(
+    name: string,
+    byteSize: number,
+    filePath: string,
+): ChatAttachmentType {
+    const isAudio = /\.(?:mp3|m4a|wav|wma)$/i.test(name);
+    const kindText = isAudio ? 'a sound file' : 'a video';
+    return {
+        id: genAttachmentId(),
+        kind: 'media',
+        name,
+        mimeType: isAudio ? 'audio/*' : 'video/*',
+        byteSize,
+        filePath,
+        summary:
+            `The user attached ${kindText} called "${name}" ` +
+            `(${toShortSize(byteSize)}). You cannot watch or hear it: do ` +
+            'not guess what is in it. With a PowerPoint open in this chat it ' +
+            'can be put on a slide to play there.',
+    };
+}
+
 export function checkIsReadableTextFile(file: File) {
     return (
         file.type.startsWith('text/') ||
@@ -585,7 +624,7 @@ export function readAskedTextFiles(asked: string): AskedTextFileType[] {
 /** What was in the file, without the line written for the model. */
 export function toAttachedText(attachment: ChatAttachmentType) {
     // A carried file holds a sentence for the model, never the file's words.
-    if (attachment.kind === 'file') {
+    if (attachment.kind === 'file' || attachment.kind === 'media') {
         return '';
     }
     const summary = attachment.summary ?? '';

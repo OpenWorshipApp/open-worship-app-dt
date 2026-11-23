@@ -30,9 +30,11 @@ import {
 } from '../virtual-display/viewerCameraTransport';
 import {
     genGlslAnimationElement,
+    toCssCodeAnimation,
     toGlslAnimation,
 } from './screenAnimationBackgroundHelpers';
 import { ensureCssAnimationKeyframes } from '../background/cssAnimationLayerHelpers';
+import { genCssCodeAnimationElement } from '../background/cssCodeAnimationElementHelpers';
 
 export function genHtmlBackground(
     screenId: number,
@@ -44,7 +46,19 @@ export function genHtmlBackground(
         backgroundSrc.type === 'animation'
             ? toGlslAnimation(backgroundSrc.src)
             : null;
-    if (glslAnimation !== null) {
+    const cssCodeAnimation =
+        backgroundSrc.type === 'animation'
+            ? toCssCodeAnimation(backgroundSrc.src)
+            : null;
+    if (cssCodeAnimation !== null) {
+        // A person's own CSS, in a box of its own: moving only where it is
+        // presented, as a built-in effect.
+        const result = genCssCodeAnimationElement(cssCodeAnimation, {
+            isMoving: appProvider.isPageScreen,
+        });
+        child = result.element;
+        promise = Promise.resolve(result.stop);
+    } else if (glslAnimation !== null) {
         // A shader runs on a canvas, live only where it is presented.
         const screenManagerBase = getScreenManagerBase(screenId);
         const result = genGlslAnimationElement(glslAnimation, {

@@ -398,6 +398,31 @@ async function importBibleItem(item: PresentingFlowItemType) {
     };
 }
 
+/**
+ * A bundle holding a Bible verse needs the Default bible list
+ * (`importBibleItem`), and whether it can be opened is known before anything is
+ * written. Checked up front, a missing Bibles folder fails the import with
+ * nothing copied: checked where the verse is re-created, it had already written
+ * the bundle's documents and media, one more copy on every retry (F-26 of robot
+ * run 20261120-2021).
+ */
+async function checkBibleListReachable(items: PresentingFlowItemType[]) {
+    const hasBibleItem = items.some((item) => {
+        for (const itemJson of iteratePresentingFlowItemJsons(item)) {
+            if (
+                itemJson.type === DragTypeEnum.BIBLE_ITEM &&
+                BibleItem.dragDeserialize(itemJson.data) !== null
+            ) {
+                return true;
+            }
+        }
+        return false;
+    });
+    if (hasBibleItem && (await Bible.getDefault()) === null) {
+        throw new Error('Unable to open the Default bible list');
+    }
+}
+
 async function applyImportedPaths(
     items: PresentingFlowItemType[],
     localFilePathByOriginalPath: Map<string, string>,
@@ -467,6 +492,7 @@ export async function importPresentingFlowArchive(archiveFilePath: string) {
             throw new Error('No presenting flows folder is selected yet');
         }
         const dirPathByKind = resolveKindDirPaths(manifest.files);
+        await checkBibleListReachable(jsonData.items);
         const { localFilePathByOriginalPath, writtenItemFilePaths } =
             await importArchiveFiles(
                 extractDir,

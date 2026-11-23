@@ -42,13 +42,20 @@ import ScreenBackgroundFillComp from './ScreenBackgroundFillComp';
 import ScreenBackgroundAnimationComp from './ScreenBackgroundAnimationComp';
 import {
     genGlslAnimationElement,
+    toCssCodeAnimation,
     toGlslAnimation,
 } from './screenAnimationBackgroundHelpers';
+import { genCssCodeAnimationElement } from '../background/cssCodeAnimationElementHelpers';
 import { ensureCssAnimationKeyframes } from '../background/cssAnimationLayerHelpers';
 import { toAnimationBlendFromSrc } from '../background/animationValueHelpers';
 import { DEFAULT_BLEND_MODE } from '../helper/blendModeHelpers';
 
 const MARQUEE_SLIDE_MILLISECOND = 500;
+/**
+ * The positioned box of one marquee: what `layOutMarquees` stacks, so each
+ * session's marquee at an edge keeps a band of its own (F-38).
+ */
+export const FOREGROUND_MARQUEE_CLASS = 'foreground-marquee';
 const MARQUEE_FADE_MILLISECOND = 1000;
 
 /**
@@ -137,6 +144,7 @@ export function genHtmlForegroundMarquee(
             : '';
     const htmlString = renderToStaticMarkup(
         <div
+            className={FOREGROUND_MARQUEE_CLASS}
             style={{
                 position: 'absolute',
                 width: '100%',
@@ -856,7 +864,8 @@ export function genHtmlForegroundFill(
 
 /**
  * An animation shown OVER the slide -- Animation Show. A CSS one is its
- * layers' markup, moving only in the screen's own window; a shader runs on
+ * layers' markup -- a person's own CSS its code in a box of its own -- moving
+ * only in the screen's own window; a shader runs on
  * a canvas there and is ONE still frame everywhere else
  * (`genGlslAnimationElement`), and lets go of its graphics context when it
  * comes off.
@@ -881,7 +890,15 @@ export function genHtmlForegroundAnimation(
     }
     let stopPromise: Promise<() => void> | null = null;
     const glslAnimation = toGlslAnimation(src);
-    if (glslAnimation === null) {
+    const cssCodeAnimation = toCssCodeAnimation(src);
+    if (cssCodeAnimation !== null) {
+        // A person's own CSS, in a box of its own inside the paint box.
+        const { element, stop } = genCssCodeAnimationElement(cssCodeAnimation, {
+            isMoving: isPageScreen,
+        });
+        box.appendChild(element);
+        stopPromise = Promise.resolve(stop);
+    } else if (glslAnimation === null) {
         if (isPageScreen) {
             ensureCssAnimationKeyframes(document);
         }

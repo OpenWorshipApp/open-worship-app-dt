@@ -40,7 +40,7 @@ export default function OnlineBibleItemComp({
     }, []);
     const isBibleXMLExist = !!bibleXMLKeysMap[bibleInfo.key];
     return (
-        <li className="list-group-item">
+        <li className="list-group-item app-selectable-text">
             <div
                 className="w-100"
                 title={isBibleXMLExist ? tran('Already in XML') : ''}

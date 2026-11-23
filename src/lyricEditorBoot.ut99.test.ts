@@ -115,8 +115,9 @@ const h = vi.hoisted(() => {
         },
         isDarkMode: false,
         windowTitle: 'Open Worship',
-        installOpenLyricPrintPopupHandler: vi.fn(),
+        printOpenLyricPage: vi.fn(),
         applyOpenLyricTheme: vi.fn(),
+        applyOpenLyricLabelLocale: vi.fn(),
         registerEventListener: vi.fn(),
         getAllLangsAsync: vi.fn(),
         initLangCss: vi.fn(),
@@ -169,10 +170,11 @@ vi.mock('./lang/langHelpers.ts', () => ({
     initLangCss: h.initLangCss,
 }));
 vi.mock('./lyric-list/lyricHelpers.ts', () => ({
+    applyOpenLyricLabelLocale: h.applyOpenLyricLabelLocale,
     applyOpenLyricTheme: h.applyOpenLyricTheme,
 }));
 vi.mock('./lyric-list/lyricPrintHelpers.ts', () => ({
-    installOpenLyricPrintPopupHandler: h.installOpenLyricPrintPopupHandler,
+    printOpenLyricPage: h.printOpenLyricPage,
 }));
 vi.mock('./others/themeHelpers.tsx', () => ({
     checkIsDarkMode: () => h.isDarkMode,
@@ -206,9 +208,6 @@ beforeEach(() => {
     }
     h.isDarkMode = false;
     h.windowTitle = 'Open Worship';
-    h.installOpenLyricPrintPopupHandler.mockImplementation(() => {
-        h.events.push('print-popup-handler');
-    });
     h.getAllLangsAsync.mockResolvedValue([]);
 });
 
@@ -225,10 +224,9 @@ describe('getDashboardInstance', () => {
         container.remove();
     });
 
-    test('installs the print handler, every shell style, then every shell markup', () => {
+    test('installs every shell style, then every shell markup', () => {
         getDashboardInstance();
         expect(h.events).toEqual([
-            'print-popup-handler',
             'style:OpenLyricDashboard',
             'style:Editor',
             'style:OpenLyricMarkdownManager',
@@ -255,6 +253,9 @@ describe('getDashboardInstance', () => {
         expect(dashboard.openLyric).toBe(openLyric);
         expect(dashboard.openLyricMarkdownManager).toBe(markdownManager);
         expect(dashboard.editor).toBe(editor);
+        // Both panels print through open-lyric's own Print, into the app's.
+        expect(openLyric.onPrint).toBe(h.printOpenLyricPage);
+        expect(markdownManager.onPrint).toBe(h.printOpenLyricPage);
         expect(editor.options).toEqual({ selectionState: true });
         expect(openLyric.plugins).toEqual([['player', h.instances.players[0]]]);
         expect(editor.plugins).toEqual([

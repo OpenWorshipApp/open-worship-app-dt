@@ -21,6 +21,11 @@ import AnimationPickerComp from './AnimationPickerComp';
 import PaintTabFrameComp, { usePaintSessionStrip } from './PaintTabFrameComp';
 import { useBackgroundPaintAutoPlaySync } from './BackgroundPaintAutoPlayComp';
 import { toPaintPresetSettingName } from './paintShowOrderHelpers';
+import {
+    findPressedTile,
+    type PressedTileType,
+    readPressedTile,
+} from './pressedTileHelpers';
 
 // How long after a tile press its focus may still be put back. The press and
 // the re-render it causes are milliseconds apart; anything later is some other
@@ -168,14 +173,12 @@ export default function BackgroundAnimationsComp() {
     // swaps this panel between the one picker for the selected screens and a
     // picker per screen, which unmounts the very tile that had the keyboard
     // (as in `BackgroundFillsComp`).
-    const pressedTileRef = useRef<{ label: string; at: number } | null>(null);
+    const pressedTileRef = useRef<PressedTileType | null>(null);
     const handleTilePressing = useCallback((event: SyntheticEvent) => {
-        const target = event.target as HTMLElement;
-        const label = target.matches?.(PRESSABLE_SELECTOR)
-            ? target.getAttribute('aria-label')
-            : null;
-        pressedTileRef.current =
-            label === null ? null : { label, at: Date.now() };
+        pressedTileRef.current = readPressedTile(
+            event.target as HTMLElement,
+            PRESSABLE_SELECTOR,
+        );
     }, []);
     useAppEffect(() => {
         const pressed = pressedTileRef.current;
@@ -192,12 +195,7 @@ export default function BackgroundAnimationsComp() {
             return;
         }
         pressedTileRef.current = null;
-        const tile = Array.from(
-            container.querySelectorAll<HTMLElement>(PRESSABLE_SELECTOR),
-        ).find((element) => {
-            return element.getAttribute('aria-label') === pressed.label;
-        });
-        tile?.focus();
+        findPressedTile(container, PRESSABLE_SELECTOR, pressed)?.focus();
     }, [selectedBackgroundSrcList]);
     if (selectedBackgroundSrcList === null) {
         return null;

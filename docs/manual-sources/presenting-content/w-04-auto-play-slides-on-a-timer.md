@@ -2,10 +2,10 @@
 id: W-04
 title: "Auto-play slides on a timer"
 section: "Presenting content"
-verify: [PM-10, PM-137, PM-138, PM-140]
+verify: [PM-10, PM-137, PM-138, PM-140, PM-195, PM-196]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-04 — Auto-play slides on a timer
 
@@ -36,16 +36,16 @@ workflowsVersion: "2026-11-15"
    the bottom left of the slides previewer, in place of the stopwatch. Click its
    **pause** button to stop, or its **✕** to stop and collapse it back to the stopwatch.
 
-The same strip runs a show over a **[en:tran:Background]** list — **[en:tran:Images]**,
-**[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
-screen — and over each **[en:tran:Image Show]** / **[en:tran:Video Show]** / **[en:tran:Web Show]** session, where it
+The same strip runs a show over a **[en:tran:Background]** list — **[en:tran:Fills]**,
+**[en:tran:Animations]**, **[en:tran:Images]**, **[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
+screen — and over each **[en:tran:Fill Show]** / **[en:tran:Animation Show]** / **[en:tran:Image Show]** / **[en:tran:Video Show]** / **[en:tran:Web Show]** session, where it
 rides the panel's top row. On the Webs list a saved **URL** is stepped just like a page
 file.
 
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PM-10` · `PM-137` · `PM-138` · `PM-140`
+`PM-10` · `PM-137` · `PM-138` · `PM-140` · `PM-195` · `PM-196`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

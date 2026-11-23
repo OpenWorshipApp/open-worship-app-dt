@@ -15,6 +15,7 @@ const h = vi.hoisted(() => ({
     noteRenders: [] as any[][],
     contextManager: null as any,
     initOpenLyric: vi.fn(),
+    addSavePptxInDocumentsAction: vi.fn(),
     applyOpenLyricTheme: vi.fn(),
     notifyLyricElement: vi.fn(),
     notifyElementHighlight: vi.fn(),
@@ -72,6 +73,7 @@ vi.mock('./Lyric', () => ({
     default: { getInstance: () => h.lyric },
 }));
 vi.mock('./lyricHelpers', () => ({
+    addSavePptxInDocumentsAction: h.addSavePptxInDocumentsAction,
     applyOpenLyricTheme: h.applyOpenLyricTheme,
     initOpenLyric: h.initOpenLyric,
 }));
@@ -247,6 +249,8 @@ describe('loading', () => {
         expect(container.textContent).toBe('');
         expect(container.querySelector('#panes')).not.toBeNull();
         expect(h.initOpenLyric).toHaveBeenCalledWith('/songs/grace.owl');
+        // The operator's previewer gets Save in PPTX in Documents.
+        expect(h.addSavePptxInDocumentsAction).toHaveBeenCalledWith(openLyric);
         // Both bodies are lazy chunks.
         await act(async () => {
             await new Promise((resolve) => {

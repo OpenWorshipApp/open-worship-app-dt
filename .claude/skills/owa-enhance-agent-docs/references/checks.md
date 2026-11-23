@@ -105,7 +105,8 @@ and 148 notes whose named code moved since their last edit.
 
 ### `ids` — `EN/EC/MC/AC/AD/UT/TP-xx`, `W-xx`, matrix ids
 
-- **Reads.** Each id must appear in its owning ledger. `W-xx` must be a `###`
+- **Reads.** Each id must appear in its owning ledger or the `-history.md`
+  beside it (`AD-33`, 2026-11-14). `W-xx` must be a `###`
   heading in `user-workflows.md`, and matrix prefixes (`CB`, `PL`, `MD`, `SC`
   …) must appear in `docs/test-paths/coverage-matrix.md`.
 - **Fix.** A typo is **fix**. An id renumbered in the matrix
@@ -124,8 +125,10 @@ and 148 notes whose named code moved since their last edit.
   must resolve to a note.
 - **Fix.** All of these are **fix**, except deleting a note (**ask**). A note
   the index never names is invisible to every session: add its line, short.
-- **Watch.** The index is loaded into every session (first 200 lines, as
-  Claude Code loaded it when this was written). Lines over ~220 characters are
+- **Watch.** The index is loaded only into a session whose Claude Code
+  memory directory is `.claude/memory` (first 200 lines, as Claude Code
+  loaded it when this was written); elsewhere a session loads its per-user
+  index (`AD-32`, 2026-11-14). Lines over ~220 characters are
   an L2 lead. A line is a hook, and the detail belongs in the note.
 
 ### `rules` — `paths:` front matter
@@ -151,6 +154,18 @@ and 148 notes whose named code moved since their last edit.
   `review-stagged-change` / `review-unstagged-change` belong in the "Project
   skills" index is an **ask**: they may be left out on purpose as generic.
 
+### `privacy` — a home path naming an account
+
+- **Reads.** Every markdown file in the listing (ledgers, `docs/`, the
+  language packages' manual pages) and every file under `.claude/`, for
+  `/Users/<name>/`, `/home/<name>/`, `C:\Users\<name>\` (any slashes) and
+  `/c/Users/<name>/` (`scripts/homePathPrivacy.mjs`, `AD-43`, 2026-11-20).
+  A placeholder account (`<you>`, `$USER`, `~`, `…`, `x`) is skipped.
+- **No false positive but a missed placeholder.** History is no exemption: a
+  ledger ships like a note. *Fix:* `../<repo>` for a sibling checkout,
+  `$HOME` or `~` for the home folder, `…/<repo>` inside a quote. A new
+  placeholder word goes in `PLACEHOLDER_ACCOUNT_PATTERN`.
+
 ### `knowledge` — the 🤖's copy
 
 - `electron-build/knowledge/index.json` older than a doc means the in-app
@@ -162,7 +177,8 @@ and 148 notes whose named code moved since their last edit.
 `user-workflows.md` from its first `### W-` heading on, and the coverage rows
 each recipe's `Verify:` line cites. Five signals. All but the fourth are drift
 and a run is not done while one is above 0; the gate holds the first two
-(`src/test-setup/manualRecipes.test.ts`):
+(`src/test-setup/manualRecipes.test.ts`, which since 2026-11-14 also fails
+on a recipe id used twice):
 
 - **A label no code draws.** An `[en:tran:Key]`, or a bolded phrase that is a
   dictionary key, that is no string in `src/`, `electron/` or `tools/`. A label
@@ -214,7 +230,17 @@ and a run is not done while one is above 0; the gate holds the first two
   pass for a re-read. Only a note edited to name OTHER files goes back to the
   commit rule: whoever edited it wrote that against the day's code. *Fix:* read it against
   the code (the reading checks below), fix it, `--stamp-notes=<path>`. Hot
-  data files (`src/lang/data/**`, `package*.json`, `docs/test-manifest.json`) are ignored.
+  data files (`src/lang/data/**`, `package*.json`, `docs/test-manifest.json`) are ignored
+  as paths. **What a note names besides paths** (2026-11-20, `AD-45`): a tracked
+  root file named bare (`.mcp.json`) when no other folder's file has that name
+  (`.npmrc` does: a language package's own), and each `package.json` key it
+  names -- `npm run <script>`, `"<dep>": …`, or a bare key beside
+  `package.json` -- followed as `package.json#<key>`, that key's own lines, so
+  only a commit changing THEM moves the note. A note stamped before it followed
+  them is due only when they differ from the stamp's commit. **Never read** is
+  a third line: a note naming nothing followable can never be listed by a
+  commit, so it is listed until it is read once and stamped. A stamp at a
+  commit rewritten out of the history says so, with no diff.
   **Due only because of an uncommitted file** is a line of its own (`AD-18`,
   2026-10-11; the manual's *recipes due* has the same one): read with every
   uncommitted file as the last commit has it, the note's code is what it was

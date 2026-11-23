@@ -158,13 +158,31 @@ function PresentingFlowPreviewComp({
     }, []);
     return (
         <div className="w-100 app-presenting-flow">
-            <div
-                className="app-presenting-flow-header d-flex align-items-center"
-                onClick={handleToggleOpened}
-            >
-                <i className={`bi bi-chevron-${isOpened ? 'down' : 'right'}`} />
-                <span className="app-ellipsis flex-fill ps-1">
-                    {fileSource.name}
+            <div className="app-presenting-flow-header d-flex align-items-center">
+                {/*
+                 * The chevron and the name are ONE button that opens and
+                 * closes the sheet. The toggle was the header `div`'s own
+                 * onClick: absent from the accessibility tree, out of the tab
+                 * order, and missed by a press aimed at the sheet's labelled
+                 * list row, which never reaches an inner handler (F-01 of
+                 * robot run 20261122-1615: the agent could not open a sheet).
+                 * The Preview icon stays a sibling so the two are not nested.
+                 */}
+                <span
+                    className="app-presenting-flow-toggle d-flex align-items-center flex-fill"
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isOpened}
+                    onClick={handleToggleOpened}
+                    onKeyDown={pressElementLikeButton}
+                >
+                    <i
+                        className={`bi bi-chevron-${isOpened ? 'down' : 'right'}`}
+                        aria-hidden="true"
+                    />
+                    <span className="app-ellipsis flex-fill ps-1">
+                        {fileSource.name}
+                    </span>
                 </span>
                 <i
                     className={

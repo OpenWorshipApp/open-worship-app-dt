@@ -1,7 +1,8 @@
 // The Background panel's Animations, laid out as its Fills are (the boxes,
 // the heads, Customize come from `FillPickerComp.scss`): tiles a little
-// larger than a fill's, each with its theme under it, since a moving
-// background is told by what it shows more than by its colours.
+// larger than a fill's, each with its effect under it -- a pinned one with
+// its category too -- since a moving background is told by what it shows
+// more than by its colours.
 .animation-picker-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
@@ -12,10 +13,74 @@
 }
 
 .animation-tile-box {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+
+  // Shown while the pointer or the keyboard is on the tile -- a plain
+  // opacity, nothing that moves or repaints at rest.
+  &:hover > .animation-tile-pin,
+  &:focus-within > .animation-tile-pin {
+    opacity: 1;
+  }
+}
+
+// A tile's pin: beside the tile in the markup, over its corner on screen
+// (the held tile's check is in the other one).
+.animation-tile-pin {
+  position: absolute;
+  top: 2px;
+  inset-inline-start: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  background-color: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  font-size: 0.7rem;
+  line-height: 1;
+  opacity: 0;
+
+  &.is-pinned {
+    opacity: 1;
+    color: var(--bs-warning);
+  }
+
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    opacity: 1;
+    outline: 2px dashed var(--bs-info);
+    outline-offset: 1px;
+  }
+}
+
+// The Category over a category's samples: its name, then the list.
+.animation-picker-category {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 4px 4px;
+  font-size: 0.8rem;
+
+  > span {
+    white-space: nowrap;
+  }
+
+  > select {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: 280px;
+  }
 }
 
 .animation-tile {
@@ -60,6 +125,35 @@
     width: 100%;
     max-width: 240px;
   }
+}
+
+// Customize's picture of the draft, and Save as Image / Save as Video
+// beside it.
+.animation-picker-preview-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+
+  > .animation-tile.is-preview {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+.animation-export-buttons {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 4px;
+}
+
+// The export's progress toast is right-aligned: digits of one width and room
+// for "100%" keep the card from shifting as the number grows.
+.animation-export-progress-percent {
+  display: inline-block;
+  min-width: 4ch;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
 }
 
 .animation-tile-caption {

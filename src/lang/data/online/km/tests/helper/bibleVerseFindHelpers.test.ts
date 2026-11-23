@@ -39,19 +39,17 @@ describe('letters typed with no space', () => {
 
     // The user's own, 2026-10-16: "Jesus asked Peter many times", typed as
     // one run of Khmer letters, matched nothing.
-    const vocabulary = new Set([
-        'ព្រះ',
-        'យេស',
-        'សួរ',
-        'ពេត្រុស',
-        'ច្រើន',
-        'ដង',
-    ]);
+    const vocabulary = new Set(['ព្រះ', 'យេស', 'សួរ', 'ពេត្រុស', 'ច្រើន', 'ដង']);
 
     it('cuts them into the words the Bible uses', () => {
-        expect(
-            segmentByVocabulary('ព្រះយេស៊ូសួរពេត្រុសច្រើនដង', vocabulary),
-        ).toEqual(['ព្រះ', 'យេស៊ូ', 'សួរ', 'ពេត្រុស', 'ច្រើន', 'ដង']);
+        expect(segmentByVocabulary('ព្រះយេស៊ូសួរពេត្រុសច្រើនដង', vocabulary)).toEqual([
+            'ព្រះ',
+            'យេស៊ូ',
+            'សួរ',
+            'ពេត្រុស',
+            'ច្រើន',
+            'ដង',
+        ]);
     });
 
     it('keeps letters no word starts with, together', () => {

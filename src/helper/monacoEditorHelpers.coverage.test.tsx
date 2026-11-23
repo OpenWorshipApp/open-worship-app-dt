@@ -15,6 +15,14 @@ const h = vi.hoisted(() => ({
 
 vi.mock('monaco-editor', () => ({
     editor: {
+        // Monaco's registry: every model made and not disposed.
+        getModel: (uri: { toString: () => string }) => {
+            return (
+                h.models.find((model) => {
+                    return model.uri === uri.toString() && !model.disposed;
+                }) ?? null
+            );
+        },
         createModel: (
             value: string,
             language: string,
@@ -28,6 +36,7 @@ vi.mock('monaco-editor', () => ({
                 dispose() {
                     model.disposed = true;
                 },
+                isDisposed: () => model.disposed,
                 isAttachedToEditor: () => h.attachedUris.has(uri.toString()),
                 getFullModelRange: () => ({ startLineNumber: 1 }),
             };

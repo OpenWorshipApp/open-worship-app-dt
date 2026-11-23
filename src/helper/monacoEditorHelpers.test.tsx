@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { act, createElement, useEffect } from 'react';
+import { act, createElement, useEffect, useState } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import {
     afterEach,
@@ -24,16 +24,28 @@ const h = vi.hoisted(() => ({
 
 vi.mock('monaco-editor', () => ({
     editor: {
+        // Monaco's registry: every model made and not disposed.
+        getModel: (uri: { toString: () => string }) => {
+            return (
+                h.models.find((model) => {
+                    return model.uri === uri.toString() && !model.isDisposed();
+                }) ?? null
+            );
+        },
         createModel: (
             value: string,
             language: string,
             uri: { toString: () => string },
         ) => {
+            let isDisposed = false;
             const model = {
                 value,
                 language,
                 uri: uri.toString(),
-                dispose: vi.fn(),
+                dispose: vi.fn(() => {
+                    isDisposed = true;
+                }),
+                isDisposed: () => isDisposed,
                 isAttachedToEditor: vi.fn(() => false),
                 getFullModelRange: vi.fn(() => ({
                     startLineNumber: 1,
@@ -302,5 +314,77 @@ describe('Monaco editor hook', () => {
         }
         expect(firstModel.dispose).toHaveBeenCalledTimes(1);
         expect(h.models.length).toBe(7);
+    });
+
+    it('reuses the model Monaco holds when a reloaded module forgot it', async () => {
+        await mount();
+        const firstModel = h.models[0];
+        // As a hot reload in development does: this module's cache starts
+        // empty while Monaco still holds the open panel's model.
+        vi.resetModules();
+        const reloaded = await import('./monacoEditorHelpers');
+        function ReloadedProbe() {
+            reloaded.useInitMonacoEditor({
+                settingName: 'wrap',
+                options: { value: 'original' },
+                uri: { toString: () => currentUri } as any,
+                language: 'json',
+            });
+            return null;
+        }
+        const otherRoot = createRoot(document.createElement('div'));
+        await act(async () => otherRoot.render(createElement(ReloadedProbe)));
+        expect(h.models).toEqual([firstModel]);
+        expect(editor().options.model).toBe(firstModel);
+        await act(async () => otherRoot.unmount());
+    });
+
+    it('never hands out a model its owner disposed', async () => {
+        await mount('file:///owner-disposed');
+        const firstModel = h.models[0];
+        await act(async () => root.unmount());
+        // The Shader Code panel disposes its model as it closes; a panel
+        // opened again under that address must not get the dead one.
+        firstModel.dispose();
+        root = createRoot(container);
+        await mount('file:///owner-disposed');
+        expect(editor().options.model).not.toBe(firstModel);
+        expect(editor().options.model.isDisposed()).toBe(false);
+    });
+
+    it('keeps the editor in the page across re-renders of a host using it as a ref', async () => {
+        // A new callback ref each render is detached and attached again by
+        // React 19 -- the editor taken out of the page and back, losing the
+        // keyboard focus mid-typing (the shader Edit Code panel re-renders
+        // after every pause in the typing).
+        let rerender = () => {};
+        function RefHost() {
+            const [count, setCount] = useState(0);
+            rerender = () => setCount(count + 1);
+            store = useInitMonacoEditor({
+                settingName: 'wrap',
+                options: { value: 'original' },
+                uri: { toString: () => currentUri } as any,
+                language: 'json',
+            });
+            return createElement('div', {
+                ref: store.onContainerInit,
+                'data-count': count,
+            });
+        }
+        await act(async () => root.render(createElement(RefHost)));
+        const { div } = store.editorStore;
+        const firstInit = store.onContainerInit;
+        const firstSetNewValue = store.setNewValue;
+        const remove = vi.spyOn(div, 'remove');
+        await act(async () => rerender());
+        await act(async () => rerender());
+        expect(container.firstElementChild?.getAttribute('data-count')).toBe(
+            '2',
+        );
+        expect(remove).not.toHaveBeenCalled();
+        expect(container.firstElementChild?.contains(div)).toBe(true);
+        expect(store.onContainerInit).toBe(firstInit);
+        expect(store.setNewValue).toBe(firstSetNewValue);
     });
 });

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-22i — Send a line to one particular screen, or park a line
 
@@ -30,6 +30,7 @@ line you cannot fire by accident.
    **[en:tran:Show on Screens]** still asks which screen you mean. If the pinned screen has been
    closed, nothing is projected anywhere and the app tells you so ("Please make sure the
    screen is open") rather than quietly using a different screen.
+
 2. A **document** line can be pinned too — its slides then all follow it — and you can pin
    **one slide on its own**: open the document's arrow, right-click the slide and set its
    screen. That slide overrides the document; its neighbours keep following the document.

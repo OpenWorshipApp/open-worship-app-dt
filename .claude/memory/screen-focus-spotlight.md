@@ -138,9 +138,10 @@ closed while a Drawing panel reopened.
   2026-08-24 test prune — the `applyEnabledState` invariants in
   `ScreenPreviewerFooterComp` are covered again —
   `src/_screen/preview/ScreenPreviewerFooterComp.test.tsx` (2026-10-29) and
-  `src/_screen/preview/components.coverage.test.tsx` (2026-11-06) — all but
-  turning OFF while Focusing shows (both turn it off in Drawing); re-verify that
-  one live before touching that function.
+  `src/_screen/preview/components.coverage.test.tsx` (2026-11-06) — and since
+  2026-11-20 turning OFF while Focusing shows too ("turning off while Focusing
+  shows closes the panel and leaves no drawing stranded", the one test that
+  fails when the Focusing branch of `applyEnabledState` is broken).
 
 **Panel:** Presets (the built-in looks and the saved ones, `SpotlightPresetsComp`), Size (40..1200 native px), Dim colour swatch, Dim (10..100%), Edge
 blur (0..100%, 0 = hard), Contrast toggle, Reset. `resetSettings()` — like a preset, through `applySettings()` — assigns all

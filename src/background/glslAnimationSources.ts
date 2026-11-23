@@ -387,7 +387,14 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     color = lightOver(color, rampColor(0.5), exp(-distance * 4.0) * 0.8);
     color = lightOver(color, rampColor(1.0), smoothstep(0.1, 0.085, distance));
     float hill = horizon + 0.02 * sin(scaled.x * 4.0 + 1.0) + 0.015 * sin(scaled.x * 9.0);
-    vec4 land = vec4(groundColor().rgb * 0.45, max(groundColor().a, 0.85));
+    // A shade of the ground: much darker on a dark one, a pale hill on a
+    // pale one (the Light side), where darker would be a grey band.
+    vec3 ground = groundColor().rgb;
+    vec3 landColor = ground * 0.45;
+    if (dot(ground, vec3(0.299, 0.587, 0.114)) > 0.5) {
+        landColor = mix(ground, rampColor(0.0).rgb, 0.18) * 0.92;
+    }
+    vec4 land = vec4(landColor, max(groundColor().a, 0.85));
     fragColor = lightOver(color, land, smoothstep(hill + pixel, hill - pixel, point.y));
 }
 `,
@@ -413,6 +420,241 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         + exp(-abs(star.y) * 160.0) * exp(-abs(star.x) * 9.0);
     float pulse = 0.85 + 0.15 * sin(time * 1.5);
     fragColor = lightOver(color, rampColor(1.0), (glow + glints * 0.6) * pulse);
+}
+`,
+    leaves: `// A leaf: two circles' overlap, pointed at both ends.
+float leafDistance(vec2 point) {
+    return length(vec2(abs(point.x) + 0.6, point.y)) - 1.0;
+}
+
+// One leaf in a cell at most, falling with the cells and swinging.
+vec4 leafLayer(vec4 color, vec2 point, float scale, float speed, float amount) {
+    vec2 grid = point * scale;
+    grid.y += iTime * speed;
+    vec2 cell = floor(grid);
+    vec2 seed = hash22(cell);
+    float swing = sin(iTime * (0.8 + seed.x) + seed.y * 6.2831);
+    vec2 center = 0.3 + 0.4 * seed + vec2(swing * 0.1, 0.0);
+    float angle = seed.x * 6.2831 + swing * 0.9;
+    vec2 local = (fract(grid) - center) / 0.2;
+    vec2 turned = vec2(
+        cos(angle) * local.x - sin(angle) * local.y,
+        sin(angle) * local.x + cos(angle) * local.y
+    );
+    float edge = scale / iResolution.y / 0.2;
+    float leaf = smoothstep(edge, -edge, leafDistance(turned));
+    leaf *= step(0.5, hash21(cell + 3.1));
+    vec4 leafColor = paletteColor(seed.y + seed.x * 0.5);
+    float vein = smoothstep(edge * 2.0 + 0.04, 0.0, abs(turned.x)) * step(abs(turned.y), 0.7);
+    leafColor.rgb *= (0.82 + 0.18 * step(0.0, turned.x)) * (1.0 - 0.3 * vein);
+    return lightOver(color, leafColor, leaf * amount);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 point = fragCoord / iResolution.y;
+    vec4 color = lightOver(groundColor(), rampColor(0.0), (1.0 - fragCoord.y / iResolution.y) * 0.15);
+    color = leafLayer(color, point, 7.0, 0.25, 0.55);
+    color = leafLayer(color, point + 4.3, 4.5, 0.35, 0.8);
+    fragColor = leafLayer(color, point + 9.7, 3.0, 0.5, 1.0);
+}
+`,
+    fireworks: `void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    float aspect = iResolution.x / iResolution.y;
+    vec2 point = fragCoord / iResolution.y;
+    float width = 0.003 + 1.5 / iResolution.y;
+    vec4 color = lightOver(groundColor(), rampColor(0.0), smoothstep(0.6, 0.0, fragCoord.y / iResolution.y) * 0.2);
+    for (int index = 0; index < 6; index++) {
+        float layer = float(index);
+        float period = 3.4 + 1.6 * hash21(vec2(layer, 7.1));
+        float clock = iTime / period + hash21(vec2(layer, 2.3));
+        float cycle = floor(clock);
+        // A burst, then dark a while before the next one.
+        float progress = fract(clock) * 1.5;
+        if (progress < 1.0) {
+            vec2 seed = hash22(vec2(layer * 13.7, cycle));
+            vec2 center = vec2((0.12 + 0.76 * seed.x) * aspect, 0.5 + 0.36 * seed.y);
+            center.y -= progress * progress * 0.06;
+            float radius = (0.12 + 0.1 * hash21(vec2(cycle, layer)))
+                * (1.0 - pow(1.0 - progress, 3.0));
+            vec2 offset = point - center;
+            float len = length(offset);
+            float sector = 6.2831 / 14.0;
+            float turn = mod(atan(offset.y, offset.x) + seed.y * 6.2831, sector) - 0.5 * sector;
+            float ray = smoothstep(width, 0.0, len * abs(sin(turn)));
+            float trail = smoothstep(radius * 0.35, radius, len)
+                * smoothstep(radius + width * 2.0, radius - width, len);
+            float tip = smoothstep(radius * 0.8, radius, len) * trail;
+            float fade = 1.0 - smoothstep(0.35, 1.0, progress);
+            float flash = exp(-len * len / 0.0015) * (1.0 - smoothstep(0.0, 0.2, progress));
+            float hue = hash21(vec2(cycle, layer * 3.1));
+            color = lightOver(color, paletteColor(hue), exp(-len / max(radius, 0.01) * 3.0) * 0.12 * fade);
+            color = lightOver(color, paletteColor(hue), (ray * trail * 0.9 + flash) * fade);
+            color = lightOver(color, paletteColor(hue + 0.5), ray * tip * fade * 0.8);
+        }
+    }
+    fragColor = color;
+}
+`,
+    petals: `// A petal, rounder at the bottom than the top.
+float petalDistance(vec2 point) {
+    point.x *= 1.0 + 0.35 * point.y;
+    return length(point * vec2(1.25, 0.9)) - 1.0;
+}
+
+// One petal in a cell at most, drifting down and turning over.
+vec4 petalLayer(vec4 color, vec2 point, float scale, float speed, float amount) {
+    vec2 grid = point * scale;
+    grid.y += iTime * speed;
+    grid.x += sin(iTime * 0.4 + grid.y * 0.5) * 0.4;
+    vec2 cell = floor(grid);
+    vec2 seed = hash22(cell);
+    float angle = seed.x * 6.2831 + iTime * (seed.y - 0.5);
+    float flip = cos(iTime * (1.2 + seed.y * 1.6) + seed.x * 6.2831);
+    vec2 local = (fract(grid) - 0.3 - 0.4 * seed) / 0.17;
+    vec2 turned = vec2(
+        cos(angle) * local.x - sin(angle) * local.y,
+        sin(angle) * local.x + cos(angle) * local.y
+    );
+    turned.x /= max(abs(flip), 0.15);
+    float edge = scale / iResolution.y / 0.17;
+    float petal = smoothstep(edge, -edge, petalDistance(turned));
+    petal *= step(0.45, hash21(cell + 2.7));
+    vec4 petalColor = paletteColor(hash21(cell + 6.1));
+    petalColor.rgb *= (0.8 + 0.2 * step(0.0, flip)) * (0.85 + 0.15 * (1.0 - length(turned)));
+    return lightOver(color, petalColor, petal * amount);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 point = fragCoord / iResolution.y;
+    vec4 color = lightOver(groundColor(), rampColor(0.5), smoothstep(1.0, 0.0, fragCoord.y / iResolution.y) * 0.18);
+    color = petalLayer(color, point, 9.0, 0.22, 0.55);
+    color = petalLayer(color, point + 3.9, 6.0, 0.3, 0.8);
+    fragColor = petalLayer(color, point + 8.3, 4.0, 0.42, 1.0);
+}
+`,
+    candles: `float candleBox(vec2 point, vec2 halfSize) {
+    vec2 outside = abs(point) - halfSize;
+    return length(max(outside, 0.0)) + min(max(outside.x, outside.y), 0.0);
+}
+
+// Soft lights far behind, drifting up.
+float glowLayer(vec2 point) {
+    vec2 grid = point * 5.0 - vec2(0.0, iTime * 0.04);
+    vec2 cell = floor(grid);
+    float distance = length(fract(grid) - 0.25 - 0.5 * hash22(cell));
+    return step(0.6, hash21(cell + 8.3)) * smoothstep(0.25, 0.05, distance);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    float aspect = iResolution.x / iResolution.y;
+    vec2 point = fragCoord / iResolution.y;
+    float pixel = 1.5 / iResolution.y;
+    vec4 wax = rampColor(0.0);
+    vec4 flameColor = rampColor(0.6);
+    vec4 core = rampColor(1.0);
+    vec4 color = lightOver(groundColor(), core, exp(-fragCoord.y / iResolution.y * 3.0) * 0.2);
+    color = lightOver(color, flameColor, glowLayer(point) * 0.12);
+    for (int index = 0; index < 7; index++) {
+        float layer = float(index);
+        float seed = hash21(vec2(layer, 4.7));
+        // The far ones smaller and higher.
+        float depth = 0.5 + 0.5 * sin(layer * 2.3 + 1.0);
+        float size = 0.022 + 0.022 * depth;
+        float height = size * (2.6 + seed * 1.6);
+        float x = ((layer + 0.5) / 7.0 + (seed - 0.5) * 0.06) * aspect;
+        float wick = 0.1 + height + 0.16 * (1.0 - depth);
+        vec2 flameCenter = vec2(x, wick + size * 0.85);
+        float flicker = 0.85 + 0.15 * sin(iTime * (7.0 + seed * 5.0) + seed * 20.0)
+            * sin(iTime * (3.1 + seed) + layer);
+        color = lightOver(color, flameColor, exp(-length(point - flameCenter) / (size * 2.2)) * 0.45 * flicker);
+        float body = candleBox(point - vec2(x, wick - height * 0.5), vec2(size * 0.5, height * 0.5));
+        vec4 bodyColor = wax;
+        bodyColor.rgb *= 0.7 + 0.3 * smoothstep(size * 0.5, -size * 0.2, point.x - x);
+        color = lightOver(color, bodyColor, smoothstep(pixel, -pixel, body) * 0.92);
+        vec2 local = (point - flameCenter) / (size * 0.9);
+        local.x += 0.12 * sin(iTime * 9.0 + seed * 20.0) * (local.y + 1.0) * 0.5;
+        local.y /= 1.0 + 0.08 * sin(iTime * 13.0 + seed * 7.0);
+        local.x *= 1.0 + max(local.y, 0.0) * 1.2;
+        float flame = smoothstep(1.0, 0.6, length(local * vec2(2.2, 1.0)));
+        color = lightOver(color, flameColor, flame * flicker);
+        color = lightOver(color, core, smoothstep(0.55, 0.2, length((local + vec2(0.0, 0.35)) * vec2(2.6, 1.4))) * flicker);
+    }
+    fragColor = color;
+}
+`,
+    confetti: `// One ribbon in a cell at most: a little box, turning and flipping.
+vec4 confettiLayer(vec4 color, vec2 point, float scale, float speed, float amount) {
+    vec2 grid = point * scale;
+    grid.y += iTime * speed;
+    vec2 cell = floor(grid);
+    vec2 seed = hash22(cell);
+    vec2 center = 0.25 + 0.5 * seed
+        + vec2(0.08 * sin(iTime * (1.0 + seed.y) + seed.x * 6.2831), 0.0);
+    float angle = seed.y * 6.2831 + iTime * (seed.x - 0.5) * 2.0;
+    float flip = cos(iTime * (2.0 + 3.0 * seed.x) + seed.y * 6.2831);
+    vec2 local = fract(grid) - center;
+    vec2 turned = vec2(
+        cos(angle) * local.x - sin(angle) * local.y,
+        sin(angle) * local.x + cos(angle) * local.y
+    );
+    vec2 outside = abs(turned) - vec2(0.07, 0.15 * max(abs(flip), 0.12));
+    float distance = length(max(outside, 0.0)) + min(max(outside.x, outside.y), 0.0);
+    float pixel = scale / iResolution.y;
+    float piece = smoothstep(pixel, -pixel, distance) * step(0.4, hash21(cell + 5.3));
+    vec4 pieceColor = paletteColor(hash21(cell + 1.9));
+    pieceColor.rgb *= 0.75 + 0.25 * abs(flip);
+    return lightOver(color, pieceColor, piece * amount);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 point = fragCoord / iResolution.y;
+    vec4 color = lightOver(groundColor(), rampColor(0.0), smoothstep(0.0, 1.0, fragCoord.y / iResolution.y) * 0.12);
+    color = confettiLayer(color, point, 10.0, 0.45, 0.6);
+    color = confettiLayer(color, point + 2.9, 7.0, 0.6, 0.85);
+    fragColor = confettiLayer(color, point + 7.7, 5.0, 0.8, 1.0);
+}
+`,
+    hearts: `// A heart standing on its point at the origin, about one tall.
+float heartDistance(vec2 point) {
+    point.x = abs(point.x);
+    if (point.y + point.x > 1.0) {
+        return length(point - vec2(0.25, 0.75)) - 0.3536;
+    }
+    vec2 toTop = point - vec2(0.0, 1.0);
+    vec2 toSide = point - 0.5 * max(point.x + point.y, 0.0);
+    return sqrt(min(dot(toTop, toTop), dot(toSide, toSide))) * sign(point.x - point.y);
+}
+
+// One heart in a cell at most, rising with the cells and swaying.
+vec4 heartLayer(vec4 color, vec2 point, float scale, float speed, float amount) {
+    vec2 grid = point * scale;
+    grid.y -= iTime * speed;
+    vec2 cell = floor(grid);
+    vec2 seed = hash22(cell);
+    float angle = 0.25 * sin(iTime * (0.9 + seed.x) + seed.y * 6.2831);
+    float beat = 1.0 + 0.06 * pow(0.5 + 0.5 * sin(iTime * 2.4 + seed.x * 6.2831), 4.0);
+    vec2 local = (fract(grid) - 0.3 - 0.4 * seed) / (0.2 * beat);
+    vec2 turned = vec2(
+        cos(angle) * local.x - sin(angle) * local.y,
+        sin(angle) * local.x + cos(angle) * local.y
+    );
+    float edge = scale / iResolution.y / 0.2;
+    float heart = smoothstep(edge, -edge, heartDistance(turned + vec2(0.0, 0.5)));
+    heart *= step(0.55, hash21(cell + 4.4));
+    vec4 heartColor = paletteColor(hash21(cell + 0.7));
+    heartColor.rgb *= 0.85 + 0.25 * smoothstep(0.6, -0.4, turned.x - turned.y);
+    return lightOver(color, heartColor, heart * amount);
+}
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    vec2 point = fragCoord / iResolution.y;
+    float height = fragCoord.y / iResolution.y;
+    vec4 color = lightOver(groundColor(), rampColor(0.0), smoothstep(0.7, 0.0, height) * 0.2);
+    // Rising, and fading out near the top.
+    float fade = smoothstep(1.0, 0.6, height);
+    color = heartLayer(color, point, 7.0, 0.12, 0.5 * fade);
+    color = heartLayer(color, point + 5.1, 4.5, 0.18, 0.75 * fade);
+    fragColor = heartLayer(color, point + 2.3, 3.0, 0.26, 0.95 * fade);
 }
 `,
 };

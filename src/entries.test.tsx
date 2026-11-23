@@ -247,13 +247,34 @@ describe('windows that run inside the app layout', () => {
 });
 
 describe('windows drawn straight into a root', () => {
-    test('the About window draws without waiting for init', async () => {
+    test('the About window draws only once init has loaded the language', async () => {
         state.initMode = 'pending';
 
         await import('./about');
+        await Promise.resolve();
 
-        expect(state.order).toEqual(['init', 'render']);
+        // `tran()` throws in dev before the language is in: nothing drawn yet.
+        expect(state.order).toEqual(['init']);
+        expect(state.render).not.toHaveBeenCalled();
+    });
+
+    test("the About window draws as init's callback", async () => {
+        await import('./about');
+        await settle();
+
+        expect(state.order).toEqual(['init', 'render', 'init-done']);
         expect(markupOf(state.render.mock.calls[0][0])).toBe('<i>About</i>');
+    });
+
+    test('the About window still draws after reporting a failed init', async () => {
+        state.initMode = 'reject';
+
+        await import('./about');
+
+        await vi.waitFor(() => {
+            expect(state.render).toHaveBeenCalledOnce();
+        });
+        expect(state.handleError).toHaveBeenCalledWith(state.initError);
     });
 
     test('Local Web Share waits for init and draws its app with the tools', async () => {

@@ -152,6 +152,10 @@ export type ChatMessageType = {
     // (`screenChatHelpers.ts`), so the next plain line under it ("centre
     // it", "undo that"), in any language, stays in it.
     isScreenAnswer?: true;
+    // An answer of a conversation about an animation in Customize
+    // (`animationChatHelpers.ts`) -- its opening card included -- so the
+    // next plain line under it ("slower", "fix the error") stays in it.
+    isAnimationAnswer?: true;
     // An answer that asked which passage to open (**Open another passage**):
     // the record it was asked from, so the line typed under it is read as
     // that passage, in its Bible.
@@ -509,6 +513,7 @@ function toValidAttachments(raw: any) {
                     one.kind === 'text' ||
                     one.kind === 'element' ||
                     one.kind === 'file' ||
+                    one.kind === 'media' ||
                     (one.kind === 'foreground' &&
                         toValidForegroundAsk(one.foreground) !== null))
             );
@@ -758,6 +763,9 @@ function toValidMessage(raw: any): ChatMessageType | null {
             : {}),
         ...(raw.author === 'bot' && raw.isScreenAnswer === true
             ? { isScreenAnswer: true as const }
+            : {}),
+        ...(raw.author === 'bot' && raw.isAnimationAnswer === true
+            ? { isAnimationAnswer: true as const }
             : {}),
         ...toValidLookupAwaitsField(raw),
         ...(raw.author === 'bot' &&

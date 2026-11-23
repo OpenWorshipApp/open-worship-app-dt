@@ -8,8 +8,9 @@ metadata:
   modified: 2026-11-11T04:53:14.237Z
 ---
 
-Local npm is v12 (node v24.15.0; written on win-arm64, repo now on macOS),
-which changed two defaults that break a plain `npm i` here:
+Written against npm v12 (node v24.15.0, win-arm64), which changed two
+defaults that break a plain `npm i` here. (On macOS on 2026-11-20 the shell's
+npm is 11.20.0, node v26.13.1, where `allow-git` reads `all`.)
 
 1. `allow-git = "none"` → `npm error code EALLOWGIT` on the five git deps
    (`bible-note`, `open-lyric`, `open-lyric-plugin-km-kh`, `docx-to-html`,
@@ -18,6 +19,8 @@ which changed two defaults that break a plain `npm i` here:
    Gone since 2026-11-06 (9e5e278b2): every one is an npm registry range now
    (`open-lyric`, `bible-note`, `docx-to-html-conv`, `pptx-to-html-conv`; the
    song plugin in the Khmer package's own `package.json`), and no flag is needed.
+   Since 2026-11-20 `pptx-to-html-conv` is a `file:` folder instead, beside a
+   committed `.npmrc` (`install-links=true`): [[pptx-converter-file-dependency]].
 2. Install scripts are blocked unless covered by `allowScripts`. `npm
    install-scripts ls` shows `@swc/core`, `esbuild` (x2), `@parcel/watcher`,
    `electron-winstaller` blocked — all harmless, since the win32-arm64 native

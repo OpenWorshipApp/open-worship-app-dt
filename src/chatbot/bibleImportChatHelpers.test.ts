@@ -161,6 +161,46 @@ describe('a step by step import, pressed through', () => {
         expect(step.actions?.[0].title).toBeUndefined();
     });
 
+    it('suggests the key an English title writes, and no key for nothing (F-29)', async () => {
+        const named = await runBibleImportStep({
+            step: 'key',
+            draftId: 'he10paxbbz64',
+            title: 'English ASV',
+            locales: [{ locale: 'en-US', name: 'English' }],
+            keys: ['ENGLISH'],
+            takenKeys: ['KJV'],
+        });
+        // The ASV, sixth in English's list, had been cut off by the four
+        // buttons, and NKJV marked suggested.
+        expect(named.actions?.[0].label).toBe('ASV (suggested)');
+        expect(named.actions?.[0].title).toBe('American Standard Version');
+
+        const unnamed = await runBibleImportStep({
+            step: 'key',
+            draftId: 'he10paxbbz64',
+            title: 'English Tqvs',
+            locales: [{ locale: 'en-US', name: 'English' }],
+            keys: ['ENGLISH'],
+            takenKeys: ['KJV'],
+        });
+        // Nothing says which: the language's keys, none marked, so a typed
+        // "yes" installs nothing under a name it was never given.
+        const labelList = unnamed.actions?.map((one) => one.label) ?? [];
+        expect(labelList.slice(0, 2)).toEqual(['NKJV', 'NIV']);
+        expect(labelList.some((label) => label.endsWith('(suggested)'))).toBe(
+            false,
+        );
+        // Typed "yes" there presses nothing and names nothing "yes".
+        expect(readBibleImportTypedReply(unnamed.actions, 'yes')).toBeNull();
+        expect(readBibleImportTypedReply(named.actions, 'yes')).toMatchObject({
+            step: 'locale',
+            key: 'ASV',
+        });
+        expect(
+            readBibleImportTypedReply(unnamed.actions, 'NKJV2'),
+        ).toMatchObject({ step: 'key', typed: 'NKJV2' });
+    });
+
     it('does not offer a short name this computer already has', async () => {
         const step = await runBibleImportStep({
             step: 'key',

@@ -187,12 +187,15 @@ export function useForegroundSessions(props: ForegroundSessionsPropsType) {
 /**
  * Which session put this single-slot overlay up.
  *
- * A countdown, a stopwatch, a marquee and a quick text hold ONE entry per
- * screen, so an item carries the session's id rather than the session owning a
- * list of its own. An entry with no id at all is the Default session's -- it
- * was put there by a drag, a run-sheet row or the assistant, none of which
- * knows about sessions, and Default is where the panel's own controls for it
- * live.
+ * A countdown, a stopwatch, a marquee and a quick text hold one entry per
+ * SESSION on each screen (since 2026-11-14, `putSessionData`: a session's Show
+ * replaces its own entry and leaves the other sessions' up beside it -- two
+ * sessions' marquees at one edge each keep a band of their own,
+ * `layOutMarquees`), so an item carries the session's id rather than the
+ * session owning a list of its own. An entry with no id at all is the Default
+ * session's -- it was put there by a drag, a run-sheet row or the assistant,
+ * none of which knows about sessions, and Default is where the panel's own
+ * controls for it live.
  *
  * Default can be removed, though, and an id can name a session that is gone.
  * Such an entry belongs to the FIRST session in `sessionIds`, the one the

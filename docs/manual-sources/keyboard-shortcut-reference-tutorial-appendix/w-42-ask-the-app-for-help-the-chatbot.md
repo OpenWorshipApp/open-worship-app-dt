@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [CB-01, CB-02, CB-03, CB-04, CB-05, CB-06, CB-07, CB-08, CB-12, CB-13, CB-14, CB-15, CB-26, CB-27, CB-28, CB-29, CB-31, CB-32, CB-43, CB-46, CB-48, CB-62, CB-66, CB-71, CB-83, CB-84, CB-85, CB-86, CB-87, CB-90, CB-97, CB-121, CB-122, CB-123, CB-124, CB-126, CB-127, CB-128, CB-129, CB-130, CB-134, CB-135, CB-136, CB-137, CB-138, CB-139, CB-140, CB-143, CB-153, CB-165, CB-175, CB-180, CB-181, CB-184, CB-185, CB-186, CB-187, CB-188, CB-189, CB-190, ST-67, ST-68, ST-69, ST-70, ST-71, ST-72, ST-73, ST-74, ST-78]
 screenshots: 57
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-42 — Ask the app for help (the chatbot)
 
@@ -492,7 +492,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    arrows wait, greyed, while an answer is on its way. An answer to one of the
    `/` commands has none — pressed again, a command would just do the same
    thing again.
-   **Asked about reading the Bible from the wrong page?** A stray press is enough
+   **Asked about reading the Bible from the wrong page?** The Reader asks first, but two hurried presses are still enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the
    Presenter or the Document Editor, and the answer ends with one more line and
@@ -946,7 +946,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     the blocks and it uses them. Typed on one line works too: _Create a song called
     Morning Praise with these words: Verse 1: We lift our eyes to you this morning,
     Chorus: Holy, holy, holy Lord._ — each label with a colon after it starts a part
-    of its own, a ` / ` between words starts a new line, and the title you named is
+    of its own, a `/` between words starts a new line, and the title you named is
     the song's. Without labels each block becomes a verse, and a
     block repeated word for word is written once and sung each time it appears. Chord
     lines above the words are left out — Open Lyric puts chords inside the words —
@@ -1154,5 +1154,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `CB-01` · `CB-02` · `CB-03` · `CB-04` · `CB-05` · `CB-06` · `CB-07` · `CB-08` · `CB-12` · `CB-13` · `CB-14` · `CB-15` · `CB-26` · `CB-27` · `CB-28` · `CB-29` · `CB-31` · `CB-32` · `CB-43` · `CB-46` · `CB-48` · `CB-62` · `CB-66` · `CB-71` · `CB-83` · `CB-84` · `CB-85` · `CB-86` · `CB-87` · `CB-90` · `CB-97` · `CB-121` · `CB-122` · `CB-123` · `CB-124` · `CB-126` · `CB-127` · `CB-128` · `CB-129` · `CB-130` · `CB-134` · `CB-135` · `CB-136` · `CB-137` · `CB-138` · `CB-139` · `CB-140` · `CB-143` · `CB-153` · `CB-165` · `CB-175` · `CB-180` · `CB-181` · `CB-184` · `CB-185` · `CB-186` · `CB-187` · `CB-188` · `CB-189` · `CB-190` · `ST-67` · `ST-68` · `ST-69` · `ST-70` · `ST-71` · `ST-72` · `ST-73` · `ST-74` · `ST-78`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

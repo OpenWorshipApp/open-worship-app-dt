@@ -14,8 +14,29 @@ const { fake, settingMap } = vi.hoisted(() => ({
         // What a tool answers, by name, when no `answerTool` is set.
         toolResultMap: {} as Record<string, string>,
         answerTool: null as null | ((name: string, args: any) => string),
+        // the links the office conversation downloaded, in order (EC-777)
+        downloadList: [] as { url: string; want: string }[],
+        // what an ask let go of once it was over
+        letGoList: [] as string[],
     },
     settingMap: new Map<string, string>(),
+}));
+
+// A picture from a link the person typed (EC-777): the window downloads it.
+vi.mock('./officeLinkMediaDownload', () => ({
+    downloadOfficeLinkMedia: async (url: string, want: string) => {
+        fake.downloadList.push({ url, want });
+        if (url.includes('page')) {
+            return { reason: 'The link is a web page.' };
+        }
+        return {
+            name: 'choir.jpg',
+            filePath: '/tmp/open-worship-app-office-links/a/choir.jpg',
+        };
+    },
+    deleteOfficeLinkFiles: async (filePaths: string[]) => {
+        fake.letGoList.push(...filePaths);
+    },
 }));
 
 vi.mock('../helper/ai/aiHelpers', () => ({
@@ -127,6 +148,7 @@ import {
     findAnswerShapeNudge,
     findStudyChangeReport,
     FOREGROUND_CLAIM_NUDGE,
+    checkClaimsUnmadeOfficeChange,
     genToolWatch,
     resetReasoningOffMemoryForTests,
     SCREEN_CLAIM_NUDGE,
@@ -134,6 +156,7 @@ import {
 import { RESOURCES_MAX_TOOL_ROUNDS } from './resourcesChatHelpers';
 import { LYRIC_SYSTEM_PROMPT } from './lyricChatHelpers';
 import { SLIDE_SYSTEM_PROMPT } from './slideChatHelpers';
+import { OFFICE_CLAIM_NUDGE, OFFICE_SYSTEM_PROMPT } from './officeChatHelpers';
 import { FLOW_SYSTEM_PROMPT } from './flowChatHelpers';
 import {
     NOTE_BESIDE_DRAFT_REFUSAL,
@@ -2283,6 +2306,142 @@ describe('a screen change claimed and never made', () => {
     });
 });
 
+// 2026-11-20, EC-770: on a host still holding the old schema, every edit
+// of _Add a fade transition to every slide_ was refused and gemma4:cloud
+// answered "I've added a fade transition to every slide" -- no Undo under
+// it, the file as it was.
+describe('a PowerPoint change claimed and never made', () => {
+    const FILE = { name: 'Hymn 4.pptx', filePath: '/d/Hymn 4.pptx' };
+    const CLAIM = "I've added a fade transition to every slide.";
+
+    function genOfficeWatch() {
+        const watch = genToolWatch();
+        watch.officeFiles = [FILE];
+        return watch;
+    }
+
+    test('a read only, then a claim: handed back once, and marked', () => {
+        const watch = genOfficeWatch();
+        applyToolWatch(
+            watch,
+            'owa_office_edit',
+            { action: 'read', file: FILE.name },
+            '{"kind":"PowerPoint","slides":[]}',
+        );
+        expect(findAnswerShapeNudge(CLAIM, watch)?.nudge).toBe(
+            OFFICE_CLAIM_NUDGE,
+        );
+        for (const words of [
+            CLAIM,
+            'I have increased the size of the words on every slide.',
+            'I’ve set every title to gold.',
+            'I moved the title to the bottom. Undo this change puts it back.',
+        ]) {
+            expect(checkClaimsUnmadeOfficeChange(words, watch), words).toBe(
+                true,
+            );
+            expect(checkClaimsUnmadeChange(words, watch), words).toBe(true);
+        }
+    });
+
+    test('an edit that changed the file, or an undo, is believed', () => {
+        const changed = genOfficeWatch();
+        applyToolWatch(
+            changed,
+            'owa_office_edit',
+            { action: 'edit', file: FILE.name },
+            JSON.stringify({
+                name: FILE.name,
+                isChanged: true,
+                changed: ['Every slide: fade transition.'],
+                undoId: '20261120-001000000-ab12',
+            }),
+        );
+        expect(checkClaimsUnmadeChange(CLAIM, changed)).toBe(false);
+        const undone = genOfficeWatch();
+        applyToolWatch(
+            undone,
+            'owa_undo',
+            { id: 'x' },
+            '{"undone":"Changed “Hymn 4.pptx”"}',
+        );
+        expect(checkClaimsUnmadeChange("I've put it back.", undone)).toBe(
+            false,
+        );
+    });
+
+    // EC-776: three refused edits, then a French answer saying in the
+    // passive that the word had been replaced -- read by no language's
+    // first-person claim words, over a file that had not changed. The same
+    // passive in English is read by none either.
+    test('edits all refused: any answer is handed back and marked', () => {
+        const words = 'The word "Pray" has been replaced by "Worship".';
+        const fresh = genOfficeWatch();
+        expect(checkClaimsUnmadeChange(words, fresh)).toBe(false);
+        const refused = genOfficeWatch();
+        refused.officeEditFailCount = 3;
+        expect(findAnswerShapeNudge(words, refused)?.nudge).toBe(
+            OFFICE_CLAIM_NUDGE,
+        );
+        expect(checkClaimsUnmadeChange(words, refused)).toBe(true);
+        // one went through after them: believed
+        applyToolWatch(
+            refused,
+            'owa_office_edit',
+            { action: 'edit', file: FILE.name },
+            JSON.stringify({
+                name: FILE.name,
+                isChanged: true,
+                changed: ['Replaced “Pray” with “Worship” (1 place).'],
+                undoId: '20261121-001000000-ab12',
+            }),
+        );
+        expect(checkClaimsUnmadeChange(words, refused)).toBe(false);
+    });
+
+    // 2026-11-21: a fill on a SmartArt is refused with "Say so and ask"
+    // (it must be turned into shapes first); the answer that asks is that
+    // question, not an unmade change -- one that claims it still is
+    test('a refusal that says to ask first, answered with a question', () => {
+        const asked = genOfficeWatch();
+        asked.officeEditFailCount = 1;
+        asked.officeAskFirstCount = 1;
+        expect(
+            checkClaimsUnmadeChange(
+                'It is a SmartArt. Shall I turn it into shapes first?',
+                asked,
+            ),
+        ).toBe(false);
+        expect(
+            checkClaimsUnmadeChange('It is a SmartArt, so I left it.', asked),
+        ).toBe(true);
+        expect(
+            checkClaimsUnmadeChange(
+                "I've made the boxes green. Anything else?",
+                asked,
+            ),
+        ).toBe(true);
+        asked.officeEditFailCount = 2;
+        expect(
+            checkClaimsUnmadeChange('Shall I turn it into shapes?', asked),
+        ).toBe(true);
+    });
+
+    test('never outside an office ask, nor for an offer or a refusal said', () => {
+        expect(checkClaimsUnmadeOfficeChange(CLAIM, genToolWatch())).toBe(
+            false,
+        );
+        const watch = genOfficeWatch();
+        for (const words of [
+            'Shall I set every title to gold?',
+            'The fade transition could not be added: the tool refused it.',
+            'Slide 2 has a fade transition already.',
+        ]) {
+            expect(checkClaimsUnmadeChange(words, watch), words).toBe(false);
+        }
+    });
+});
+
 // EC-503: a change parsed every diagram in the file. One of the person's
 // own that mermaid could not draw went to the model to fix, and was dropped
 // from their file when the model sent its change again.
@@ -2962,5 +3121,311 @@ describe('a part of a study drafted with none of its words shown', () => {
         expect(answer.actions?.[0]?.label).toBe(
             'Save changes to "JHN.3.The New Birth.md"',
         );
+    });
+});
+
+// A PowerPoint or Word file opened in the chat (EC-761): the model names it,
+// the window puts its path in, and every change of one answer is one Undo.
+describe('a PowerPoint or Word file conversation', () => {
+    const deck = {
+        name: 'Sunday Welcome.pptx',
+        filePath: '/church/documents/Sunday Welcome.pptx',
+    };
+
+    test('the name becomes the path, a path is refused, two edits are one Undo', async () => {
+        fake.toolList = [{ name: 'owa_office_edit' }];
+        const undoIdList = ['o-1', 'o-2'];
+        fake.answerTool = (_name, args) => {
+            if (args.action === 'read') {
+                return JSON.stringify({ kind: 'PowerPoint', slideCount: 1 });
+            }
+            return changed('Sunday Welcome.pptx', undoIdList.shift()!);
+        };
+        const { sentList } = useAnthropic([
+            anthropicToolUse(
+                {
+                    name: 'owa_office_edit',
+                    input: { action: 'read', file: '/etc/Sunday Welcome.pptx' },
+                },
+                {
+                    name: 'owa_office_edit',
+                    input: { action: 'read', file: 'sunday welcome' },
+                },
+                {
+                    name: 'owa_office_edit',
+                    input: {
+                        action: 'edit',
+                        file: 'Sunday Welcome.pptx',
+                        replace: [{ from: 'Lord', to: 'God' }],
+                    },
+                },
+                // sent with no `action`: an edit, filled in by the window
+                // and counted as one (EC-770)
+                {
+                    name: 'owa_office_edit',
+                    input: {
+                        file: 'Sunday Welcome',
+                        changes: [{ id: '1.1', text: 'Welcome home' }],
+                    },
+                },
+            ),
+            anthropicText('I changed the words. It is kept in the file.'),
+        ]);
+
+        const answer = await askLlmBot(
+            'Change Lord to God and the title to Welcome home',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { office: { files: [deck] } },
+        );
+
+        expect(sentList[0].system[0].text).toBe(OFFICE_SYSTEM_PROMPT);
+        expect(readToolResults(sentList[1])[0]).toMatch(/^Tool refused: /);
+        expect(
+            fake.toolCallList.map((call) => {
+                return [call.args.action, call.args.file];
+            }),
+        ).toEqual([
+            ['read', deck.filePath],
+            ['edit', deck.filePath],
+            ['edit', deck.filePath],
+        ]);
+        // The read changed nothing; both edits are undone by one press.
+        expect(answer.actions).toEqual([
+            {
+                label: 'Undo this change',
+                toolName: 'lyric-undo',
+                args: {
+                    id: 'o-2',
+                    name: 'Sunday Welcome.pptx',
+                    ids: ['o-1', 'o-2'],
+                },
+            },
+        ]);
+    });
+
+    test('a picture by its attached name: the window puts its path in', async () => {
+        fake.toolList = [{ name: 'owa_office_edit' }];
+        fake.answerTool = () => {
+            return changed('Sunday Welcome.pptx', 'o-3');
+        };
+        const photo = {
+            name: 'Choir.jpg',
+            filePath: '/Users/a/Pictures/Choir.jpg',
+        };
+        const { sentList } = useAnthropic([
+            anthropicToolUse(
+                // a path the model writes is never taken
+                {
+                    name: 'owa_office_edit',
+                    input: {
+                        action: 'edit',
+                        file: 'Sunday Welcome.pptx',
+                        changes: [{ slide: 2, picture: '/etc/x.png' }],
+                    },
+                },
+                {
+                    name: 'owa_office_edit',
+                    input: {
+                        file: 'Sunday Welcome.pptx',
+                        changes: [
+                            {
+                                slide: 2,
+                                picture: 'choir',
+                                at: [60, 10, 30, null],
+                            },
+                        ],
+                    },
+                },
+            ),
+            anthropicText('I put the choir photo on slide 2.'),
+        ]);
+
+        await askLlmBot(
+            'Put this photo on slide 2',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            { office: { files: [deck], pictures: [photo] } },
+        );
+
+        expect(readToolResults(sentList[1])[0]).toBe(
+            'Tool refused: `picture` names a picture attached to this chat ' +
+                'by its name, never a path: "Choir.jpg".',
+        );
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_office_edit',
+                args: {
+                    action: 'edit',
+                    file: deck.filePath,
+                    changes: [
+                        {
+                            slide: 2,
+                            picture: photo.filePath,
+                            at: [60, 10, 30, null],
+                        },
+                    ],
+                },
+            },
+        ]);
+    });
+
+    // EC-777: a picture at a link the person typed is downloaded by the
+    // window and put in by its file; a link they never typed is refused,
+    // and one given twice is one download.
+    test('a picture from a link they typed: downloaded, then put in', async () => {
+        fake.toolList = [{ name: 'owa_office_edit' }];
+        fake.downloadList = [];
+        fake.letGoList = [];
+        fake.answerTool = () => {
+            return changed('Sunday Welcome.pptx', 'o-9');
+        };
+        const typed = 'https://cdn.example.org/img/choir.jpg';
+        const { sentList } = useAnthropic([
+            anthropicToolUse(
+                {
+                    name: 'owa_office_edit',
+                    input: {
+                        action: 'edit',
+                        file: 'Sunday Welcome.pptx',
+                        changes: [
+                            {
+                                slide: 2,
+                                picture: 'https://other.example/x.png',
+                            },
+                        ],
+                    },
+                },
+                {
+                    name: 'owa_office_edit',
+                    input: {
+                        action: 'edit',
+                        file: 'Sunday Welcome.pptx',
+                        changes: [
+                            {
+                                slide: 2,
+                                picture: typed,
+                                at: [60, 10, 30, null],
+                            },
+                            { slide: 3, picture: typed },
+                        ],
+                    },
+                },
+            ),
+            anthropicText('I put the choir photo on slides 2 and 3.'),
+        ]);
+
+        await askLlmBot(
+            `Put this photo on slides 2 and 3: ${typed}.`,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [],
+            null,
+            {
+                office: { files: [deck] },
+                askedText: `Put this photo on slides 2 and 3: ${typed}.`,
+            },
+        );
+
+        expect(readToolResults(sentList[1])[0]).toMatch(
+            /^Tool refused: A picture, video or sound from the web goes in only from a link THEY typed/,
+        );
+        expect(fake.downloadList).toEqual([{ url: typed, want: 'picture' }]);
+        // the deck keeps its own copy: the download is let go at the end
+        await new Promise((resolve) => {
+            setTimeout(resolve, 0);
+        });
+        expect(fake.letGoList).toEqual([
+            '/tmp/open-worship-app-office-links/a/choir.jpg',
+        ]);
+        expect(fake.toolCallList).toEqual([
+            {
+                name: 'owa_office_edit',
+                args: {
+                    action: 'edit',
+                    file: deck.filePath,
+                    changes: [
+                        {
+                            slide: 2,
+                            picture:
+                                '/tmp/open-worship-app-office-links/a/choir.jpg',
+                            at: [60, 10, 30, null],
+                        },
+                        {
+                            slide: 3,
+                            picture:
+                                '/tmp/open-worship-app-office-links/a/choir.jpg',
+                        },
+                    ],
+                },
+            },
+        ]);
+    });
+
+    test("a link that is a page: the download's reason, the tool never called", async () => {
+        fake.toolList = [{ name: 'owa_office_edit' }];
+        fake.downloadList = [];
+        const typed = 'https://example.org/page/choir';
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_office_edit',
+                input: {
+                    action: 'edit',
+                    file: 'Sunday Welcome.pptx',
+                    changes: [{ slide: 2, picture: typed }],
+                },
+            }),
+            anthropicText('That link is a page, not the picture.'),
+            // every edit refused: the answer is handed back once (EC-776)
+            anthropicText(
+                'Nothing was changed: that link is a web page. Send the ' +
+                    "picture's own link, or save it and drag it in.",
+            ),
+        ]);
+
+        await askLlmBot(
+            `Put the picture at ${typed} on slide 2`,
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+            [{ author: 'you', text: `Here it is: ${typed}` }],
+            null,
+            { office: { files: [deck] }, askedText: 'Put it on slide 2' },
+        );
+
+        expect(readToolResults(sentList[1])[0]).toBe(
+            'Tool refused: The link is a web page.',
+        );
+        expect(fake.toolCallList).toEqual([]);
+    });
+
+    test('outside such a chat the tool is refused and never called', async () => {
+        fake.toolList = [{ name: 'owa_help_search' }];
+        const { sentList } = useAnthropic([
+            anthropicToolUse({
+                name: 'owa_office_edit',
+                input: { action: 'edit', file: 'Sunday Welcome.pptx' },
+            }),
+            anthropicText('Open the file in the chat first.'),
+        ]);
+
+        await askLlmBot(
+            'Change my PowerPoint',
+            'presenter',
+            'anthropic',
+            'claude-sonnet-5',
+        );
+
+        expect(readToolResults(sentList[1])[0]).toMatch(
+            /^Tool refused: owa_office_edit changes a PowerPoint or Word file/,
+        );
+        expect(fake.toolCallList).toEqual([]);
     });
 });

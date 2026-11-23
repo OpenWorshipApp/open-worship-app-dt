@@ -122,7 +122,7 @@ after an edit (memory: `mcp-tool-edit-two-processes`).
 
 ### 1. Fewer tools
 
-32 of the 77 the chatbot's door turns on are chrome-devtools', and the chatbot's model cannot usefully
+32 of the 78 the chatbot's door turns on are chrome-devtools', and the chatbot's model cannot usefully
 drive most of them. Three are already gone: the firewall's denials remove
 `evaluate_script`, `take_heapsnapshot` and `upload_file` from the list for both
 callers, worth ~668 tokens/round.
@@ -229,7 +229,7 @@ Ask, in this order:
 4. Does the model actually reach for it, or is it a tool for a case you
    imagined? A tool nothing calls is worse than no tool.
 5. Does it have to reach the MODEL, or only the developer? `modelTools.mjs`
-   withholds 39 of the 74 the chatbot's door lists and costs the developer nothing.
+   withholds 40 of the 76 the chatbot's door lists and costs the developer nothing.
 
 Then run `--ratchet`. If it fails, either the tool is worth raising
 `MODEL_TOKEN_CEILING` for — say so in the same change — or it is not.

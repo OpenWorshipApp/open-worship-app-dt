@@ -698,6 +698,12 @@ const AGENT_DATA_WORKER_MAP: Record<
         return (await import('./agentMediaFileHelpers'))
             .handleAgentMediaFileRequest;
     },
+    // `owa_office_edit`: a PowerPoint or Word file read line by line and
+    // changed, every change undoable (2026-11-20).
+    'office-edit': async () => {
+        return (await import('./agentOfficeEditHelpers'))
+            .handleAgentOfficeEditRequest;
+    },
 };
 
 document.addEventListener('owa-agent-data', (event) => {
@@ -778,6 +784,31 @@ document.addEventListener('owa-agent-screen-edit', (event) => {
     import('./agentScreenControlHelpers')
         .then(async ({ handleAgentScreenEditRequest }) => {
             reply(await handleAgentScreenEditRequest(detail));
+        })
+        .catch((error) => {
+            reply({
+                isError: true,
+                reason: String(error?.message ?? error),
+            });
+        });
+});
+
+// An animation in Customize -- its settings, and a shader's code typed into
+// Edit Code -- changed for the help window's assistant through the editors
+// open now (`animationAgentEditorRegistry`). Same relay, same lazy import.
+document.addEventListener('owa-agent-animation', (event) => {
+    const detail = (event as CustomEvent).detail ?? {};
+    const { token } = detail;
+    const reply = (result: unknown) => {
+        document.dispatchEvent(
+            new CustomEvent('owa-agent-animation-answer', {
+                detail: { token, result },
+            }),
+        );
+    };
+    import('./agentAnimationHelpers')
+        .then(async ({ handleAgentAnimationRequest }) => {
+            reply(await handleAgentAnimationRequest(detail));
         })
         .catch((error) => {
             reply({

@@ -93,6 +93,11 @@ const mocks = vi.hoisted(() => {
             return `yt-${(iframe.getAttribute('src') ?? '').replace(/\W/g, '')}`;
         }),
         unlocking: vi.fn((_key: string, callback: () => unknown) => callback()),
+        // A test can hold one slide's apply back on it, to let a newer one
+        // overtake it.
+        resolveSlideTransitionEffect: vi.fn(
+            async (..._args: unknown[]): Promise<unknown> => undefined,
+        ),
         toKeyByFilePath: vi.fn(
             (filePath: string, id: number) => `${filePath}:${id}`,
         ),
@@ -137,7 +142,7 @@ vi.mock('../../lyric-list/lyricBoxGrowHelpers', () => ({
 }));
 
 vi.mock('./screenSlideTransitionHelpers', () => ({
-    resolveSlideTransitionEffect: async () => undefined,
+    resolveSlideTransitionEffect: mocks.resolveSlideTransitionEffect,
 }));
 vi.mock('../../helper/settingHelpers', () => ({
     getSetting: mocks.getSetting,
@@ -398,6 +403,10 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         mocks.docxCheckIsThisType.mockReturnValue(false);
         mocks.unlocking.mockImplementation(
             (_key: string, callback: () => unknown) => callback(),
+        );
+        mocks.resolveSlideTransitionEffect.mockReset();
+        mocks.resolveSlideTransitionEffect.mockImplementation(
+            async () => undefined,
         );
     });
 
@@ -785,6 +794,116 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         ).toEqual([]);
         expect(
             ScreenVaryAppDocumentManager.getDataList('/b.slide', 2),
+        ).toHaveLength(1);
+    });
+
+    // Space pressed again before the slide it asked for has landed: the
+    // slide lands a few awaits after it is handed over (stage, transition,
+    // look-ahead), and a step that read the slide still drawn stepped from
+    // the one that was leaving -- the press was lost, and two screens drifted
+    // apart. Measured 2026-11-19 on a two-screen presenter: five presses
+    // 40-60ms apart moved the screens three slides.
+    test('a slide still on its way is the one a step moves on from', async () => {
+        const filePath = '/slides/quick-steps.slide';
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(91),
+            createEffectManager(),
+        );
+        manager.varySlideData = {
+            filePath,
+            itemJson: { id: 1 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+
+        manager.varySlideData = {
+            filePath,
+            itemJson: { id: 2 },
+            isRenderFullWidth: false,
+        };
+        // Not drawn yet...
+        expect(manager.varySlideData?.itemJson.id).toBe(1);
+        // ...but already what the screen is presenting as far as the next
+        // press is concerned.
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(filePath, 2),
+        ).toEqual([
+            [manager.key, expect.objectContaining({ itemJson: { id: 2 } })],
+        ]);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(filePath, 1),
+        ).toEqual([]);
+
+        await flushVarySlideData();
+        expect(manager.varySlideData?.itemJson.id).toBe(2);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(filePath, 2),
+        ).toHaveLength(1);
+    });
+
+    test('a slide a locked screen refused is not what it presents', async () => {
+        const filePath = '/slides/locked-steps.slide';
+        const base = createScreenManagerBase(92);
+        const manager = new ScreenVaryAppDocumentManager(
+            base,
+            createEffectManager(),
+        );
+        manager.varySlideData = {
+            filePath,
+            itemJson: { id: 1 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+
+        base.checkIsLockedWithMessage.mockReturnValue(true);
+        manager.varySlideData = {
+            filePath,
+            itemJson: { id: 2 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+
+        expect(manager.varySlideData?.itemJson.id).toBe(1);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(filePath, 1),
+        ).toHaveLength(1);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(filePath, 2),
+        ).toEqual([]);
+    });
+
+    test('a slide that lands late never covers a newer one', async () => {
+        const filePath = '/slides/late-steps.slide';
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(93),
+            createEffectManager(),
+        );
+        let releaseSlowSlide = () => {};
+        mocks.resolveSlideTransitionEffect.mockImplementationOnce(() => {
+            return new Promise((resolve) => {
+                releaseSlowSlide = () => {
+                    resolve(undefined);
+                };
+            });
+        });
+        manager.varySlideData = {
+            filePath,
+            itemJson: { id: 2 },
+            isRenderFullWidth: false,
+        };
+        manager.varySlideData = {
+            filePath,
+            itemJson: { id: 3 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+        expect(manager.varySlideData?.itemJson.id).toBe(3);
+
+        releaseSlowSlide();
+        await flushVarySlideData();
+        expect(manager.varySlideData?.itemJson.id).toBe(3);
+        expect(
+            ScreenVaryAppDocumentManager.getPresentingDataList(filePath, 3),
         ).toHaveLength(1);
     });
 
@@ -2062,6 +2181,29 @@ describe('ScreenVaryAppDocumentManager coverage', () => {
         // memoized on-screen map.
         expect(reapplied).not.toBe(current);
         await flushVarySlideData();
+    });
+
+    test('a stage change while a step is on its way re-applies the step', async () => {
+        const manager = new ScreenVaryAppDocumentManager(
+            createScreenManagerBase(205),
+            createEffectManager(),
+        );
+        manager.varySlideData = {
+            filePath: '/slides/a.slide',
+            itemJson: { id: 1 },
+            isRenderFullWidth: false,
+        };
+        await flushVarySlideData();
+
+        manager.varySlideData = {
+            filePath: '/slides/a.slide',
+            itemJson: { id: 2 },
+            isRenderFullWidth: false,
+        };
+        manager.reapplyForStage();
+        await flushVarySlideData();
+
+        expect(manager.varySlideData?.itemJson.id).toBe(2);
     });
 
     test('every playable element of the slide, cameras left out', () => {

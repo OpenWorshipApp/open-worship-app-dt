@@ -107,7 +107,8 @@ suffixing rather than overwriting, so an uncleaned run adds a copy every time �
 `Desktop\open-worship-data-dev` by 2026-08-07. Sweep the videos/audios dirs
 before downloading, and trash both files (row → **Move to Trash**, hidden while
 the item is on a screen) as soon as the on-disk evidence is captured. A failed
-download also leaves a `temp-*.part` behind. Deleting on disk needs piped
+download left a `temp-*.part` behind until 2026-11-22, when any non-zero yt-dlp
+exit began to sweep its `temp-<ts>*` files; one left now is a regression. Deleting on disk needs piped
 objects, not a glob — the names start with `[MV]` and `[` is a PowerShell
 wildcard — and must match the **canonical video's title**, never `*YouTube*`:
 the user's own library holds real downloads whose names also end in `- YouTube`.
@@ -249,10 +250,11 @@ agent-doc work here.
 
 The skill has two jobs. **Drift**: `scripts/audit-agent-docs.mjs` reads
 the documents with no app, no network and no writes (its calibration run,
-2026-10-08: ~16 000 code spans and links out of ~245 documents in ~1 s). It runs 15 checks: paths and `file:line` anchors, code
+2026-10-08: ~16 000 code spans and links out of ~245 documents in ~1 s). It runs 16 checks: paths and `file:line` anchors, code
 names, the `owa_*` listings against `server.registerTool`, `npm run` and script
 flags, `OWA_*` variables, ledger ids, the memory index and front matter, rule
-`paths:` globs, skill wiring, knowledge freshness, the manual's recipes (`manual`, since
+`paths:` globs, skill wiring, a home path naming an account in anything that
+ships (`privacy`, since 2026-11-20, `AD-43`), knowledge freshness, the manual's recipes (`manual`, since
 2026-10-11: labels no code draws, coverage rows citing a file that is gone,
 recipes due a read — `user-workflows.md` had been skipped whole as a
 ledger), the notes due a read (`staleness`), and three leverage signals
@@ -266,7 +268,11 @@ only because of an uncommitted file is listed apart, and a stamp against
 uncommitted code is refused without `--allow-dirty` (`AD-18`: eight notes went
 due mid-run from a file another session had not committed); a read made
 against the last commit while another session's work sits uncommitted under
-it is stamped `--at-head` (`AD-26`, 2026-11-11). A run is done when
+it is stamped `--at-head` (`AD-26`, 2026-11-11). A note follows a root
+file and the `package.json` keys it names as well as paths, and one that
+names nothing a commit could move is listed as never read until stamped
+(`AD-45`, 2026-11-20: 51 had never been read, and two notes about the
+install were wrong for a day unlisted). A run is done when
 the audit prints 0, and `src/test-setup/manualRecipes.test.ts` holds the
 manual's two hard signals in the gate — `src/test-setup/agentDocsAudit.test.ts`
 the rest of the hard checks since 2026-10-29 (`AD-21`), front matter that does
@@ -291,8 +297,10 @@ that wait for `apply`. The friction comes from `scripts/session-friction.mjs`,
 which reads the local Claude Code transcripts, prints masked error signatures
 only, and is never quoted into a note, since notes ship. One signature became
 machinery (`AD-34`, 2026-11-14): a `PreToolUse` Bash hook,
-`scripts/zsh-glob-guard.mjs`, refuses `--include=*.ts`-style unquoted globs
-under zsh and names the quoted form.
+`scripts/zsh-glob-guard.mjs`, that catches `--include=*.ts`-style unquoted
+globs under zsh. It refused them until 2026-11-19 (`AD-35`); it now escapes
+the glob through `updatedInput` and decides no permission, so the command
+runs under the same rules and prompts as before.
 
 Its binding rules: **code is the truth for facts, a doc for decisions**. A
 note recording a decision that the code now breaks is a possible regression,

@@ -36,6 +36,7 @@ const h = vi.hoisted(() => ({
     error: vi.fn(),
     getInstance: vi.fn(),
     sharedLink: vi.fn(),
+    importOpenLyric: vi.fn(),
 }));
 
 vi.mock('../others/FileListHandlerComp', () => ({
@@ -127,6 +128,9 @@ vi.mock('../plugins/song-select/songSelectSettingHelpers', () => ({
     checkIsSongSelectSignedIn: h.signedIn,
     getSongSelectSetting: h.songSelectSetting,
 }));
+vi.mock('../lyric-list/openLyricFileHelpers', () => ({
+    importOpenLyricFile: h.importOpenLyric,
+}));
 vi.mock('../plugins/public-domain-songs/PublicDomainSongsPopupComp', () => ({
     default: ({ onClose }: { onClose: () => void }) =>
         createElement('button', { onClick: onClose }, 'Public songs popup'),
@@ -194,6 +198,7 @@ describe('Documents list', () => {
         expect(h.props.fileSelectionOption.extensions).toEqual([
             'appDocument',
             'lyric',
+            'md',
             'pdf',
             'pptx',
             'docx',
@@ -248,6 +253,34 @@ describe('Documents list', () => {
                 'C:/incoming/slides.odp',
             ),
         ).toBe(true);
+    });
+
+    it('converts an Open Lyric file to a lyric and never copies other Markdown in', async () => {
+        await renderList();
+        h.importOpenLyric.mockClear();
+        const dropped = { name: 'Morning Praise.OL.MD' };
+        expect(h.props.takeDroppedFile(dropped)).toBe(true);
+        expect(
+            h.props.fileSelectionOption.takeSelectedFile(
+                'C:/incoming/hymn.ol.md',
+            ),
+        ).toBe(true);
+        // The converter is loaded on the first one; nothing is copied as-is.
+        await vi.waitFor(() => {
+            expect(h.importOpenLyric).toHaveBeenCalledTimes(2);
+        });
+        expect(h.importOpenLyric).toHaveBeenCalledWith(dropped, 'C:/documents');
+        expect(h.importOpenLyric).toHaveBeenCalledWith(
+            'C:/incoming/hymn.ol.md',
+            'C:/documents',
+        );
+        expect(
+            h.props.fileSelectionOption.takeSelectedFile(
+                'C:/incoming/readme.md',
+            ),
+        ).toBe(true);
+        expect(h.importOpenLyric).toHaveBeenCalledTimes(2);
+        expect(h.props.checkExtraFile('song.ol.md')).toBe(false);
     });
 
     it('creates each document kind and checks screen paths until one is visible', async () => {

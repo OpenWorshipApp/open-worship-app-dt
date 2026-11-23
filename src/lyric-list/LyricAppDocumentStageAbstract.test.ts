@@ -336,6 +336,9 @@ describe('stage slide and rendering options', () => {
             backgroundAlpha: 0.35,
             fontSize: 45,
             fontFamily: 'Made Up Sans',
+            // open-lyric draws `// comment` lines when the flag is absent, and
+            // stage 0 is the audience slide: every stage but 1 must say no.
+            isShowingCommentText: false,
         });
         expect(saved.css).toContain('Made Up Sans, sans-serif');
         // The box's frame keeps its laid-out size and its rounded corners:

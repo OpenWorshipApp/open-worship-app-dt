@@ -84,7 +84,7 @@ describe('appMenuAgentHelpers', () => {
         ]);
         const byPath = Object.fromEntries(listed.map((one) => [one.path, one]));
         expect(byPath['File'].hasSubmenu).toBe(true);
-        expect(byPath['File > Quit'].refused).toContain('closes or hides');
+        expect(byPath['File > Quit'].refused).toContain('closes the app');
         expect(byPath['View > Relaunch'].refused).toContain(
             'closes and reopens',
         );
@@ -134,7 +134,7 @@ describe('appMenuAgentHelpers', () => {
     test('refuses what takes the app down, a submenu, and a greyed-out item', () => {
         const { menu, click } = genMenu();
         for (const [item, words] of [
-            ['File > Quit', 'closes or hides'],
+            ['File > Quit', 'closes the app'],
             ['View > Relaunch', 'closes and reopens'],
             ['View > Toggle Developer Tools', 'Developer Tools'],
             ['File', 'opens a menu'],
@@ -216,6 +216,65 @@ describe('appMenuAgentHelpers', () => {
             isError: true,
             reason: expect.stringContaining('no menu item called'),
         });
+        expect(click).not.toHaveBeenCalled();
+    });
+
+    test('each refused role says what it does, and none is pressed (F-1)', () => {
+        const click = vi.fn();
+        const item = (label: string, role: string) => {
+            return { label, role, type: 'normal', enabled: true, click };
+        };
+        const menu = {
+            items: [
+                {
+                    label: 'Edit',
+                    type: 'submenu',
+                    submenu: {
+                        items: [
+                            {
+                                label: 'Speech',
+                                type: 'submenu',
+                                submenu: {
+                                    items: [
+                                        item('Start Speaking', 'startSpeaking'),
+                                        item('Stop Speaking', 'stopSpeaking'),
+                                    ],
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    label: 'Window',
+                    type: 'submenu',
+                    submenu: {
+                        items: [
+                            item('Bring All to Front', 'front'),
+                            item('Hide Others', 'hideOthers'),
+                            item('Show All', 'unhide'),
+                            item('Services', 'services'),
+                        ],
+                    },
+                },
+            ],
+        } as any;
+        const said = (path: string) => {
+            const result = clickAgentMenuItem(path, null, menu);
+            expect(result, path).toMatchObject({ isError: true });
+            return (result as { reason: string }).reason;
+        };
+        expect(said('Edit > Speech > Start Speaking')).toContain('aloud');
+        expect(said('Edit > Speech > Stop Speaking')).toContain('aloud');
+        expect(said('Window > Bring All to Front')).toContain('in front of');
+        expect(said('Window > Hide Others')).toContain('hides');
+        expect(said('Window > Show All')).toContain('brings back');
+        expect(said('Window > Services')).toContain('another program');
+        for (const path of [
+            'Edit > Speech > Start Speaking',
+            'Window > Bring All to Front',
+        ]) {
+            expect(said(path)).not.toContain('closes');
+        }
         expect(click).not.toHaveBeenCalled();
     });
 });

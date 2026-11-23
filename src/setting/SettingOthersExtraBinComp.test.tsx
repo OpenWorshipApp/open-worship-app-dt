@@ -18,6 +18,7 @@ const h = vi.hoisted(() => ({
     reportUpdatesMock: vi.fn(),
     findInstalledMcpBinPathMock: vi.fn(),
     copyToClipboardMock: vi.fn(),
+    openExternalURLMock: vi.fn(),
     // The settings the panel keeps, as the real store keeps them: by name,
     // read once when the row mounts.
     settings: new Map<string, string>(),
@@ -74,7 +75,10 @@ vi.mock('../helper/extra-bin/extraBinHelpers', () => ({
 // The texts themselves are mcpClientHelpers.test.ts's; here the picker, on
 // Windows, the platform the panel's paths are written for.
 vi.mock('../server/appProvider', () => ({
-    default: { systemUtils: { isWindows: true, isMac: false } },
+    default: {
+        systemUtils: { isWindows: true, isMac: false },
+        browserUtils: { openExternalURL: h.openExternalURLMock },
+    },
 }));
 
 vi.mock('../helper/settingHelpers', async () => {
@@ -163,6 +167,8 @@ function readDetail(label: string) {
 }
 
 const mcpBinPath = '/data/extra-bin/win/mcp/open-worship-app-mcp.exe';
+const NPM_PACKAGE_URL = 'https://www.npmjs.com/package/open-worship-app-mcp';
+const NPM_LINK_TEXT = 'npm: open-worship-app-mcp';
 
 function getClientSelect() {
     return container.querySelector('select') as HTMLSelectElement;
@@ -214,6 +220,7 @@ beforeEach(() => {
     h.changedListeners = [];
     h.settings.clear();
     h.copyToClipboardMock.mockClear();
+    h.openExternalURLMock.mockClear();
     setLocalState({ isInstalled: true, version: '2026.2.1' });
     h.getExtraBinEntryMock.mockResolvedValue(ONLINE_ENTRY);
     h.installExtraBinMock.mockResolvedValue(undefined);
@@ -232,11 +239,26 @@ afterEach(() => {
 });
 
 describe('SettingOthersExtraBinComp', () => {
-    test('a pack without the MCP executable shows no AI agents row', async () => {
+    test('a pack without the MCP executable shows only the npm package link', async () => {
         await renderPanel();
         expect(readDetail('Installed version')).toBe('2026.2.1');
-        expect(readDetail('AI agents (MCP)')).toBeNull();
+        expect(readDetail('AI agents (MCP)')).toBe(NPM_LINK_TEXT);
         expect(container.querySelector('select')).toBeNull();
+        await act(async () => findButton(NPM_LINK_TEXT)!.click());
+        expect(h.openExternalURLMock).toHaveBeenCalledExactlyOnceWith(
+            NPM_PACKAGE_URL,
+        );
+    });
+
+    test('a pack with it links the npm package beside the copy row', async () => {
+        setLocalState({ isInstalled: true, version: '2026.2.1', mcpBinPath });
+        await renderPanel();
+        const link = findButton(NPM_LINK_TEXT)!;
+        expect(link.title).toBe(NPM_PACKAGE_URL);
+        await act(async () => link.click());
+        expect(h.openExternalURLMock).toHaveBeenCalledExactlyOnceWith(
+            NPM_PACKAGE_URL,
+        );
     });
 
     test('a pack with it shows the Claude Code command first, and Copy puts it on the clipboard', async () => {

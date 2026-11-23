@@ -87,6 +87,12 @@ import {
   PICKER_HINT_TEMPLATE,
 } from './picker.mjs';
 import {
+  genInspectExpression,
+  INSPECT_LIMIT_MAX,
+  INSPECT_STYLE_MAX,
+  INSPECT_STYLE_PATTERN,
+} from './inspect.mjs';
+import {
   listQuestionPageIds,
   matchQuestions,
   outlineQuestions,
@@ -112,6 +118,7 @@ import {
   AGENT_LANGUAGE_ACTIONS,
   AGENT_MEDIA_FILE_ACTIONS,
   AGENT_MEDIA_KINDS,
+  AGENT_PPTX_LIKENESS_MODES,
   AGENT_NOTE_ACTIONS,
   AGENT_PRESENTING_FLOW_ACTIONS,
   AGENT_UNDO_ACTIONS,
@@ -140,8 +147,10 @@ import { registerLyricEditTool } from './agentLyricEdit.mjs';
 import { registerSlideEditTool } from './agentSlideEdit.mjs';
 import { registerNoteEditTool } from './agentNoteEdit.mjs';
 import { registerPresentingFlowEditTool } from './agentPresentingFlowEdit.mjs';
+import { registerOfficeEditTool } from './agentOfficeEdit.mjs';
 import { registerForegroundEditTool } from './agentForegroundEdit.mjs';
 import { registerScreenEditTool } from './agentScreenEdit.mjs';
+import { registerAnimationEditTool } from './agentAnimationEdit.mjs';
 import {
   AGENT_BIBLE_ACTIONS,
   formatPresentBibleResult,
@@ -201,6 +210,9 @@ const RESOURCE_FILE_TIMEOUT = 60 * 1000;
 // A PowerPoint or Word file is converted before its words are read: a long
 // deck on a church laptop takes most of a minute.
 const DOCUMENT_WORDS_TIMEOUT = 180 * 1000;
+// A whole deck converted, its pictures shrunk and, with `likeness: all`,
+// every slide drawn twice (`EC-763`): 300 slides at most.
+const PPTX_CONVERT_TIMEOUT = 300 * 1000;
 // `owa_language` `install`: a language pack is up to ~30 MB (one with its own
 // fonts and Bible data), checked and extracted on a cheap machine over a
 // church hall's internet.
@@ -256,7 +268,7 @@ async function readAppLanguage(page) {
 // English ones. Rather than fail and make it guess again, every label is
 // offered to the matcher with its translation beside it: `waitForBest` takes
 // alternatives already, so this costs one array entry and no extra round trip.
-function withTranslations(labels, langCode) {
+export function withTranslations(labels, langCode) {
   if (!langCode || langCode === 'en') {
     return labels;
   }
@@ -268,8 +280,34 @@ function withTranslations(labels, langCode) {
     if (translated !== label) {
       out.push(translated);
     }
+    const kept = tranControlOnly(label, langCode, bundle);
+    if (kept !== label && kept !== translated) {
+      out.push(kept);
+    }
   }
   return out;
+}
+
+// The panel's English name kept, the control translated: a panel answers to
+// its stamped English `data-widget-name` in every language, while a FLOATING
+// panel shows its title as no name a scope reads. So "Countdown > Reset Date
+// and Time to Now" in a translated window found nothing -- the panel's name
+// has a translation too, and both halves translated named no panel there.
+// Last of the three, so a label that matched before still matches first.
+function tranControlOnly(label, langCode, bundle) {
+  if (typeof label !== 'string') {
+    return label;
+  }
+  const parts = label.split(SCOPE_SEPARATOR_PATTERN);
+  if (parts.length < 2) {
+    return label;
+  }
+  const control = parts[parts.length - 1];
+  const translated = tranText(control, langCode, bundle);
+  if (translated === control) {
+    return label;
+  }
+  return [...parts.slice(0, -1), translated].join(' > ');
 }
 
 // "Panel > Control" is two labels, and each is translated on its own: the
@@ -424,13 +462,74 @@ async function attempt(callback) {
   }
 }
 
+// A press that reloads or closes the window it was made in -- installing or
+// switching a language in Settings reloads every window, a dialog's own
+// button closes it -- takes away the page the press reads its effect back
+// from, and CDP answers the evaluation "Inspected target navigated or
+// closed". That was handed back as the tool's error, so an agent pressed
+// again or called a press that worked a failure (`AD-04`, `MC-67`: in 7 of
+// 40 local sessions by 2026-10-08, still in 2 of 17 on 2026-11-20).
+const TARGET_GONE_PATTERN =
+  /Inspected target navigated or closed|Execution context was destroyed/;
+
+export function checkIsTargetGoneError(error) {
+  return TARGET_GONE_PATTERN.test(String(error?.message ?? error ?? ''));
+}
+
+/**
+ * What a press answers when its window went away under it: a SENTENCE in
+ * `unverified`, as for any press whose effect was not read back -- the window
+ * may have reloaded because of the press or for a reason of its own.
+ */
+export function toTargetGonePress(pressed) {
+  return {
+    pressed,
+    isWindowGone: true,
+    unverified:
+      'The window reloaded or closed during the press, so what it did ' +
+      'could not be read back. Check with owa_app_state (owa_list_screens ' +
+      'for a screen) before saying what happened, and do not press it ' +
+      'again only because of this.',
+  };
+}
+
+/** The press, or `toTargetGonePress` when its window went away under it. */
+async function pressOrWindowGone(pressed, press) {
+  try {
+    return await press();
+  } catch (error) {
+    if (checkIsTargetGoneError(error)) {
+      return { value: toTargetGonePress(pressed) };
+    }
+    throw error;
+  }
+}
+
 // The forty dev-only component names it used to list are gone (2026-09-09):
 // ~200 tokens on every call, internal by definition, and read by nobody --
 // the Report line had to trim them out again. `data-react-comp-fp` is still
 // on the DOM for a developer who wants it.
 // Reads the DOM only. Never `import()` an app module from here -- that re-runs
 // module top-level code and takes the app's keyboard shortcuts down with it.
-const APP_STATE_EXPRESSION = `(() => {
+// Mid-navigation -- right after a page-tab press -- the document has no root
+// element yet, and reading its \`lang\` threw a TypeError that came back as
+// the tool's error (F-17 of robot run 20261120-2021). The answer says the
+// window is LOADING instead, which is the fact a caller can act on.
+export const FONT_FAMILY_CREATE_ONLY_REASON =
+  '`fontFamily` is taken by `create` alone: it is the face a NEW song is ' +
+  'made with. An existing song keeps its face; the person changes it in ' +
+  "that song's Stage Style panel (its Song Font box). Nothing was changed.";
+
+export const APP_STATE_EXPRESSION = `(() => {
+    const root = document.documentElement;
+    if (root === null) {
+        return {
+            title: document.title,
+            page: location.pathname.replace(/^.*\\//, ''),
+            isLoading: true,
+            note: 'The window is loading a page right now. Ask again in a moment.',
+        };
+    }
     const tabs = [...document.querySelectorAll('[data-tab-key], .nav-link, .app-tab')]
         .map((element) => ({
             label: (element.textContent || '').trim().slice(0, 40),
@@ -440,8 +539,8 @@ const APP_STATE_EXPRESSION = `(() => {
     return {
         title: document.title,
         page: location.pathname.replace(/^.*\\//, ''),
-        language: document.documentElement.lang || null,
-        theme: document.documentElement.getAttribute('data-bs-theme') || null,
+        language: root.lang || null,
+        theme: root.getAttribute('data-bs-theme') || null,
         tabs,
     };
 })()`;
@@ -1156,13 +1255,13 @@ export function registerOwaTools(
         // the app's own managers (`agentPresenter.mjs`). Asked of
         // any other page it is a note, never a silent absence -- a
         // missing key is something a model infers past.
-        if (value && value.page === 'presenter.html') {
+        if (value && value.page === 'presenter.html' && !value.isLoading) {
           const presenter = await evaluateInApp(genPresenterStateExpression(), {
             port,
             match: page,
           });
           mainWindow = foldPresenterState(value, presenter.value);
-        } else if (value) {
+        } else if (value && !value.isLoading) {
           mainWindow = foldPresenterState(value, {
             isAuthoritative: false,
           });
@@ -1823,6 +1922,13 @@ export function registerOwaTools(
               return toErrorResult(new Error(nameReason));
             }
           }
+          // A face is written as a song is MADE (`stageSetting` beside
+          // its content); no other action has anywhere to put it, and
+          // `update` had answered "updated" with the face dropped
+          // (F-41 of robot run 20261120-2021).
+          if (typeof fontFamily === 'string' && action !== 'create') {
+            return toErrorResult(new Error(FONT_FAMILY_CREATE_ONLY_REASON));
+          }
           // A song's words are checked HERE, before the app is asked
           // anything: `owa_lyric_validate` already owns the grammar
           // and answers with a line number and what to write instead,
@@ -1885,6 +1991,11 @@ export function registerOwaTools(
   // a conversation about an attached presenting flow.
   registerPresentingFlowEditTool(server);
 
+  // ONE PowerPoint or Word file read line by line and changed in one write
+  // and one backup (`agentOfficeEdit.mjs`). Offered to the chatbot's model
+  // only in a conversation about an attached .pptx or .docx.
+  registerOfficeEditTool(server);
+
   // Any foreground component changed through its own panel: a session's
   // words and look, live on the wall (`agentForegroundEdit.mjs`). Offered to
   // the chatbot's model only in a foreground conversation.
@@ -1896,6 +2007,12 @@ export function registerOwaTools(
   // (`agentScreenEdit.mjs`). Offered to the chatbot's model only in a screen
   // conversation (`MODEL_ON_ASK_TOOL_MAP`).
   registerScreenEditTool(server);
+
+  // An animation in Customize -- its effect, colours, speed, density or
+  // quality, opacity, blend -- and its code typed into Shader Code or CSS
+  // Code (`agentAnimationEdit.mjs`). Offered to the chatbot's model only in an
+  // animation conversation (`MODEL_ON_ASK_TOOL_MAP`).
+  registerAnimationEditTool(server);
 
   // The saved passages and the notes. A list or file name reaches the disk,
   // so it is checked here first with the document tools' own rule -- and
@@ -2472,7 +2589,10 @@ export function registerOwaTools(
         '(to the trash, a copy kept so owa_undo puts it back); `import` ' +
         'copies the file at `path` on the disk into the folder, never over ' +
         'an existing one; `create` / `update` write a web page from ' +
-        '`content`. Nothing reaches a screen. ' +
+        '`content`; `convert` makes a slide document of the PowerPoint ' +
+        "`name` (or at `path`), called `newName` or the deck's name, each " +
+        'shape a box, and says how alike it looks (`likeness`: eight ' +
+        'slides compared, `all`, or `none`). Nothing reaches a screen. ' +
         AGENT_UNDO_TEXT,
       inputSchema: {
         action: z.enum(AGENT_MEDIA_FILE_ACTIONS),
@@ -2483,8 +2603,12 @@ export function registerOwaTools(
           .string()
           .optional()
           .describe('A web page, for create/update'),
-        path: z.string().optional().describe('A file on the disk, for import'),
+        path: z
+          .string()
+          .optional()
+          .describe('A file on the disk, for import or convert'),
         pictures: z.boolean().optional(),
+        likeness: z.enum(AGENT_PPTX_LIKENESS_MODES).optional(),
         page: z.string().optional(),
       },
     },
@@ -2493,6 +2617,19 @@ export function registerOwaTools(
         const nameReason = findDataNameReason(request.name, request.newName);
         if (nameReason !== null) {
           return toErrorResult(new Error(nameReason));
+        }
+        // A PowerPoint into a slide document (2026-11-20, `EC-763`): the
+        // deck is converted, its pictures made no bigger than drawn and
+        // slides drawn both ways to compare -- far past an ordinary wait.
+        if (request.action === 'convert') {
+          const { value } = await evaluateInApp(
+            genAgentDataExpression('media', request, PPTX_CONVERT_TIMEOUT),
+            { match: page, timeout: PPTX_CONVERT_TIMEOUT + 5000 },
+          );
+          const formatted = formatAgentDataResult(value);
+          return formatted.isError
+            ? toErrorResult(new Error(formatted.text))
+            : toTextResult(formatted.text);
         }
         // A document's words (2026-11-10): a PowerPoint or Word file is
         // CONVERTED first, which takes far longer than the 15 s an ordinary
@@ -2629,6 +2766,41 @@ export function registerOwaTools(
       return await attempt(async () => {
         const { value } = await evaluateInApp(
           genHighlightSelectorExpression(selector, true),
+          { match: page },
+        );
+        return value;
+      });
+    },
+  );
+
+  // The developer's read of the page by selector (`AD-40`): what a
+  // hand-written `Runtime.evaluate` was reaching for, with no expression of
+  // the caller's. Withheld from the model (`modelTools.mjs`).
+  server.registerTool(
+    'owa_inspect',
+    {
+      description:
+        'Read, never act: how many elements a CSS selector names (open ' +
+        'shadow roots too) and, for the first few, tag, class, box, ' +
+        'shown / hidden / gone, words, role, title, aria states, ' +
+        'data-widget-name, the dev component stamps, and the computed ' +
+        'styles named in `styles`. For what a snapshot does not say -- ' +
+        "a pane's height, a class a fold sets, which component drew a " +
+        "box. Runs no code of yours and reads no field's value.",
+      inputSchema: {
+        selector: z.string().min(1).max(500),
+        page: z.string().optional(),
+        styles: z
+          .array(z.string().regex(INSPECT_STYLE_PATTERN))
+          .max(INSPECT_STYLE_MAX)
+          .optional(),
+        limit: z.number().int().min(1).max(INSPECT_LIMIT_MAX).optional(),
+      },
+    },
+    async ({ selector, page, styles, limit }) => {
+      return await attempt(async () => {
+        const { value } = await evaluateInApp(
+          genInspectExpression(selector, { styles, limit }),
           { match: page },
         );
         return value;
@@ -2775,11 +2947,22 @@ export function registerOwaTools(
           // is a different word, so the ordinary case pays nothing.
           if ((value?.matches ?? []).length === 0) {
             const langCode = await readAppLanguage(page);
-            const translated =
-              !langCode || langCode === 'en'
-                ? text
-                : tranLabel(text, langCode, loadTranBundle());
-            if (translated !== text) {
+            // Both halves of a scope translated, then the panel's
+            // English name kept (`tranControlOnly`): a floating panel
+            // answers to that name alone.
+            const retryList = [];
+            if (langCode && langCode !== 'en') {
+              const bundle = loadTranBundle();
+              for (const one of [
+                tranLabel(text, langCode, bundle),
+                tranControlOnly(text, langCode, bundle),
+              ]) {
+                if (one !== text && !retryList.includes(one)) {
+                  retryList.push(one);
+                }
+              }
+            }
+            for (const translated of retryList) {
               const retry = await evaluateInApp(
                 genFindUiExpression(translated, highlight === true),
                 { match: page },
@@ -2904,24 +3087,47 @@ export function registerOwaTools(
           ),
         button: z.enum(['left', 'right']).optional(),
         clicks: z.number().int().min(1).max(2).optional(),
+        // The developer's door alone (F-9 of robot run 20261120-2021): a
+        // screen card's second Bible is a Shift+click and nothing else.
+        // Kept off the chatbot's door, so its model pays no schema for it.
+        ...(door === 'stdio'
+          ? {
+              modifiers: z
+                .array(z.enum(['shift', 'ctrl', 'alt', 'meta']))
+                .max(4)
+                .optional()
+                .describe(
+                  'Keys held down through the press, as a Shift+click ' +
+                    '(`["shift"]`).',
+                ),
+            }
+          : {}),
         page: z.string().optional().describe(PAGE_TEXT),
       },
     },
-    async ({ find, button, clicks, page }) => {
+    async ({ find, button, clicks, modifiers, page }) => {
       return await attempt(async () => {
         const finds = (Array.isArray(find) ? find : [find]).filter(Boolean);
         if (finds.length === 0) {
           throw new Error('Pass the label of the control to click.');
         }
-        const evaluated = await evaluateInApp(
-          genClickExpression(
-            withTranslations(finds, await readAppLanguage(page)),
-            undefined,
-            undefined,
-            { guard: genPressGuard(), button, clicks },
-          ),
-          { match: page },
-        );
+        const language = await readAppLanguage(page);
+        const evaluated = await pressOrWindowGone(finds, () => {
+          return evaluateInApp(
+            genClickExpression(
+              withTranslations(finds, language),
+              undefined,
+              undefined,
+              {
+                guard: genPressGuard(),
+                button,
+                clicks,
+                modifiers: door === 'stdio' ? modifiers : undefined,
+              },
+            ),
+            { match: page },
+          );
+        });
         const { value } = evaluated;
         // Refused in the page, off the control itself: said the way
         // the firewall says it, and logged beside its refusals.
@@ -2971,14 +3177,16 @@ export function registerOwaTools(
         if (finds.length === 0) {
           throw new Error('Pass the label of the box to type in.');
         }
-        const { value: result } = await evaluateInApp(
-          genTypeExpression(
-            withTranslations(finds, await readAppLanguage(page)),
-            value,
-            { submit: submit === true, guard: genPressGuard() },
-          ),
-          { match: page },
-        );
+        const language = await readAppLanguage(page);
+        const { value: result } = await pressOrWindowGone(finds, () => {
+          return evaluateInApp(
+            genTypeExpression(withTranslations(finds, language), value, {
+              submit: submit === true,
+              guard: genPressGuard(),
+            }),
+            { match: page },
+          );
+        });
         if (typeof result?.refused === 'string') {
           recordPressRefusal('owa_type', result);
           throw new Error(genPressRefusalReason(result));
@@ -3047,16 +3255,19 @@ export function registerOwaTools(
           find === undefined
             ? null
             : (Array.isArray(find) ? find : [find]).filter(Boolean);
-        const { value } = await evaluateInApp(
-          genPressKeyExpression(keystroke, {
-            finds:
-              finds === null || finds.length === 0
-                ? null
-                : withTranslations(finds, await readAppLanguage(page)),
-            guard: genPressGuard(),
-          }),
-          { match: page },
-        );
+        const translatedFinds =
+          finds === null || finds.length === 0
+            ? null
+            : withTranslations(finds, await readAppLanguage(page));
+        const { value } = await pressOrWindowGone(phrase, () => {
+          return evaluateInApp(
+            genPressKeyExpression(keystroke, {
+              finds: translatedFinds,
+              guard: genPressGuard(),
+            }),
+            { match: page },
+          );
+        });
         if (typeof value?.refused === 'string') {
           recordPressRefusal('owa_press_key', value);
           throw new Error(genPressRefusalReason(value));
@@ -3300,12 +3511,17 @@ export function registerOwaTools(
             new Error('Name the menu item to press, as "View > Reload".'),
           );
         }
-        const { value } = await evaluateInApp(
-          action === 'list'
-            ? genMenuListExpression()
-            : genMenuClickExpression(item.trim()),
-          { match: page },
-        );
+        const { value } = await pressOrWindowGone(item?.trim(), () => {
+          return evaluateInApp(
+            action === 'list'
+              ? genMenuListExpression()
+              : genMenuClickExpression(item.trim()),
+            { match: page },
+          );
+        });
+        if (value?.isWindowGone === true) {
+          return toTextResult(value);
+        }
         const formatted = formatMenuResult(
           action === 'list' ? { items: value } : value,
         );

@@ -39,8 +39,10 @@ its readers raise themselves inside `<ModalLayerContext value={true}>`
 `VerseCommentHoverToolComp.coverage.test.tsx`), and since 2026-11-06
 `src/app-modal/components.coverage.test.tsx` asserts that a child of the
 modal reads `useIsInModalLayer()` as inside it and one outside does not; the
-floating widget's own read of it is still unasserted (`FloatingWidgetComp.test.tsx`
-mocks `useIsInModalLayer` to `false`)
+floating widget's own read of it is asserted since 2026-11-20 by
+`src/app-modal/FloatingWidgetComp.modalLayer.test.tsx` (the real hook, the widget
+portaled to `document.body` out of a fake modal: `floating-widget--above-modal`
+inside one, not outside; `FloatingWidgetComp.test.tsx` still mocks it to `false`)
 (the explicit `isAboveModal` class is asserted by
 `src/keyboard-shortcut/KeyboardShortcutsComp.test.tsx`); verify the layering
 itself live ([[appprovider-mock-node-env]]).

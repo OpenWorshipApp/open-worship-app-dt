@@ -8,7 +8,10 @@ const h = vi.hoisted(() => ({
     screenManager: null as any,
     isNoRendering: false,
     extractDropData: vi.fn(),
-    dragStore: { onDropped: undefined as undefined | ((event: any) => void) },
+    dragStore: {
+        onDropped: undefined as undefined | ((event: any) => void),
+        isScreenRefused: false,
+    },
     openContextMenu: vi.fn(),
     observers: [] as {
         callback: () => void;
@@ -147,6 +150,7 @@ beforeEach(() => {
     h.isNoRendering = false;
     h.observers.length = 0;
     h.dragStore.onDropped = undefined;
+    h.dragStore.isScreenRefused = false;
     container = document.createElement('div');
     document.body.appendChild(container);
     root = createRoot(container);
@@ -327,6 +331,22 @@ describe('ScreenPreviewerItemComp', () => {
                 new Event('dragleave', { bubbles: true, cancelable: true }),
             );
         });
+        expect(card.classList.contains('receiving-data-drop')).toBe(false);
+    });
+
+    test('refuses a drag that carries nothing a screen shows (F-13)', async () => {
+        // A run sheet's whole-document line: accepted, it did nothing.
+        h.dragStore.isScreenRefused = true;
+        await renderItem();
+        const card = getCard();
+        const dragOver = new Event('dragover', {
+            bubbles: true,
+            cancelable: true,
+        });
+        await act(async () => {
+            card.dispatchEvent(dragOver);
+        });
+        expect(dragOver.defaultPrevented).toBe(false);
         expect(card.classList.contains('receiving-data-drop')).toBe(false);
     });
 

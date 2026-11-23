@@ -158,8 +158,11 @@ A verse item id is now refused by the note window in both modes.
 
 **Imports:** `bibleNotePreviewHelpers.ts` / `markdownPreviewParamHelpers.ts`
 import NOTHING (the lookup panel reads their name checks); the popup openers live
-in `src/resources/resourcePreviewOpenHelpers.ts` (pulls `domHelpers`, which has
-module-level IPC listeners) and are `import()`ed at the press. A test rendering
+in `src/resources/resourcePreviewOpenHelpers.ts` (it pulls the leaf
+`popupWindowHelpers` and `urlParamHelpers`; until 2026-11-14 it pulled
+`domHelpers`, which has module-level IPC listeners) and are `import()`ed at
+the press, so the lookup panel carries no window helpers for a press that
+may never come. A test rendering
 `ResourcesFileRowComp` and opening a note file must mock `bibleStyleHelpers` and
 `BibleItemsViewController` (they reach `BibleDatabaseController`, which reads
 `appProvider.appUtils` at load) and WAIT for the lazy list. Related:

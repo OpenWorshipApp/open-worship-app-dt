@@ -36,7 +36,7 @@ Other non-obvious bits:
   the menu only; `dataArchiveMenuHelpers.tsx` (the flows, the archive / password /
   folder-picker modules) is imported on the CLICK, so neither page loads them at start.
 - **Dot-prefixed names never travel (2026-08-07).** `EXCLUDED_NAME_PATTERNS` carries `^\.`
-  — `checkIsHiddenName` (`src/server/fileHelpers.ts`) in regex form, the app's one
+  — `checkIsHiddenName` (`src/server/storageFileHelpers.ts`, re-exported by `fileHelpers`) in regex form, the app's one
   hidden-name rule, now shared by `fsListDirectories`, `getAllXMLFileKeys`, the bible
   download scan and the archive. What it really catches is the `._*` AppleDouble stubs a
   macOS machine or a USB round-trip leaves behind. `copyFilesInto` skips them on IMPORT

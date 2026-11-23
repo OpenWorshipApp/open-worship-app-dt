@@ -79,7 +79,7 @@ Found and applied in run `20261008-2315`. **Re-measured** in run
 once each. The index line has not moved it; a hook for one retry a session
 was judged not worth every session's cost.
 
-## AD-04 · `owa_click` loses its target when a press opens or closes a window — `open` · S3 · L4
+## AD-04 · `owa_click` loses its target when a press opens or closes a window — `done` 2026-11-20 · S3 · L4
 
 **Signal.** "Inspected target navigated or closed" in 7/40 sessions (×21);
 `owa_screenshot` "UnknownVizError" in 4/40. Neither is in the MC or EC
@@ -95,8 +95,14 @@ chatbot-window refusal in 7/40 sessions (its words unchanged), the click
 signature in 3/40 (×5); and `take_screenshot` now needs the `pageId` from
 `list_pages` too (chrome-devtools-mcp 1.8 `pageIdRouting`), refused for its
 lack in 2/40.
+**Applied 2026-11-20** as `MC-67` (the click signature 3/40 ×9 that day, all
+`owa_click`): a press whose window reloads or closes under it answers
+`isWindowGone` with an `unverified` sentence instead of the CDP error, in
+`owa_click`, `owa_type`, `owa_press_key` and `owa_menu`; seen live on a scratch
+instance (**Apply Settings**). The screenshot signature: 0 in 40 sessions,
+1 error in 177 calls; `pageId` optional again since `MC-65`. Nothing left.
 
-## AD-05 · `user-workflows.md` is re-read whole — `open` · S3 · L4 · L2
+## AD-05 · `user-workflows.md` is re-read whole — `done` 2026-11-20 · S3 · L4 · L2
 
 **Signal.** 463 KB / 5 457 lines, read in 10/40 sessions (×14). Its version
 line alone is 1 420 characters. **Change.** A `W-xx` → line index at the top,
@@ -108,6 +114,11 @@ or a SKILL.md line: `grep -n '^### W-'`, then Read with an offset. **Cost.**
 `docs:gen` reads one line of it (`workflowsVersion:`). The sharper change:
 move all but the newest entry to a history file beside it. **Re-measured** in
 run `20261028-1700`: 740 KB; the dated head 331 KB, 45% of the file.
+**Applied 2026-11-20.** The history had already moved to
+`user-workflows-history.md` (the head is 28 KB of 556 KB); `owa-robot-test`'s
+SKILL.md now says to read one recipe -- `grep -n '^### W-'`, then Read with
+`offset` / `limit`, or its page under `docs/manual-sources/`. Proof: the
+hot-read count at the next friction run.
 
 ## AD-06 · Screen Mirror area gets a scoped rule; its index lines become hooks — `done` · S3 · L1 · L2
 
@@ -123,7 +134,7 @@ coverage rows now show `rules: screen-mirror.md`. The other eight long lines
 carry 3–4 links each and were left alone. **Route.** This skill. Found and
 applied in run `20261008-2315`.
 
-## AD-07 · Skill triggers sit past the listing cut — `open` · S3 · L6
+## AD-07 · Skill triggers sit past the listing cut — `done` 2026-11-20 · S3 · L6
 
 **Signal.** Past the ~1 530-character cut: `owa-robot-test` by 2 402
 characters, `owa-enhance-chatbot` 1 503, `owa-enhance-mcp` 705, `owa-enhance`
@@ -133,6 +144,15 @@ number. **Cost.** ~0. **Proof on apply.** `--check=skills`. **Route.**
 Each owning skill, on ask. Found in run `20261008-2315`. **Re-measured** in run
 `20261028-1700`: past the cut by robot-test 2 627, chatbot 1 505, mcp 687,
 enhance 619, aichat 156, unit-test 82 characters.
+**Done** in run `20261120` (the user's yes): the six rewritten triggers
+first, each under the cut — robot-test 4 166 → 1 349 characters, chatbot
+3 035 → 1 390, mcp 2 634 → 1 441, enhance 2 168 → 1 510, aichat 1 686 →
+1 347, unit-test 1 634 → 1 279; `--check=skills` past the cut 6 → 0, wiring
+0. Nothing re-routed: each keeps its own triggers. What left a description
+was already in its body, except `owa-enhance-mcp`'s file map, moved into the
+body under the doors table, and robot-test's list of newer matrix areas
+(`RD-81..90` …), which the matrix itself holds. The unit-test "~45%" is gone
+with the number (the body states the measured baseline).
 
 ## AD-08 · The review skills are in neither skill index — `done` 2026-10-11 · S4 · L6
 
@@ -147,7 +167,7 @@ each in `rules/project-skills.md` and one line for the pair in CLAUDE.md
 (+150 B always-loaded, the user's ask being every document current);
 `--check=skills` wiring 4 → 0.
 
-## AD-09 · Four guards the notes say are missing — `open` · S3 · L5
+## AD-09 · Four guards the notes say are missing — `done` 2026-11-20 · S3 · L5
 
 **Signal.** The notes name four untested invariants: `applyEnabledState` in
 `ScreenPreviewerFooterComp`, the `HandleAlertComp` popup chain,
@@ -155,6 +175,17 @@ each in `rules/project-skills.md` and one line for the pair in CLAUDE.md
 **Change.** Behavioural tests, with no shared appProvider mock. **Cost.** Gate
 time. **Proof on apply.** Each test fails on a broken invariant, and the notes
 then name it. **Route.** `owa-upgrade-unit-test`. Found in run `20261008-2315`.
+**Applied 2026-11-20.** The rename migration's test was already back
+(2026-10-15). New: `ScreenPreviewerFooterComp.test.tsx` "turning off while
+Focusing shows…" (the only test a Focusing-only break of `applyEnabledState`
+fails), `FloatingWidgetComp.modalLayer.test.tsx` (the real
+`useIsInModalLayer`, the widget portaled out of a fake modal) and
+`HandleAlertComp.test.tsx` (Alert → Alert, Confirm → Confirm, Input → Input:
+`components.coverage.test.tsx` walked the chain through the real host but no
+same-type step past Alert). Each fails with its invariant broken and passes
+restored. Notes `screen-focus-spotlight`, `modal-layer-above-modal` and the
+robot-test knowledge base now name them. Left: a SYNCHRONOUS same-type open
+inside a close callback would still lose its popup (untested, unreported).
 
 ## AD-10 · The scan never read the manual — `done` 2026-10-11 · S2 · L3
 
@@ -500,7 +531,9 @@ was past `MAX_READ_BYTES` (2 MB), so every matrix-owned id had been skipped
 as unreadable. **Cost.** 0 always-loaded bytes. **Proof.** 981 411 → 531 658 B
 and 3 648 162 → 3 218 535 B; `docs:gen` output byte-identical (pages,
 manifest, sidebar); the `ids` check, now reading the whole matrix and its
-history, finds no citation it lacks.
+history, finds no citation it lacks. **Again on 2026-11-19**, at 41 and 48
+entries: 21 and 28 moved the same way, every entry of each file and its
+history still there in order and byte for byte, `docs:gen` byte-identical.
 
 ## AD-34 · zsh's flag glob is refused before it runs — `done` 2026-11-14 · S4 · L4
 
@@ -516,3 +549,204 @@ comments and here-documents followed) and names the quoted form.
 per Bash call. **Proof.** 4 tests; `zsh -c` shows the unquoted line dying with
 `no matches found` before grep runs; live, the hook refused
 `grep --include=*.zzz` with the quoted form and let `--include='*.zzz'` run.
+
+## AD-35 · zsh's flag glob is escaped, not refused — `done` 2026-11-19 · S4 · L4
+
+**Signal.** AD-34's refusal, the cost moved rather than gone: its message in
+14, 8 and 4 of the last 40 sessions (three signatures), each a round trip
+and the command sent again. **Change.** `scripts/zsh-glob-guard.mjs hook`
+answers `hookSpecificOutput.updatedInput` -- the whole input, the command
+with a backslash before each unquoted `*`, `?`, `[` of a `--flag=value` word
+(a brace list, a `$VAR` or a `~` in the word keeps its meaning, which quotes
+around it would not) -- and NO `permissionDecision`. The hooks page:
+permission rules are evaluated against the input the hook returns, and with
+no decision auto mode can still deny the call; `"allow"` would skip the
+person's prompts for every rewritten command and is never added. A rewrite
+that would not come out clean is refused as before. Same hook entry in
+`.claude/settings.json`, behaviour changed with the user's own yes.
+**Cost.** 0 always-loaded bytes. **Proof.** `zshGlobGuard.test.ts` 6 tests,
+4 failing on the AD-34 guard (the rewrite, no decision, the brace list, a
+here-document); `zsh -c` expands `--include=\*.{ts,tsx}` to `--include=*.ts`
+`--include=*.tsx` and dies on the bare form; live, an unquoted
+`grep -rln --include=*.mjs …` ran and found its file in this session.
+
+## AD-36 · "no infinite paint animation at rest" held app-wide — `done` 2026-11-19 · S3 · L3
+
+**Signal.** An always-loaded CLAUDE.md rule paid for by three traces (EN-09,
+EN-10, EN-19) and held only for the boot spinner (`bootLoading.test.ts`).
+**Change.** `src/test-setup/infinitePaintAnimation.test.ts` reads every
+`src/**/*.{css,scss}` and `html/*.html`, resolves each `infinite` use to its
+`@keyframes` (a shorthand's own names, commas inside `calc()` / `var()`
+followed; an `animation-iteration-count: infinite` through the names its file
+sets) and fails on any property but `opacity`, `transform`, `rotate`,
+`scale`, `translate`, or on a name it cannot resolve. The exemption map is
+empty: all 13 uses move `transform` or `opacity`. The CSS TypeScript writes
+for a screen's content is left to its own checks (`cssCodeCheckHelpers`, the
+effects' keyframes test). **Cost.** 0 always-loaded bytes. **Proof.** 5 tests,
+four on planted stylesheets; a `border-color` keyframes planted in
+`AiChatAppComp.scss` failed the tree test, the file restored byte for byte.
+
+## AD-37 · `src/background` gets a scoped rule — `done` 2026-11-19 · S3 · L1
+
+**Signal.** `--check=coverage`: 91 files, 25 commits (8 fixes) in 60 days,
+named in 6 docs, no rule; the hidden animation-capture window
+(`electron/animationCaptureHelpers.ts`) in no note. **Change.**
+`.claude/rules/background.md` (`paths:` the folder, the screen's background
+components and shader runtime, the foreground's Fill / Animation Show, the
+capture window, `agentAnimation*.mjs`): the tabs, the one-string `src` and
+its compare, what is built and what is read (a person's own CSS and GLSL
+through their checks), the legacy `color` names, live only where presented,
+infinite on the compositor, the capture window as a stranger's page, the
+export, a show's row, the per-instance debounce, the assistant's tool; the
+full story stays in memory `background-animation-runtime`. Named in
+CLAUDE.md's Printing, Screen Mirror section. **Cost.** CLAUDE.md +94 B; the
+rule ~5 KB, loaded only beside those files. **Proof.** `rules` 0 (globs all
+match, CLAUDE.md names it); `src/background` reads `rules: background.md`.
+
+## AD-38 · CLAUDE.md stops enumerating the `owa_*` tools — `done` 2026-11-19 · S3 · L2
+
+**Signal.** 1 463 B of CLAUDE.md, in every session, listing tools the MCP
+listing already hands each session, and held complete by the `tools` check,
+so every new tool grew it. **Change.** CLAUDE.md names the chrome-devtools
+tools, says the `owa_*` ones are described in `rules/agent-tools.md` and
+tabled in the README, and keeps the warnings: the developer-only tools, and
+the two stdio-only ones with `owa_choose_app`'s ask-the-user. The `tools`
+check holds those two listings complete, no longer CLAUDE.md
+(`audit-agent-docs.mjs`'s `listingDocList`). **Cost.** CLAUDE.md
+34 358 → 33 525 B (−833 B, ≈ −210 tokens a session); with AD-37's line,
+33 619 B. **Proof.** `tools` 0 with 48 tools registered; the byte counts.
+
+## AD-39 · The stdio door's two page-tool walls come down — `done` 2026-11-19 · S3 · L4
+
+**Signal.** Transcripts, 40 sessions: a page tool refused for a missing
+`pageId` (chrome-devtools-mcp 1.12 made it required), 9 calls in 3 sessions;
+a `filePath` in the session's scratch folder refused by the roots check, 9
+calls in 7 -- mostly ordinary code sessions verifying live, which never load
+`rules/agent-access.md` where the roots rule lives. **Change.**
+`makePageIdOptional` (`server.mjs`) makes `pageId` optional again on every
+page tool: left out, the page `select_page` chose. `explainRootsRefusal`
+(`firewall.mjs`) adds `ROOTS_REFUSAL_HINT` to a roots refusal: where the
+server may write (the client's working directory, e.g. `test-results/`, or
+the OS temp folder). `owa-robot-test`'s step 2 and `rules/agent-access.md`
+say both; `MC-65`. **Cost.** 0 always-loaded bytes. **Proof.**
+`chromeDevtoolsContract.test.mjs` and `firewall.test.mjs`; live on a fresh
+stdio server, read-only: `take_snapshot {}` answered the selected page's
+snapshot (830 lines), a scratch-folder `filePath` was refused with the hint.
+
+## AD-40 · `owa_inspect`: a read by selector instead of raw CDP — `done` 2026-11-19 · S3 · L5
+
+**Signal.** 10 of 40 sessions went to raw CDP `Runtime.evaluate` for what a
+snapshot does not say (a count, a box, a class, a computed style), ~27
+calls, 3 stopped by the permission classifier. **Change.** `owa_inspect
+{selector, page?, styles?, limit?}` (`inspect.mjs`): how many elements a
+selector names, open shadow roots included, and for the first few tag,
+class, box, shown / hidden / gone, words, role, aria states,
+`data-widget-name`, the dev stamps and the computed styles named. It runs no
+expression of the caller's, reads no field's value, and is withheld from the
+model (`modelTools.mjs`). Proposed for the stdio door alone; registered on
+both, because a tool added for one caller ships to the other unless it needs
+the disk (`owa-enhance-mcp`'s first rule). The two skills' raw-CDP wording
+stays as it is (the user, 2026-11-19). `MC-66`. **Cost.** 0 always-loaded
+bytes; the model's bill unchanged (≈ 8 464 of 8 480 tokens a round), stdio
+lists 78 tools. **Proof.** `inspect.test.mjs` (7, jsdom: no value read, a
+selector carried as data, a bad selector answered in words) and the
+`owaTools.coverage.test.mjs` case; live, read-only, on the packaged app: 13
+`[data-widget-name]` panes with their boxes, inputs listed with no value, a
+style named `color;x` refused by the schema.
+
+## AD-41 · CLAUDE.md's file-drop paragraph becomes a pointer — `done` 2026-11-19 · S3 · L2
+
+**Signal.** 1 246 B in every session prescribing fiber walking and a
+fabricated `dataTransfer` -- in-page evaluation the firewall refuses --
+written before `owa_drop_files` (2026-10-24) made a real drop drivable.
+**Change.** Four lines: `owa_drop_files` first, why a page-built
+`DragEvent` cannot carry a file, and memory
+`drag-payload-written-in-dragstart`, which now holds the by-hand recipe.
+**Cost.** CLAUDE.md 33 619 → 32 626 B (−993 B, ≈ −250 tokens a session).
+**Proof.** The byte counts; `paths`, `symbols` and `memory` 0.
+
+## AD-42 · A note is counted from its read, never from its last edit — `done` 2026-11-19 · S3 · L3
+
+**Signal.** Memory `background-animation-runtime` kept a "never" a commit
+broke, through two later edits of the note: a note the hashes cannot clear
+(never read, or edited since its read to name other files) was counted from
+its last EDIT, and an edit about anything at all cleared it. **Change.**
+`scripts/noteStaleness.mjs`: with a ledger entry, commits are counted from
+the stamp's commit (`review.at`); with none, from the last edit as before. A
+row says which (`N commits since its check on <date>`), and `--json` gives
+its whole file list (`changed`) and the stamp (`since`) for readers.
+**Cost.** 0. **Proof.** `src/test-setup/agentDocsStaleness.test.ts` (a
+planted ledger; the old rule's miss held as its own case); notes due
+2 → 12 at `3c706a186`, all twelve read in the same run.
+
+## AD-43 · A home path naming an account fails the gate — `done` 2026-11-20 · S3 · L3
+
+**Signal.** Two notes in the knowledge every installer ships carried a home
+path with an account name: `office-converter-fixes-go-upstream` from
+`16bf45295` (2026-11-20) and `dont-taskkill-all-electron` from `a0c3ef929`
+(2026-08-30, 82 days). The rule lived only in memory
+`no-user-specific-references-in-notes`. **Change.**
+`scripts/homePathPrivacy.mjs` (+ `.d.mts`) finds `/Users/<name>/`,
+`/home/<name>/`, `C:\Users\<name>\` (any slashes) and `/c/Users/<name>/`
+with a real account, a placeholder (`<you>`, `$USER`, `~`, `…`, `x`) skipped;
+the audit's new `privacy` check runs it over every markdown file in the
+listing and everything under `.claude/`, ledgers included, and
+`agentDocsAudit.test.ts` holds it as a hard check. Both notes rewritten to a
+sibling checkout (`../open-lyric`, `…/pptx-in-html-out`). **Cost.** 0
+always-loaded bytes; the check reads ~680 files in ~0.15 s. **Proof.**
+`agentDocsPrivacy.test.ts` (9: six shapes found, placeholders, a word ending
+in `users`, CRLF); with HEAD's two notes put back, `agentDocsAudit.test.ts`
+fails on exactly those two lines; a planted `.claude/` and `docs/` probe
+gave 3 hits, its placeholder none.
+
+## AD-44 · The PPTX converter note describes the uncommitted tree — `done` 2026-11-20 · S3 · drift
+
+**Signal.** Memory `pptx-converter-file-dependency` (from `16bf45295`) says
+the repo's `.npmrc` sets `install-links=true` and `pptx-to-html-conv` is
+`file:../pptx-to-html-conv-dist`. At HEAD `.npmrc` is untracked and
+`package.json` / the lockfile pin 1.1.0 from npm (published up to 1.1.0 on
+2026-11-20), while HEAD's `electron/msHelpers.ts` already passes 1.2.0's
+`defaultFontFamily`: a clean checkout gets a converter without the face, or a
+typecheck error. **Change.** None in the docs: it settles when 1.2.0 is
+published or the two files are committed (a committed `file:../…-dist`
+breaks `npm install` wherever that sibling folder is missing). Read again
+then and stamp. **Route.** The user.
+**Settled 2026-11-20.** `7ee8297c2` committed `.npmrc` and the `file:` range
+(npm still stops at 1.1.0); the note read against it holds and is stamped.
+The same commit made memory `npm-12-install-gotchas`' "every one is an npm
+registry range now" untrue: corrected. Neither note was listed due, since
+`package.json` is a hot file and `.npmrc` no path root. Asked the same day
+whether to change the committed `file:` range, which fails `npm install` on a
+checkout without the sibling folder: the user said leave it. Both blind spots
+became `AD-45`.
+
+## AD-45 · Notes no commit could ever list due — `done` 2026-11-20 · S2 · drift
+
+**Signal.** AD-44's two notes were wrong for a day and never listed: a note is
+due when a commit touches a file it names, and the staleness check followed
+only paths under a root folder (`src/`, `.claude/`, …) and code basenames --
+never a root file (`.npmrc`, `.mcp.json`), never `package.json` (a hot file,
+dropped), so a note about an install, a script or a dependency range had no
+file at all. And 51 documents -- 38 memory notes, skill references, project
+`*.md` -- had NEVER been read: naming nothing followable, no commit could ever
+list them. **Change.** (1) A tracked root file whose name no other folder's
+file carries is a path (`.npmrc` is not: a language package has its own).
+(2) A note naming `npm run <script>`, `"<dep>": …`, or a key beside
+`package.json`, follows `package.json#<key>`: that key's own lines, so a
+version bump elsewhere moves nothing (`noteStaleness.mjs`
+`listPackageKeysNamed`, `readPackageKeyLines`, `readPackageKeyLog` over one
+`git log -p` of `package.json`). (3) A note stamped before it followed more
+is not due for that alone: due only when the newly followed files differ
+from the stamp's commit. (4) A third list, notes never read that name no
+file to follow. (5) A stamp at a commit gone from the history says so
+instead of an empty diff (README, two stamps of 2026-10-29). **Cost.** 0
+always-loaded; the scan +~0.3 s. **Proof.** The ledger as it was before the
+fixes: the old script listed neither note (4 due), the new one both (12 due,
+51 never read); `agentDocsStaleness.test.ts` 9/9, two of its four new tests
+failing with the key filter and the `package.json` guard broken. The 10 due
+read and fixed (README's per-language `index.ts`, gone since 2026-11-06, and
+its `--allow-git=all`; the PPTX face read from `en/fonts.json`;
+`owa_goto_page`'s Screen Mirror; the popup chain's coverage), and the 51 read
+by three readers (16 edits through `apply-manual-edits.mjs`, one date
+corrected first; 2 regressions routed), all stamped.
+

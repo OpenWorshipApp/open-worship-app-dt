@@ -18,10 +18,17 @@ import BibleTextLookTileComp from './BibleTextLookTileComp';
 const state = vi.hoisted(() => ({
     view: null as unknown as BibleTextStyleViewType,
     applyStyle: vi.fn(),
+    settingStore: new Map<string, string>(),
 }));
 
 vi.mock('./BibleCustomStyleComp.scss', () => ({}));
 vi.mock('../lang/langHelpers', () => ({ tran: (text: string) => text }));
+vi.mock('../helper/settingHelpers', () => ({
+    getSetting: (key: string) => state.settingStore.get(key) ?? null,
+    setSetting: (key: string, value: string) => {
+        state.settingStore.set(key, value);
+    },
+}));
 vi.mock('../_screen/preview/stylingHelpers', () => ({
     useBibleTextStyleEditing: () => [state.view, state.applyStyle],
 }));
@@ -40,6 +47,7 @@ vi.mock('./BibleTextPresetTilesComp', () => ({
 }));
 
 import BibleCustomStyleComp from './BibleCustomStyleComp';
+import { BIBLE_TEXT_STAGE_FOLDED_SETTING_NAME } from './BibleTextStageComp';
 
 let host: HTMLDivElement;
 let root: Root;
@@ -56,6 +64,8 @@ function buttonByTitle(title: string) {
 
 beforeEach(() => {
     vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true);
+    state.settingStore.clear();
+    state.applyStyle.mockClear();
     host = document.createElement('div');
     document.body.append(host);
     root = createRoot(host);
@@ -155,6 +165,61 @@ describe('Bible/LongText Properties panel', () => {
         expect(state.applyStyle).toHaveBeenCalledWith(
             genBibleTextEffectPatch(glow.effect),
         );
+    });
+});
+
+describe('the stage fold', () => {
+    function getFold() {
+        return host.querySelector<HTMLButtonElement>(
+            '.bible-style-stage-fold',
+        )!;
+    }
+
+    test('folds the stage to its last line, keeping the switch, and remembers it', () => {
+        state.view = toBibleTextStyleView({ color: '#FFFFFF' });
+
+        render(<BibleCustomStyleComp />);
+        expect(getFold().getAttribute('aria-expanded')).toBe('true');
+        expect(getFold().title).toBe('Collapse: Preview');
+        expect(host.querySelector('.bible-style-verse')).not.toBeNull();
+
+        act(() => {
+            getFold().click();
+        });
+        const stage = host.querySelector('.bible-style-stage')!;
+        expect(stage.classList.contains('bible-style-stage-folded')).toBe(true);
+        expect(host.querySelector('.bible-style-verse')).toBeNull();
+        expect(getFold().getAttribute('aria-expanded')).toBe('false');
+        expect(getFold().title).toBe('Expand: Preview');
+        expect(getFold().textContent).toBe('Preview');
+        expect(
+            state.settingStore.get(BIBLE_TEXT_STAGE_FOLDED_SETTING_NAME),
+        ).toBe('true');
+        // Folded, the switch is still a control.
+        act(() => {
+            buttonByTitle('Dark words for a light background').click();
+        });
+        expect(state.applyStyle).toHaveBeenCalledWith(
+            genBibleBackdropPatch(state.view, 'light'),
+        );
+
+        // Opened again folded, as it was left.
+        act(() => root.unmount());
+        root = createRoot(host);
+        render(<BibleCustomStyleComp />);
+        expect(host.querySelector('.bible-style-verse')).toBeNull();
+        act(() => {
+            getFold().click();
+        });
+        expect(host.querySelector('.bible-style-verse')).not.toBeNull();
+        expect(
+            host
+                .querySelector('.bible-style-stage')!
+                .classList.contains('bible-style-stage-folded'),
+        ).toBe(false);
+        expect(
+            state.settingStore.get(BIBLE_TEXT_STAGE_FOLDED_SETTING_NAME),
+        ).toBe('false');
     });
 });
 

@@ -397,9 +397,10 @@ describe('bibleXMLHelpers', () => {
         );
         expect(messages).toContain('Downloading file...');
         expect(messages.at(-1)).toBeNull();
-        expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
+        // The temp file is gone a moment later: no "File saved at" (F-23).
+        expect(mocks.showSimpleToastMock).not.toHaveBeenCalledWith(
             'Download Completed',
-            'File saved at: /storage/temp-xml/kjv.xml',
+            expect.anything(),
         );
 
         mocks.initHttpRequestMock.mockRejectedValueOnce(new Error('offline'));
@@ -408,6 +409,15 @@ describe('bibleXMLHelpers', () => {
         expect(mocks.showSimpleToastMock).toHaveBeenCalledWith(
             'Error occurred during download: "https://example.com/kjv"',
             'Error: Error: offline',
+        );
+    });
+
+    test('names the temp file of a link that has no file name (F-23)', async () => {
+        const { readFromUrl } = await loadModule();
+        const { form } = createFormWithInput('url', 'https://example.com/');
+        await readFromUrl(form, vi.fn());
+        expect(mocks.fsDeleteFileMock).toHaveBeenCalledWith(
+            '/storage/temp-xml/download.xml',
         );
     });
 

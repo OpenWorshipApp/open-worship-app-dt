@@ -12,6 +12,9 @@ const {
     unlockingMock,
     generateFileMD5Mock,
     showSimpleToastMock,
+    forgetCachedDataMock,
+    forgetCachedDataUnderMock,
+    getPptxOmitBackgroundMock,
 } = vi.hoisted(() => ({
     fileSourceGetInstanceMock: vi.fn(),
     showProgressBarMock: vi.fn(),
@@ -26,6 +29,9 @@ const {
     }),
     generateFileMD5Mock: vi.fn(),
     showSimpleToastMock: vi.fn(),
+    forgetCachedDataMock: vi.fn(),
+    forgetCachedDataUnderMock: vi.fn(),
+    getPptxOmitBackgroundMock: vi.fn(),
 }));
 
 vi.mock('../lang/langHelpers', () => ({
@@ -39,7 +45,13 @@ vi.mock('../toast/toastHelpers', () => ({
 vi.mock('../helper/FileSource', () => ({
     default: {
         getInstance: fileSourceGetInstanceMock,
+        forgetCachedData: forgetCachedDataMock,
+        forgetCachedDataUnder: forgetCachedDataUnderMock,
     },
+}));
+
+vi.mock('./pptxBuildOptionHelpers', () => ({
+    getPptxOmitBackground: getPptxOmitBackgroundMock,
 }));
 
 vi.mock('../progress-bar/progressBarHelpers', () => ({
@@ -82,9 +94,33 @@ async function loadPptxModule() {
     return await import('./pptxHelpers');
 }
 
+// The converter's version and its export answered by channel, so a test
+// reads as the IPC it stands for. `exported` is what each export answers.
+function answerPptxChannels(
+    version: unknown,
+    exported: boolean | (() => boolean) = true,
+) {
+    electronSendAsyncMock.mockImplementation(async (channel: string) => {
+        if (channel === 'main:app:get-pptx-to-htmls-version') {
+            return version;
+        }
+        if (channel === 'main:app:pptx-to-htmls') {
+            return typeof exported === 'function' ? exported() : exported;
+        }
+        throw new Error(`Unexpected channel: ${channel}`);
+    });
+}
+
+function countPptxExports() {
+    return electronSendAsyncMock.mock.calls.filter(([channel]) => {
+        return channel === 'main:app:pptx-to-htmls';
+    }).length;
+}
+
 describe('docxHelpers and pptxHelpers', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        getPptxOmitBackgroundMock.mockResolvedValue(true);
         pathJoinMock.mockImplementation((...parts: string[]) =>
             parts.join('/'),
         );
@@ -250,6 +286,11 @@ describe('docxHelpers and pptxHelpers', () => {
             module.removePptxHtmlsPreview('/slides/demo.pptx'),
         ).resolves.toBeUndefined();
         expect(fsDeleteDirMock).toHaveBeenCalledWith('/slides/demo.pptx-htmls');
+        // A folder deleted whole is not reached by the file cache: the next
+        // read of its `info.json` must not be served the old one.
+        expect(forgetCachedDataUnderMock).toHaveBeenCalledWith(
+            '/slides/demo.pptx-htmls',
+        );
 
         await expect(module.getSlidesCount('/slides/demo.pptx')).resolves.toBe(
             12,
@@ -258,6 +299,18 @@ describe('docxHelpers and pptxHelpers', () => {
             module.pptxToHtmls('/slides/demo.pptx', '/slides/out'),
         ).resolves.toBe(true);
         await expect(module.getPptxToHtmlsVersion()).resolves.toBe('2.3.4');
+        // No choice given is the converter's default: built with backgrounds.
+        expect(electronSendAsyncMock).toHaveBeenCalledWith(
+            'main:app:pptx-to-htmls',
+            {
+                filePath: '/slides/demo.pptx',
+                outDir: '/slides/out',
+                noBackground: false,
+            },
+        );
+        expect(forgetCachedDataMock).toHaveBeenCalledWith(
+            '/slides/out/info.json',
+        );
 
         expect(showSimpleToastMock).toHaveBeenCalledWith(
             'Exporting PPTX Slides',
@@ -291,6 +344,8 @@ describe('docxHelpers and pptxHelpers', () => {
                 ],
             })
             .mockResolvedValueOnce({
+                toolVersion: '1.1.0',
+                noBackground: true,
                 checksum: { md5: 'new-md5' },
                 slides: [
                     {
@@ -320,13 +375,15 @@ describe('docxHelpers and pptxHelpers', () => {
             throw new Error(`Unexpected file source: ${filePath}`);
         });
         generateFileMD5Mock.mockResolvedValue('new-md5');
-        electronSendAsyncMock.mockResolvedValue(true);
+        answerPptxChannels('1.1.0');
         fsReadFileMock.mockImplementation(async (filePath: string) => {
             return `<html>${filePath}</html>`;
         });
 
         await expect(module.getPptxData('/slides/demo.pptx')).resolves.toEqual({
             info: {
+                toolVersion: '1.1.0',
+                noBackground: true,
                 checksum: { md5: 'new-md5' },
                 slides: [
                     {
@@ -359,8 +416,111 @@ describe('docxHelpers and pptxHelpers', () => {
             {
                 filePath: '/slides/demo.pptx',
                 outDir: '/slides/demo.pptx-htmls',
+                noBackground: true,
             },
         );
+        expect(countPptxExports()).toBe(1);
+    });
+
+    function mockPptxPreview(infoList: any[]) {
+        const infoReadMock = vi.fn();
+        for (const info of infoList) {
+            infoReadMock.mockResolvedValueOnce(info);
+        }
+        fileSourceGetInstanceMock.mockImplementation((filePath: string) => {
+            if (filePath === '/slides/deck.pptx') {
+                return {
+                    baseDirPath: '/slides',
+                    fullName: 'deck.pptx',
+                    name: 'deck',
+                };
+            }
+            if (filePath.endsWith('/info.json')) {
+                return { readFileJsonData: infoReadMock };
+            }
+            throw new Error(`Unexpected file source: ${filePath}`);
+        });
+        generateFileMD5Mock.mockResolvedValue('md5');
+        fsReadFileMock.mockResolvedValue('<html></html>');
+    }
+
+    function genInfo(extra: Record<string, unknown>) {
+        return { checksum: { md5: 'md5' }, slides: [], ...extra };
+    }
+
+    test('reuses a pptx preview of this copy, by this converter, built the way asked', async () => {
+        const module = await loadPptxModule();
+        mockPptxPreview([
+            genInfo({ toolVersion: '1.1.0', noBackground: true }),
+        ]);
+        answerPptxChannels('1.1.0');
+
+        await expect(module.getPptxData('/slides/deck.pptx')).resolves.toEqual(
+            expect.objectContaining({ baseDir: '/slides/deck.pptx-htmls' }),
+        );
+        expect(countPptxExports()).toBe(0);
+        expect(fsDeleteDirMock).not.toHaveBeenCalled();
+    });
+
+    test.each([
+        [
+            'a preview from before the choice existed, by the old converter',
+            genInfo({ toolVersion: '1.0.4' }),
+            true,
+        ],
+        [
+            'a preview from before the choice existed',
+            genInfo({ toolVersion: '1.1.0' }),
+            true,
+        ],
+        [
+            'a preview built without backgrounds, now asked with them',
+            genInfo({ toolVersion: '1.1.0', noBackground: true }),
+            false,
+        ],
+        [
+            'a preview built with backgrounds, now asked without them',
+            genInfo({ toolVersion: '1.1.0', noBackground: false }),
+            true,
+        ],
+    ])(
+        'rebuilds %s, silently and the way asked',
+        async (_name, staleInfo, isOmit) => {
+            const module = await loadPptxModule();
+            getPptxOmitBackgroundMock.mockResolvedValue(isOmit);
+            mockPptxPreview([
+                staleInfo,
+                genInfo({ toolVersion: '1.1.0', noBackground: isOmit }),
+            ]);
+            answerPptxChannels('1.1.0');
+
+            await expect(
+                module.getPptxData('/slides/deck.pptx'),
+            ).resolves.not.toBeNull();
+            expect(fsDeleteDirMock).toHaveBeenCalledTimes(1);
+            expect(countPptxExports()).toBe(1);
+            expect(electronSendAsyncMock).toHaveBeenCalledWith(
+                'main:app:pptx-to-htmls',
+                {
+                    filePath: '/slides/deck.pptx',
+                    outDir: '/slides/deck.pptx-htmls',
+                    noBackground: isOmit,
+                },
+            );
+        },
+    );
+
+    test('a converter that cannot say its version leaves the preview to the other checks', async () => {
+        const module = await loadPptxModule();
+        mockPptxPreview([
+            genInfo({ toolVersion: '1.0.4', noBackground: true }),
+        ]);
+        answerPptxChannels(null);
+
+        await expect(
+            module.getPptxData('/slides/deck.pptx'),
+        ).resolves.not.toBeNull();
+        expect(countPptxExports()).toBe(0);
     });
 
     test('returns null for pptx data after repeated missing exports', async () => {
@@ -382,12 +542,12 @@ describe('docxHelpers and pptxHelpers', () => {
             throw new Error(`Unexpected file source: ${filePath}`);
         });
         generateFileMD5Mock.mockResolvedValue('md5');
-        electronSendAsyncMock.mockResolvedValue(false);
+        answerPptxChannels('1.1.0', false);
 
         await expect(
             module.getPptxData('/slides/missing.pptx'),
         ).resolves.toBeNull();
-        expect(electronSendAsyncMock).toHaveBeenCalledTimes(3);
+        expect(countPptxExports()).toBe(3);
     });
 
     test('lists pptx slide audios from info.json alone -- no hash, no html read, no export', async () => {

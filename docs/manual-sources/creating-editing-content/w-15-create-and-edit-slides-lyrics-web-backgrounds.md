@@ -2,10 +2,10 @@
 id: W-15
 title: "Create and edit slides / lyrics / web backgrounds"
 section: "Creating & editing content"
-verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, ED-55, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168]
-screenshots: 8
+verify: [ED-01, ED-02, ED-03, ED-04, ED-05, ED-06, ED-07, ED-08, ED-09, ED-10, ED-11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, ED-55, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, CM-104, DD-20, PM-33, PM-124, PM-168]
+screenshots: 10
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-15 — Create and edit slides / lyrics / web backgrounds
 
@@ -13,6 +13,17 @@ workflowsVersion: "2026-11-15"
 (or right-click the empty area of the list) and pick **[en:tran:New App Document]** (a slide document) or **[en:tran:New Lyric]** (a song). Type
 a name into the row that appears and press **Enter** (or click the ✓). Both kinds live
 in the same documents folder. 📸
+
+**Bringing in an Open Lyric song file (`.ol.md`):** drag one or more `.ol.md` files
+from your file manager onto the **[en:tran:Documents]** list. Each becomes a song (♪)
+named after its file — the app keeps its songs as `.owl`, so the `.ol.md` itself is only
+read, never copied in or changed. A name already in the list gets a number, `(2)`.
+Any other Markdown file dropped there is left alone. 📸
+
+**Saving a song as an Open Lyric file:** right-click a song row and choose
+**[en:tran:Export to Open Lyric File]**, just under **[en:tran:Export]**. It writes
+`<song>.ol.md` into your **Downloads** folder (a second export beside the first is
+numbered), ready for an Open Lyric editor. 📸
 
 **Slides** ([en:tran:Slide Editor]):
 
@@ -113,8 +124,9 @@ use an HTML box for rich formatting. Existing files are kept as saved.
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 Once a song has been changed, the Presenter also shows **[en:tran:Undo]**, **[en:tran:Redo]**,
 **[en:tran:Discard changed]** and **[en:tran:Save]** in a row under its **[en:tran:Stage Previewer]**
-header — the same row a slide document has above its slides. **[en:tran:Undo]** steps every stage
-back at once; **[en:tran:Save]** is lit while a change is not saved yet (a red **\*** beside the
+header — the same row a slide document has above its slides — and again above the song's words in
+the pane over it, where the row stays put however far the words are scrolled. Both rows act on the
+same song. **[en:tran:Undo]** steps every stage back at once; **[en:tran:Save]** is lit while a change is not saved yet (a red **\*** beside the
 song's name), and **Ctrl+S** saves the song from anywhere in the Presenter.
 
 **Web backgrounds:** **[en:tran:Background]** panel → **[en:tran:Webs]** tab, then the
@@ -128,7 +140,7 @@ to press.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `ED-55` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-27` · `CM-32` · `CM-33` · `CM-43` · `PM-33` · `PM-124` · `PM-168`
+`ED-01` · `ED-02` · `ED-03` · `ED-04` · `ED-05` · `ED-06` · `ED-07` · `ED-08` · `ED-09` · `ED-10` · `ED-11` · `ED-21` · `ED-25` · `ED-45` · `ED-46` · `ED-47` · `ED-48` · `ED-52` · `ED-53` · `ED-55` · `PU-02` · `PU-04` · `PL-09` · `PL-11` · `PL-24` · `CM-23` · `CM-27` · `CM-32` · `CM-33` · `CM-43` · `CM-104` · `DD-20` · `PM-33` · `PM-124` · `PM-168`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

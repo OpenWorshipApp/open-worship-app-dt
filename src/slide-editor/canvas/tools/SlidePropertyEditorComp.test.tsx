@@ -239,6 +239,21 @@ describe('slide property editor', () => {
         );
     });
 
+    it('puts typed sizes back when the slide is already the display size (F-19)', async () => {
+        h.slide.metadata = { width: 1280, height: 720 };
+        await renderEditor();
+        await expand();
+        await typeValue(input('Width'), '1500');
+        expect(button('Apply')).toBeDefined();
+        await act(async () => button('Reset').click());
+        // Nothing to change on the slide: the boxes go back, the actions go.
+        expect(h.changeDimensions).not.toHaveBeenCalled();
+        expect(input('Width').value).toBe('1280');
+        expect(input('Height').value).toBe('720');
+        expect(button('Apply')).toBeUndefined();
+        expect(button('Reset')).toBeUndefined();
+    });
+
     it('refreshes the slide index after a document update', async () => {
         await renderEditor();
         h.getSlideIndex.mockResolvedValue(4);

@@ -1,6 +1,6 @@
 {
     "lang": "fr",
-    "updated": "2026-11-15",
+    "updated": "2026-11-20",
     "sections": {
         "bible-note.writing": {
             "en": "Writing a note",
@@ -816,6 +816,10 @@
             "en": "How do I present a PDF or a PowerPoint?",
             "text": "Comment présenter un PDF ou un PowerPoint ?"
         },
+        "presenter.documents.pptx-omit-background": {
+            "en": "How do I show my own background behind PowerPoint slides?",
+            "text": "Comment afficher mon propre arrière-plan derrière les diapositives PowerPoint ?"
+        },
         "presenter.documents.document-stage-monitor": {
             "en": "How do I show the singer on stage what slide comes next?",
             "text": "Comment montrer au chanteur sur scène quelle diapositive vient ensuite ?"
@@ -871,6 +875,10 @@
         "presenter.documents.change-slides-with-assistant": {
             "en": "Can the assistant change my slides for me?",
             "text": "L’assistant peut-il modifier mes diapositives pour moi ?"
+        },
+        "presenter.documents.change-office-file-with-assistant": {
+            "en": "Can the assistant change my PowerPoint or Word file?",
+            "text": "L’assistant peut-il modifier mon fichier PowerPoint ou Word ?"
         },
         "presenter.lyrics.present-lyrics": {
             "en": "How do I put a song's lyrics on the screen?",
@@ -1031,6 +1039,10 @@
         "presenter.background.background-shader-code": {
             "en": "Can I change or write the code of a shader background?",
             "text": "Puis-je modifier ou écrire le code d'un arrière-plan shader ?"
+        },
+        "presenter.background.background-animation-export": {
+            "en": "Can I save an animation as a picture or a video?",
+            "text": "Puis-je enregistrer une animation en image ou en vidéo ?"
         },
         "presenter.background.background-paint-slide-show": {
             "en": "Can the background colours or animations change by themselves?",
@@ -1587,6 +1599,10 @@
         "reader.lookup.detail-language": {
             "en": "How do I open the same person or place in two languages?",
             "text": "Comment ouvrir la même personne ou le même lieu en deux langues ?"
+        },
+        "reader.lookup.names-language-install": {
+            "en": "How do I get the names and places in a language that is not in the list?",
+            "text": "Comment avoir les noms et les lieux dans une langue absente de la liste ?"
         },
         "reader.lookup.names-in-passage": {
             "en": "Who and where is named in the passage I am reading?",

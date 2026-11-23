@@ -51,9 +51,7 @@ describe('a word of a Khmer note', () => {
     test('is the word, not the start of a longer word', () => {
         const line = 'ព្រះជាម្ចាស់ស្រឡាញ់មនុស្សលោក សេចក្ដីស្រឡាញ់របស់ព្រះ';
         const at = line.lastIndexOf('ព្រះ');
-        expect(findWordRanges(line, 'ព្រះ')).toEqual([
-            [at, at + 'ព្រះ'.length],
-        ]);
+        expect(findWordRanges(line, 'ព្រះ')).toEqual([[at, at + 'ព្រះ'.length]]);
     });
 
     test('a word given without its last mark takes the mark with it', () => {
@@ -90,8 +88,7 @@ describe('a word of a Khmer note', () => {
 
 describe('a Khmer paragraph made a heading', () => {
     const paragraph =
-        'ព្រះជាម្ចាស់ស្រឡាញ់មនុស្សលោក សេចក្ដីស្រឡាញ់របស់ព្រះ ' +
-        'យើងអធិស្ឋានរាល់ថ្ងៃ';
+        'ព្រះជាម្ចាស់ស្រឡាញ់មនុស្សលោក សេចក្ដីស្រឡាញ់របស់ព្រះ ' + 'យើងអធិស្ឋានរាល់ថ្ងៃ';
 
     test('with other words is refused: it would lose its own', () => {
         const result = applyNoteEdit({

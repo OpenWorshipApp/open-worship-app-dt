@@ -267,11 +267,34 @@ describe('PresentingFlowFileComp', () => {
 
     test('toggles the tree and floating preview from the rendered header', async () => {
         const rendered = await render();
+        // The chevron and the name are one labelled button (F-01 of robot
+        // run 20261122-1615): reachable by keyboard and by a press aimed at
+        // the sheet's name, and saying whether the sheet is open.
+        const toggle = rendered.container.querySelector(
+            '.app-presenting-flow-header [role="button"][aria-expanded]',
+        ) as HTMLElement;
+        expect(toggle).not.toBeNull();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(toggle.tabIndex).toBe(0);
+        expect(toggle.textContent).toContain('run');
+        expect(toggle.querySelector('.bi-window-stack')).toBeNull();
+        toggle.click();
+        expect(mocks.setOpened).toHaveBeenCalledWith(false);
+        mocks.setOpened.mockClear();
+        await act(async () => {
+            toggle.dispatchEvent(
+                new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+            );
+        });
+        expect(mocks.setOpened).toHaveBeenCalledWith(false);
+        mocks.setOpened.mockClear();
+        // The header around it no longer toggles by itself, so a press on
+        // the Preview icon can never also open or close the tree.
         const header = rendered.container.querySelector(
             '.app-presenting-flow-header',
         ) as HTMLElement;
         header.click();
-        expect(mocks.setOpened).toHaveBeenCalledWith(false);
+        expect(mocks.setOpened).not.toHaveBeenCalled();
         const preview = rendered.container.querySelector(
             '.bi-window-stack',
         ) as HTMLElement;

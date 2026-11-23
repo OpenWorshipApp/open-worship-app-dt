@@ -101,6 +101,10 @@ function BibleNoteBibleLookupComp({
     );
     return (
         <FloatingWidgetComp
+            // The panel's English name, as every floating panel carries one:
+            // a control inside it is scoped by it (`Panel > control`) and
+            // reports it as `inPanel` (F-42 of robot run 20261120-2021).
+            widgetName="Bible Lookup"
             onClose={() => setIsShowingBibleLookup(false)}
             collapsedChildren={
                 <div className="d-flex m-2">{tran('Bible Lookup')}</div>

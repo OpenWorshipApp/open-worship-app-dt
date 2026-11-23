@@ -11,13 +11,11 @@ import {
 } from '../context-menu/appContextMenuHelpers';
 import { handleError } from '../helper/errorHelpers';
 import type { AnyObjectType, OptionalPromise } from '../helper/typeHelpers';
-import { appLog } from '../helper/loggerHelpers';
 import PptxSlide, { type PptxSlidePropsType } from './PptxSlide';
 import {
     getPptxData,
     getPptxMissingFontFamilyList,
     getPptxSlideAudioDataListQuick,
-    getPptxToHtmlsVersion,
     removePptxHtmlsPreview,
 } from '../server/pptxHelpers';
 import { type VarySlideAudioDataType } from '../background/backgroundHelpers';
@@ -80,20 +78,10 @@ export default class PptxAppDocument
 
     async getSlides() {
         try {
+            // A preview by another converter version, of another copy of the
+            // file or built with the other background choice is rebuilt
+            // inside `getPptxData`, so it is never handed back here.
             const pptxData = await getPptxData(this.filePath);
-            const pptxToHtmlsVersion = await getPptxToHtmlsVersion();
-            if (
-                pptxData !== null &&
-                pptxToHtmlsVersion !== pptxData.info.toolVersion
-            ) {
-                await removePptxHtmlsPreview(this.filePath);
-                appLog(
-                    'Pptx version mismatch:',
-                    pptxToHtmlsVersion,
-                    pptxData?.info.toolVersion,
-                );
-                return [];
-            }
             if (pptxData === null) {
                 return [];
             }

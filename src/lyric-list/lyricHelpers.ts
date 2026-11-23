@@ -12,13 +12,18 @@ import LyricAppDocumentStage2 from './LyricAppDocumentStage2';
 import LyricAppDocumentStage3 from './LyricAppDocumentStage3';
 import LyricAppDocumentStage4 from './LyricAppDocumentStage4';
 import LyricAppDocumentStage5 from './LyricAppDocumentStage5';
-import { genOpenLyricFontFaces, initAllLangCss } from '../lang/langHelpers';
+import {
+    genOpenLyricFontFaces,
+    getCurrentLocale,
+    initAllLangCss,
+    tran,
+} from '../lang/langHelpers';
 import { genLangOpenLyricFontFaces } from '../lang/langFontListHelpers';
 import SettingManager from '../helper/SettingManager';
 import FileSource from '../helper/FileSource';
 import type LyricAppDocumentStageAbstract from './LyricAppDocumentStageAbstract';
 import { checkIsDarkMode } from '../others/themeHelpers';
-import { installOpenLyricPrintPopupHandler } from './lyricPrintHelpers';
+import { printOpenLyricPage } from './lyricPrintHelpers';
 import { OpenLyricPluginPlayer } from 'open-lyric-plugin-player';
 // Already in this module's graph (the player plugin imports it); handed to the
 // language plugins so they register into this registry.
@@ -81,8 +86,42 @@ export function getOpenLyricFontSetting(): {
     };
 }
 
+/**
+ * Prints the labels round a song (`Key`, `Attachments`) in the APP's
+ * language, whatever the song's own `Locales` say (2026-11-21, the user,
+ * a Khmer song with no `Locales` labelled in English in a Khmer app: _it
+ * should not depend on lyric locale_). The language's package attaches its
+ * song labels (`initOpenLyricPlugins`); a locale no attached plugin claims
+ * -- English, or a language whose package has none -- prints English.
+ * The app's language changes only by a reload, so it is read once.
+ */
+export function applyOpenLyricLabelLocale(target: { labelLocale: string }) {
+    target.labelLocale = getCurrentLocale();
+}
+
+/**
+ * **Save in PPTX in Documents**: a button after Download and Download as HTML
+ * in the PowerPoint options dialog of a previewer the operator uses. It gets
+ * the very `.pptx` Download would save and puts it in the Documents list
+ * (`savePptxInDocuments`, loaded on the first press). For a previewer with a
+ * menu only -- the headless ones that build slides have no dialog to put it
+ * in.
+ */
+export function addSavePptxInDocumentsAction(openLyric: OpenLyric) {
+    openLyric.addExportAction({
+        id: 'save-pptx-in-documents',
+        // Asked each time the dialog opens: in render, never at module scope.
+        label: () => tran('Save in PPTX in Documents'),
+        kinds: ['powerpoint'],
+        run: async ({ blob, fileName }) => {
+            const { savePptxInDocuments } =
+                await import('./lyricPptxDocumentHelpers');
+            return savePptxInDocuments(blob, fileName);
+        },
+    });
+}
+
 export async function initOpenLyric(filePath: string, isNoLangInit = false) {
-    installOpenLyricPrintPopupHandler();
     const lyric = Lyric.getInstance(filePath);
     // `initAllLangCss`, not just the language list: open-lyric freezes every
     // line of a slide into pixel boxes measured in whatever faces the window
@@ -101,6 +140,8 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
     ]);
     const openLyricPreviewer = new OpenLyric();
     openLyricPreviewer.value = content;
+    // Print is open-lyric's own; the app only shows the page it hands over.
+    openLyricPreviewer.onPrint = printOpenLyricPage;
 
     const openLyricPlayer = new OpenLyricPluginPlayer();
     openLyricPreviewer.addPlugin('player', openLyricPlayer);
@@ -133,6 +174,7 @@ export async function initOpenLyric(filePath: string, isNoLangInit = false) {
             openLyricPreviewer.fontFaces,
             langDataList,
         ) as OpenLyricFontFaceList;
+        applyOpenLyricLabelLocale(openLyricPreviewer);
     }
     return openLyricPreviewer;
 }

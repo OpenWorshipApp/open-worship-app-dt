@@ -76,10 +76,18 @@ window as a whole — tabs, pickers, its language, the caution — is in
   or comes to the front. Every answer is one step — the language, every file in
   it with the title its own file gives, then a short name, the language, the
   digits, the book names (ranked by how many of their names the verses use,
-  each with the names only it has), **Install it**, **Undo** — and every button
+  each with the names only it has; a site's own slips taken off each name --
+  a `<` or `>` at either end, a space before a combining mark --
+  `toCleanBookName` in `bibleBookNames.mjs`, 2026-11-21, F-24: Wordproject's
+  Khmer index had put `>` before Psalms and a space inside John into an
+  imported Bible), **Install it**, **Undo** — and every button
   is `BIBLE_IMPORT_STEP_TOOL_NAME`, a pseudo tool no model can press, carrying
   the WHOLE state in its args, so the window keeps nothing and an old button
-  restarts its own step. A typed word answers the step in front of the person
+  restarts its own step. The language question's examples are three
+  DIFFERENT words (`genLanguageExampleWords`, 2026-11-21, F-30): an installed
+  language's name and its own words, English names standing in where none is
+  installed -- every fresh install had read _for example Thai, Spanish or
+  Spanish_. A typed word answers the step in front of the person
   (`readBibleImportTypedReply`: their own short name, a language by name, a word
   that narrows a list — added to the earlier search, "2019" after "Khmer"), read
   off the LAST answer only, and a NEW request beats it. A tool's words never
@@ -149,7 +157,25 @@ window as a whole — tabs, pickers, its language, the caution — is in
   TITLE names comes first (`findChatBibleKeyByName`, matched in that same
   language: a whole phrase, longest name first, never under five characters,
   so `New King James Version` is not read as the KJV and a title that is just
-  `Khmer` claims nothing), then the rest as the language lists them. **A key
+  `Khmer` claims nothing) -- or, failing a name, the language's KEY the title
+  writes as a word of its own, three letters or more, exactly so
+  (`findLanguageKeyInTitle`, 2026-11-21, robot run 20261120-2021 F-29: the
+  collection titles its files `<Language> <short name>`, and _English ASV_
+  had been offered as **NKJV (suggested)**, ASV sixth in English's list and
+  cut off by the four buttons; `findChatBibleKeyByName` keeps reading names
+  alone, a package test holds `English NKJV` to no name) -- or, failing
+  both, the one key whose name carries a year the title writes, in either's
+  digits (`findLanguageKeyByYear`: _Khmer Standard Version 1954_ and the
+  edition Khmer names by its 1954; two keys of one year name neither) --
+  then the rest as
+  the language lists them. **Only a key suggested for a REASON is marked
+  (suggested)** (`hasSuggestion`): asked for by name, named or dated by the
+  title, or
+  the file's own guesses when the language lists none. The first of a
+  language's list is only first, so nothing is marked, and a typed `yes`
+  there presses nothing and is never taken as the short name "yes"
+  (`checkIsTypedYes`): it goes to the reader of ordinary words, which keeps
+  the question. **A key
   this computer already has is left out** (`checkIsTakenKey`, the same test a
   typed name gets), because its press could only answer "you already have a
   Bible called …". Each button carries its full name as the DOM `title`

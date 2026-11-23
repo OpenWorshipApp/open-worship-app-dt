@@ -55,6 +55,7 @@ import DocxAppDocument from '../app-document-list/DocxAppDocument';
 import PdfAppDocument from '../app-document-list/PdfAppDocument';
 import PptxAppDocument from '../app-document-list/PptxAppDocument';
 import PptxSlide from '../app-document-list/PptxSlide';
+import { toSlideViewIndex } from '../app-document-list/slideViewIndexHelpers';
 import { toSlideAccessibleName } from '../app-document-presenter/items/slideAccessibleNameHelpers';
 import appProvider from '../server/appProvider';
 import { getFileName, pathBasename } from '../server/fileHelpers';
@@ -152,7 +153,7 @@ export function flattenVarySlides(varySlides: VarySlideType[]) {
         if (PptxSlide.checkIsThisType(varySlide)) {
             varySlide.subSlides.forEach((subSlide, j) => {
                 flat.push({
-                    viewIndex: PptxSlide.calcIndex(i, j) + 1,
+                    viewIndex: toSlideViewIndex(PptxSlide.calcIndex(i, j)),
                     varySlide: subSlide,
                 });
             });
@@ -330,6 +331,42 @@ async function toPreviewedDocument(varyAppDocument: VaryAppDocumentType) {
 }
 
 /**
+ * Whether the slide with the screen's id still HOLDS what the screen holds.
+ * A locked screen keeps its slide while the document changes under it: Atom
+ * Mode re-cut a song into one-line cards and the held verse's id went to a
+ * card holding half of it, so the words handed out for "what screen 1 shows"
+ * put up another slide (F-40 of robot run 20261120-2021). A song's screen
+ * holds the slide of ITS stage (`getTargetLyricSlideItemData`), which can draw
+ * more than the card -- stage 2 adds the next slide under it -- so it is
+ * compared with that stage's slide, never with the stage-0 card.
+ */
+async function checkIsSlideStillHeld(
+    data: VarySlideScreenDataType,
+    card: VarySlideType,
+) {
+    const heldText = toSlideText(data.itemJson);
+    const stage = (data.itemJson as any)?.stage;
+    if (typeof stage !== 'number' || stage === 0) {
+        return toSlideText(card.toJson() as any) === heldText;
+    }
+    try {
+        const { getLyricAppDocumentStageByStage } =
+            await import('../lyric-list/lyricHelpers');
+        const [, stageDocument] = getLyricAppDocumentStageByStage(
+            data.filePath,
+            stage,
+        );
+        const stageSlide = await stageDocument.getSlideById(card.id);
+        return (
+            stageSlide !== null &&
+            toSlideText(stageSlide.toJson() as any) === heldText
+        );
+    } catch {
+        return false;
+    }
+}
+
+/**
  * Give each slide on a screen the number its card shows and the words that
  * card answers to. `describeScreensForAgent` has only the slide's JSON, so an
  * unnamed slide was called `slide <id>` -- and a slide's id is not its place
@@ -379,7 +416,10 @@ export async function numberScreenSlidesForAgent(
         const found = flat?.find(({ varySlide }) => {
             return varySlide.id === id;
         });
-        if (found === undefined) {
+        if (
+            found === undefined ||
+            !(await checkIsSlideStillHeld(data, found.varySlide))
+        ) {
             continue;
         }
         slide.n = found.viewIndex;

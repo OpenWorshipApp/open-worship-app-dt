@@ -90,6 +90,7 @@ const screenManagerMock: any = {
         clear: vi.fn(),
         screenViewData: { type: 'bible-item' },
         isLineSync: false,
+        textScale: 1,
         handleScreenVersesHighlighting: vi.fn(),
         handleBibleViewVersesHighlighting: vi.fn(),
         applyBibleViewData: vi.fn(),
@@ -302,6 +303,8 @@ vi.mock('./managers/screenEventHelpers', () => ({
 vi.mock('./managers/ScreenLongTextManager', () => ({
     default: class ScreenLongTextManager {
         static readonly textStyleTextColor = '#ffffff';
+        static readonly textStyleText = 'font-size: 65px;';
+        static readonly textStyleTextFontSize = 65;
     },
 }));
 
@@ -479,6 +482,28 @@ describe('screen component smoke tests', () => {
             root.unmount();
         });
         container.remove();
+    });
+
+    // Each screen draws the shared size times its own scale, and a screen
+    // left at 1 draws exactly the shared rule it always did.
+    test("the rows take this screen's own text scale", async () => {
+        const { default: ScreenBibleComp } = await import('./ScreenBibleComp');
+        const { screenLongTextManager } = screenManagerMock;
+        const scaledRule = /#bible-screen-view tr \{ font-size: ([\d.]+)px; \}/;
+        try {
+            expect(renderToStaticMarkup(<ScreenBibleComp />)).not.toMatch(
+                scaledRule,
+            );
+            screenLongTextManager.textScale = 2;
+            const html = renderToStaticMarkup(<ScreenBibleComp />);
+            expect(scaledRule.exec(html)?.[1]).toBe('130');
+            // After the shared rule, so it wins at the same specificity.
+            expect(html.indexOf('font-size: 130px')).toBeGreaterThan(
+                html.indexOf('font-size: 65px'),
+            );
+        } finally {
+            screenLongTextManager.textScale = 1;
+        }
     });
 
     // Each session's top marquee is its own band: the passage starts below

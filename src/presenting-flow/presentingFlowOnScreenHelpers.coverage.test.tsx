@@ -12,6 +12,7 @@ const { state, mocks } = vi.hoisted(() => ({
         decoded: null as any,
         bibleItem: null as any,
         flowItems: new Map<string, any[]>(),
+        getItemsOptions: [] as ({ isQuiet?: boolean } | undefined)[],
         screenUpdate: null as null | (() => void),
         // Set once, when the module under test is imported.
         screenManagers: null as null | (() => unknown[]),
@@ -80,7 +81,10 @@ vi.mock('../helper/timeoutHelpers', () => ({
 vi.mock('./PresentingFlow', () => ({
     default: {
         getInstance: (filePath: string) => ({
-            getItems: async () => state.flowItems.get(filePath) ?? null,
+            getItems: async (options?: { isQuiet?: boolean }) => {
+                state.getItemsOptions.push(options);
+                return state.flowItems.get(filePath) ?? null;
+            },
         }),
     },
 }));
@@ -127,6 +131,7 @@ beforeEach(() => {
     state.decoded = null;
     state.bibleItem = null;
     state.flowItems.clear();
+    state.getItemsOptions.length = 0;
     mocks.backgroundSelect.mockReturnValue([]);
     mocks.varyData.mockReturnValue([]);
     mocks.bibleOnScreen.mockResolvedValue(false);
@@ -481,6 +486,14 @@ describe('presenting-flow on-screen matching', () => {
         expect(await checkIsAnyPresentingFlowOnScreen(['/one', '/two'])).toBe(
             true,
         );
+        // A read in the background: a damaged entry is not announced from
+        // here (F-36), only when the person opens the sheet.
+        expect(state.getItemsOptions.length).toBeGreaterThan(0);
+        expect(
+            state.getItemsOptions.every((options) => {
+                return options?.isQuiet === true;
+            }),
+        ).toBe(true);
         state.flowItems.set('/three', [item(), item({ isSlide: true })]);
         expect(await checkIsPresentingFlowFilePathOnScreen('/three')).toBe(
             true,

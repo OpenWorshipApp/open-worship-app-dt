@@ -3,7 +3,7 @@ id: W-22c
 title: "Effacer l'écran, ou l'afficher et le masquer, depuis un déroulé"
 section: "Configuration"
 lang: fr
-translatedFrom: ff28bb64602ac801
+translatedFrom: eb9cb564b1ff2a10
 ---
 # W-22c — Effacer l'écran, ou l'afficher et le masquer, depuis un déroulé
 
@@ -23,7 +23,7 @@ l'éteindre — plutôt que quelque chose à montrer.
 
    Sous ces cinq, **[en:tran:Other Clear FG Items]** propose un **effacement plus fin,
    pour un seul élément du premier plan à la fois**, pour retirer le compte à rebours et laisser
-   tourner le texte défilant : **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) et **[en:tran:Clear FG Web Show]** (`WB`). Chacun fait exactement ce que fait le bouton de masquage de cet élément dans le panneau **[en:tran:Foreground]** ; ceux de `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show`, `Screen Show` et `Web Show` effacent tous leurs éléments d'un coup.
+   tourner le texte défilant : **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Fill Show]** (`FL`), **[en:tran:Clear FG Animation Show]** (`AN`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) et **[en:tran:Clear FG Web Show]** (`WB`). Chacun fait exactement ce que fait le bouton de masquage de cet élément dans le panneau **[en:tran:Foreground]** ; ceux de `Messages`, `Time`, `Video Show`, `Image Show`, `Fill Show`, `Animation Show`, `Camera Show`, `Screen Show` et `Web Show` effacent tous leurs éléments d'un coup.
 2. **Une action d'écran s'exécute, elle ne s'affiche pas.** Cliquez dessus pour effacer, faites-la glisser sur un écran miniature
    pour n'effacer que celui-là, ou faites un clic droit → **[en:tran:Apply on Screens]** pour choisir. Elle ne
    s'allume jamais comme « en direct », car rien d'elle n'est à l'écran pour être en direct. Dans le
@@ -57,4 +57,4 @@ l'éteindre — plutôt que quelque chose à montrer.
    ne change pas l'écran auquel la ligne est épinglée.
 4. **Où se trouvent les actions dans le menu.** **[en:tran:Add Action]** commence par **[en:tran:Clear Screen]** —
    une ligne qui n'ajoute rien et ouvre les cinq effacements, avec **[en:tran:Other Clear FG Items]**
-   en dessous pour les douze effacements par élément du premier plan — puis viennent **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, puis les cinq actions qui pilotent le déroulé.
+   en dessous pour les quatorze effacements par élément du premier plan — puis viennent **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, puis les cinq actions qui pilotent le déroulé.

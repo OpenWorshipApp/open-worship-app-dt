@@ -1,6 +1,7 @@
 import {
     parseAnimation,
     toAnimationStillFill,
+    type CssAnimationType,
     type GlslAnimationType,
 } from '../background/animationValueHelpers';
 import { genFillBackground } from '../background/fillValueHelpers';
@@ -29,6 +30,14 @@ const STILL_WIDTH = 480;
 export function toGlslAnimation(src: string): GlslAnimationType | null {
     const animation = parseAnimation(src);
     return animation?.engine === 'glsl' ? animation : null;
+}
+
+/** A person's own CSS animation, drawn from its code in a box of its own. */
+export function toCssCodeAnimation(src: string): CssAnimationType | null {
+    const animation = parseAnimation(src);
+    return animation?.engine === 'css' && animation.name === 'custom'
+        ? animation
+        : null;
 }
 
 export function genGlslAnimationElement(

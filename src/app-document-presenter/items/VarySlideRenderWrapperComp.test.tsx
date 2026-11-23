@@ -291,6 +291,26 @@ describe('VarySlideRenderWrapperComp selecting', () => {
         );
     });
 
+    test('a sub-slide card hands its own hundredth, not a float tail', async () => {
+        // Slide 16's first sub-slide: `15.01 + 1` is 16.009999999999998,
+        // which the footer's history badge then showed.
+        const slide = genSlide();
+        await render(
+            <VarySlideRenderWrapperComp
+                thumbSize={200}
+                varySlide={slide}
+                index={0}
+            />,
+        );
+        const event = genClickEvent();
+
+        mocks.rendered!.props.onClick(event, PptxSlide.calcIndex(15, 0), slide);
+        await vi.advanceTimersByTimeAsync(0);
+
+        const viewIndex = mocks.handleVarySlideSelectingMock.mock.lastCall![1];
+        expect(String(viewIndex)).toBe('16.01');
+    });
+
     test.each([
         [{}, undefined],
         [{ ctrlKey: true }, 'Ctrl'],

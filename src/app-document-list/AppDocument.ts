@@ -28,6 +28,7 @@ import {
 } from '../app-document-presenter/items/appDocumentHelpers';
 import CanvasItemText from '../slide-editor/canvas/CanvasItemText';
 import {
+    escapeSelectorValue,
     notifyElementHighlight,
     openPopupWindow,
     setParamFileFullName,
@@ -35,6 +36,7 @@ import {
     setParamKeyValue,
 } from '../helper/domHelpers';
 import { dirSourceSettingNames } from '../helper/constants';
+import { VARY_SLIDE_FILE_PATH_ATTR } from '../app-document-presenter/items/varySlideDomAttrs';
 import { SESSION_URL_PARAM_NAME } from '../media-sessions/folderSessionHelpers';
 import { findNonDefaultSessionIdByFilePath } from '../media-sessions/folderSessionPathHelpers';
 import { getBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
@@ -365,8 +367,10 @@ export default class AppDocument
 
     notifyNewSlidesAdded(slideIds: number[]) {
         for (const slideId of slideIds) {
+            // Its own document's card: ids restart at 0 in every document.
             const key =
                 `.${APP_DOCUMENT_ITEM_CLASS}` +
+                `[${VARY_SLIDE_FILE_PATH_ATTR}="${escapeSelectorValue(this.filePath)}"]` +
                 `[data-vary-app-document-item-id="${slideId}"]`;
             notifyElementHighlight(() => {
                 return document.querySelector(key);

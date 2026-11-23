@@ -120,6 +120,34 @@ describe('folder file entry actions', () => {
         expect(state.copy).toHaveBeenCalledOnce();
         expect(state.copy).toHaveBeenCalledWith({ name: 'one.jpg' }, '/photos');
         expect(take).toHaveBeenCalledTimes(2);
+        // Taken by the caller is not skipped: nothing to say.
+        expect(state.toast).not.toHaveBeenCalled();
+    });
+
+    it('names every file of a kind the list does not hold (F-25)', async () => {
+        const event = drag([
+            droppedItem('one.jpg'),
+            droppedItem('notes.txt'),
+            droppedItem('song.mp3'),
+        ]);
+        await genOnDrop({
+            dirSource: { dirPath: '/photos' } as never,
+            mimetypeName: 'image',
+        })(event as never);
+        expect(state.copy).toHaveBeenCalledOnce();
+        expect(state.toast).toHaveBeenCalledOnce();
+        expect(state.toast).toHaveBeenCalledWith(
+            'Unsupported file type!',
+            'notes.txt, song.mp3',
+        );
+    });
+
+    it('says nothing when every dropped file is taken', async () => {
+        await genOnDrop({
+            dirSource: { dirPath: '/photos' } as never,
+            mimetypeName: 'image',
+        })(drag([droppedItem('one.jpg')]) as never);
+        expect(state.toast).not.toHaveBeenCalled();
     });
 
     it('offers to open a folder before accepting a drop', async () => {

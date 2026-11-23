@@ -59,6 +59,7 @@ vi.mock('./LyricAppDocumentStage4', () => ({ default: mocks.stage4 }));
 vi.mock('./LyricAppDocumentStage5', () => ({ default: mocks.stage5 }));
 vi.mock('../lang/langHelpers', () => ({
     genOpenLyricFontFaces: vi.fn(),
+    getCurrentLocale: vi.fn(() => 'xx-XX'),
     initAllLangCss: mocks.initAllLangCssMock,
 }));
 vi.mock('../setting/directory-setting/appLocalStorage', () => ({
@@ -72,7 +73,7 @@ vi.mock('../others/themeHelpers', () => ({
     checkIsDarkMode: vi.fn(() => false),
 }));
 vi.mock('./lyricPrintHelpers', () => ({
-    installOpenLyricPrintPopupHandler: vi.fn(),
+    printOpenLyricPage: vi.fn(),
 }));
 
 import {

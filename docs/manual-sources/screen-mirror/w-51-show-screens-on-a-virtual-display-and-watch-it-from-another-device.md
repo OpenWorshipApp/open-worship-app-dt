@@ -5,7 +5,7 @@ section: "Screen Mirror"
 verify: [SP-30, SP-31]
 screenshots: 0
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-51 — Show screens on a virtual display and watch it from another device
 
@@ -13,6 +13,7 @@ A virtual display is a monitor that exists only inside the app. Screens are
 shown on it exactly as on a real monitor, and any phone, TV or computer can
 watch it — in a web browser, or as a video in a media player — without a
 cable or a second copy of the app.
+
 1. On the Presenter, click **[en:tran:Mini Screen Options]** — the ⋮ at the
    bottom right of the Mini Screen list — and in the menu it opens click
    **[en:tran:Virtual Screens Manager]**, then pick the floating panel's
@@ -201,5 +202,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `SP-30` · `SP-31`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

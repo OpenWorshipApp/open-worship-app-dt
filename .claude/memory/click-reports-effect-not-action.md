@@ -20,13 +20,17 @@ to tell a press that worked from a press that hit the wrong thing.
 - The answer now carries `isOnNow` (only when the control has an on/off state),
   `didChange`, and `unverified` — a full SENTENCE, not a flag, because a missing
   key is something a model infers past.
-- The control is read back **~250 ms after** `target.click()`. This app
+- The control is read back **~250 ms after** the press (`target.click()` at
+  first, `pressAtCentre` since 2026-10-06, below). This app
   re-renders on an event, not on the press, so reading it straight away reports
   the state BEFORE and every toggle would report "no change".
-- Four kinds of evidence, weakest last: a layer the press brought up
+- Four kinds of evidence at first, weakest last: a layer the press brought up
   (`opened`: dialog / panel / menu, or window + `page` from the CDP targets),
   the element is GONE (it did something), a toggle flipped (the state itself),
-  the label changed (same fact in words). Anything else is `didChange: false`.
+  the label changed (same fact in words). Later additions count too: a layer
+  it took down (`closed`), a question the press made the app ask (`question`),
+  a control of its own toolbar switched (`nowEnabled` / `nowDisabled`) and a
+  value it moved (`nowValue`). Anything else is `didChange: false`.
   The press is a click at the control's CENTRE, because the app opens menus at
   the event's coordinates (2026-10-06).
 - The aiming half is [[dom-match-exact-label-beats-everything]]: `matchTier`

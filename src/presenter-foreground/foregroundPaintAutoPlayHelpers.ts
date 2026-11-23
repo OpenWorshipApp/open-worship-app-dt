@@ -2,7 +2,10 @@ import {
     findNextPaintShowSrc,
     type PaintShowKindType,
 } from '../background/paintShowOrderHelpers';
-import { readPaintSavedSrcList } from '../background/paintShowSavedHelpers';
+import {
+    readPaintPinnedSrcList,
+    readPaintSavedSrcList,
+} from '../background/paintShowSavedHelpers';
 import {
     readSessions,
     toSessionSuffix,
@@ -93,13 +96,20 @@ export function tickForegroundPaint(
     );
     // The foreground's saved row is the one list it has always offered.
     const savedSrcList = readPaintSavedSrcList(kind, '');
+    const pinnedSrcList = readPaintPinnedSrcList(kind);
     const moveList = showingList
         .map(([screenId, data]) => {
-            const src = findNextPaintShowSrc(kind, data.src, savedSrcList, {
-                isNext,
-                step: options.step,
-                repeatKind: options.repeatKind,
-            });
+            const src = findNextPaintShowSrc(
+                kind,
+                data.src,
+                savedSrcList,
+                {
+                    isNext,
+                    step: options.step,
+                    repeatKind: options.repeatKind,
+                },
+                pinnedSrcList,
+            );
             return src === null ? null : { screenId, data, src };
         })
         .filter((move) => {

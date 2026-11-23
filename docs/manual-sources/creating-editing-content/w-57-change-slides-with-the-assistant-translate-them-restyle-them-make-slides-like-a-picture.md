@@ -5,7 +5,7 @@ section: "Creating & editing content"
 verify: [PL-108, CB-167]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-57 — Change slides with the assistant (translate them, restyle them, make slides like a picture)
 
@@ -64,8 +64,9 @@ like a picture of slides you like.
 
 **Not there?** **[en:tran:Open in Chatbot]** is in a document's menu only while AI is on
 (**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). A PDF,
-PowerPoint or Word file carries it too, but only an Open Worship slide document has slides
-the assistant can change; to make a song from such a file's words, see W-42 step 18. When no
+PowerPoint or Word file carries it too: the assistant changes a PowerPoint's or a Word
+file's own words in the file itself (W-65); to make a song from such a file's words, see
+W-42 step 18. When no
 assistant can answer, the chat says so and offers **[en:tran:Open AI settings]**.
 
 ::: details 🤖 Robot-verified — coverage traceability
@@ -73,5 +74,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PL-108` · `CB-167`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

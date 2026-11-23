@@ -89,7 +89,30 @@ describe('ItemColorNoteComp', () => {
     // The button was named `magenta` and nothing else: what it does went
     // unsaid, and in a translated window that one English word was all there was.
     test('is named for what it is, then the colour it holds', () => {
-        expect(renderNameOf('#ff00ff')).toBe('Color Note: magenta');
+        expect(renderNameOf('#ff00ff')).toBe('Color Note: fuchsia');
+    });
+
+    // One colour, one row, one name: the menu offered `fuchsia` AND
+    // `magenta` for #FF00FF and the dot then said the other one (F-6).
+    test('offers each colour once, under the name the dot says', () => {
+        const disabledOf = openMenuOf(null);
+        for (const [kept, twin] of [
+            ['fuchsia', 'magenta'],
+            ['aqua', 'cyan'],
+            ['gray', 'grey'],
+            ['darkgray', 'darkgrey'],
+        ]) {
+            expect(disabledOf[kept]).toBe(false);
+            expect(twin in disabledOf).toBe(false);
+        }
+    });
+
+    test.each([
+        ['#00ffff', 'aqua'],
+        ['#808080', 'gray'],
+        ['#a9a9a9', 'darkgray'],
+    ])('names %s by the row the menu offers, %s', (colorCode, name) => {
+        expect(renderNameOf(colorCode)).toBe(`Color Note: ${name}`);
     });
 
     test('says when there is no colour', () => {
@@ -104,13 +127,13 @@ describe('ItemColorNoteComp', () => {
     ])('offers no "No Color" when the colour is %s', (_name, colorNote) => {
         const disabledOf = openMenuOf(colorNote);
         expect(disabledOf['No Color']).toBe(true);
-        expect(disabledOf['magenta']).toBe(false);
+        expect(disabledOf['fuchsia']).toBe(false);
     });
 
     test('disables the colour it holds and offers to clear it', () => {
         const disabledOf = openMenuOf('#ff00ff');
         expect(disabledOf['No Color']).toBe(false);
-        expect(disabledOf['magenta']).toBe(true);
+        expect(disabledOf['fuchsia']).toBe(true);
         expect(disabledOf['red']).toBe(false);
     });
 
@@ -129,7 +152,7 @@ describe('ItemColorNoteComp', () => {
         const disabledOf = openMenuOf(null, '#00FF00');
         expect(disabledOf['No Color']).toBe(true);
         expect(disabledOf['lime']).toBe(true);
-        expect(disabledOf['magenta']).toBe(false);
+        expect(disabledOf['fuchsia']).toBe(false);
     });
 
     test('marks the current row case-insensitively', () => {
@@ -141,6 +164,6 @@ describe('ItemColorNoteComp', () => {
     test('offers to clear a colour chosen over the default', () => {
         const disabledOf = openMenuOf('#ff00ff', '#00FF00');
         expect(disabledOf['No Color']).toBe(false);
-        expect(disabledOf['magenta']).toBe(true);
+        expect(disabledOf['fuchsia']).toBe(true);
     });
 });

@@ -117,11 +117,7 @@ describe('bible-find bibleFindHelpers', () => {
         };
         const word = 'ព្រះ‌យេហូវ៉ា';
         expect(
-            highlightFoundWords(
-                `${word}​ទ្រង់`,
-                'ព្រះយេហូវ៉ា',
-                toKhmerFindingText,
-            ),
+            highlightFoundWords(`${word}​ទ្រង់`, 'ព្រះយេហូវ៉ា', toKhmerFindingText),
         ).toBe(`${mark(word)}​ទ្រង់`);
         // A conjunct is never split: `ស្រី` segments as `ស្` + `រី`.
         expect(highlightFoundWords('ស្រី', 'ស', toKhmerFindingText)).toBe(

@@ -73,7 +73,9 @@ export default function ScreenBackgroundAnimationComp({
     if (animation === null) {
         return <div style={boxStyle} />;
     }
-    if (animation.engine === 'glsl') {
+    // A shader, and a person's own CSS (drawn from its code in a box of its
+    // own, `cssCodeAnimationElementHelpers`): their still gradient here.
+    if (animation.engine === 'glsl' || animation.name === 'custom') {
         return (
             <div
                 style={{

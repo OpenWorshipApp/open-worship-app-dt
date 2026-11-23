@@ -187,9 +187,7 @@ describe('the verses found', () => {
 
 describe('words in another script', () => {
     it('knows which words have to be put into English', () => {
-        expect(checkVerseFindNeedsTranslation('ព្រះយេស៊ូសួរពេត្រុស')).toBe(
-            true,
-        );
+        expect(checkVerseFindNeedsTranslation('ព្រះយេស៊ូសួរពេត្រុស')).toBe(true);
         expect(checkVerseFindNeedsTranslation('jesus asked peter')).toBe(false);
         expect(checkVerseFindNeedsTranslation('Éternel, berger')).toBe(false);
         expect(checkVerseFindNeedsTranslation('John 3:16 — 愛')).toBe(true);
@@ -582,10 +580,7 @@ describe('genVerseFindThanksAnswer', () => {
 
     it('leaves more words of the verse, and other answers, alone', () => {
         expect(
-            genVerseFindThanksAnswer(
-                found,
-                'អត់មែនទេ ខ្ញុំគិតថានៅក្នុងគម្ពីរលូកាវិញ',
-            ),
+            genVerseFindThanksAnswer(found, 'អត់មែនទេ ខ្ញុំគិតថានៅក្នុងគម្ពីរលូកាវិញ'),
         ).toBeNull();
         expect(
             genVerseFindThanksAnswer(
@@ -756,9 +751,9 @@ describe('a found verse of a one-chapter book named in an answer', () => {
                 title: 'យូដាស ៣',
             },
         ];
-        expect(
-            pickNamedVerses(found, 'សូមអាន យូដាស ៣ ម្ដងទៀត។', 'ពគប'),
-        ).toEqual([found[0]]);
+        expect(pickNamedVerses(found, 'សូមអាន យូដាស ៣ ម្ដងទៀត។', 'ពគប')).toEqual([
+            found[0],
+        ]);
         expect(pickNamedVerses(found, 'សូមអាន ម៉ាថាយ ៥។', 'ពគប')).toEqual([]);
     });
 });

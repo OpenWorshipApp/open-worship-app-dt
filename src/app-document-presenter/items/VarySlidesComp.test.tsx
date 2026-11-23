@@ -14,6 +14,7 @@ const h = vi.hoisted(() => ({
     autoNext: null as null | ((data: any) => unknown),
     gridProps: null as any,
     bannerProps: null as any,
+    omitProps: null as any,
     getSlides: vi.fn(),
     getMissingFonts: vi.fn(),
     moveSlide: vi.fn(),
@@ -143,6 +144,12 @@ vi.mock('./MissingFontFamilyBannerComp', () => ({
         );
     },
 }));
+vi.mock('./PptxOmitBackgroundCheckboxComp', () => ({
+    default: (props: any) => {
+        h.omitProps = props;
+        return createElement('label', {}, `Omit: ${props.filePath}`);
+    },
+}));
 vi.mock('../../helper/timeoutHelpers', () => ({
     genTimeoutAttempt: () => (callback: () => void) => callback(),
 }));
@@ -175,8 +182,12 @@ import VarySlidesComp from './VarySlidesComp';
 let container: HTMLDivElement;
 let root: Root;
 
-async function renderSlides() {
-    await act(async () => root.render(createElement(VarySlidesComp)));
+async function renderSlides(
+    menuRoom: { height: number; width: number } | null = null,
+) {
+    await act(async () =>
+        root.render(createElement(VarySlidesComp, { menuRoom })),
+    );
 }
 
 beforeEach(() => {
@@ -195,6 +206,7 @@ beforeEach(() => {
     h.autoNext = null;
     h.gridProps = null;
     h.bannerProps = null;
+    h.omitProps = null;
     h.getSlides.mockImplementation(async () => h.slides);
     h.getMissingFonts.mockResolvedValue([]);
     h.doc = {
@@ -364,6 +376,48 @@ describe('slide list', () => {
             await act(async () => h.bannerProps.onRefresh());
             expect((h as any)[remover]).toHaveBeenCalledWith(h.doc.filePath);
             expect(h.doc.fileSource.fireUpdateEvent).toHaveBeenCalledTimes(1);
+        },
+    );
+
+    it('a PowerPoint file on stage 0 leads its slides with Omit Background, the fonts beside it in the menu strip', async () => {
+        h.doc.kind = 'pptx';
+        h.getMissingFonts.mockResolvedValue(['Missing Serif']);
+        await renderSlides({ height: 26, width: 64 });
+        expect(h.omitProps).toEqual({ filePath: h.doc.filePath });
+        const label = container.querySelector('label')!;
+        const row = label.parentElement!;
+        // One row, moved up into the strip and short of the menu button, at
+        // least the strip tall so the cards below do not move.
+        expect(row.style.marginTop).toBe('-26px');
+        expect(row.style.marginRight).toBe('64px');
+        expect(row.style.minHeight).toBe('26px');
+        expect(row.textContent).toBe(
+            `Omit: ${h.doc.filePath}Fonts: Missing Serif`,
+        );
+        // The row already moved: the banner must not move a second time.
+        expect(h.bannerProps.menuRoom).toEqual({ height: 0, width: 0 });
+    });
+
+    it('a PowerPoint file with no menu strip keeps its row in the flow', async () => {
+        h.doc.kind = 'pptx';
+        await renderSlides();
+        const row = container.querySelector('label')!.parentElement!;
+        expect(row.getAttribute('style')).toBeNull();
+        expect(h.bannerProps.menuRoom).toBeNull();
+    });
+
+    it.each([
+        ['pptx', 1],
+        ['app', 0],
+        ['docx', 0],
+    ])(
+        'a %s file on stage %s has no Omit Background, its banner in the strip as before',
+        async (kind, stage) => {
+            h.doc.kind = kind;
+            h.stage = stage;
+            await renderSlides({ height: 26, width: 64 });
+            expect(h.omitProps).toBeNull();
+            expect(h.bannerProps.menuRoom).toEqual({ height: 26, width: 64 });
         },
     );
 

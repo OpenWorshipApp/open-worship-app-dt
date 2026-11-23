@@ -4,7 +4,11 @@ import { tran } from '../lang/langHelpers';
 import { toWidgetLabel } from '../others/labelIconHelpers';
 import ResizeActorComp from '../resize-actor/ResizeActorComp';
 import Lyric from './Lyric';
-import { applyOpenLyricTheme, initOpenLyric } from './lyricHelpers';
+import {
+    addSavePptxInDocumentsAction,
+    applyOpenLyricTheme,
+    initOpenLyric,
+} from './lyricHelpers';
 import LyricManager, { LyricManagerContext } from './LyricManager';
 import {
     useAppCurrentRef,
@@ -76,6 +80,7 @@ export default function LyricHandlerComp({
 
     const [lyricManager] = useAppStateAsync(async () => {
         const openLyricPreviewer = await initOpenLyric(selectedLyric.filePath);
+        addSavePptxInDocumentsAction(openLyricPreviewer);
         const manager = new LyricManager(selectedLyric, openLyricPreviewer);
         return manager;
     }, [selectedLyric]);

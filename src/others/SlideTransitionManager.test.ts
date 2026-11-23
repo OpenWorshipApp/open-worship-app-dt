@@ -23,6 +23,10 @@ vi.mock('../helper/loggerHelpers', () => ({ appWarning: vi.fn() }));
 vi.mock('../server/fileHelpers', () => ({
     fsCheckFileExist: fsCheckFileExistMock,
     fsDeleteFile: fsDeleteFileMock,
+    getFileDotExtension: (fileFullName: string) => {
+        return fileFullName.substring(fileFullName.lastIndexOf('.'));
+    },
+    mimetypePptx: { extensions: ['.pptx'] },
 }));
 vi.mock('../helper/FileSource', () => ({
     default: {
@@ -53,6 +57,8 @@ import FileSource from '../helper/FileSource';
 
 const DOC = '/docs/Song.ows';
 const META = `${DOC}.transition.json`;
+const DECK = '/docs/Sunday.PPTX';
+const DECK_META = `${DECK}.transition.json`;
 
 describe('SlideTransitionManager', () => {
     beforeEach(async () => {
@@ -62,6 +68,7 @@ describe('SlideTransitionManager', () => {
         fsDeleteFileMock.mockClear();
         // The short-lived read cache is per module, not per instance.
         await new SlideTransitionManager().forgetCachedData(DOC);
+        await new SlideTransitionManager().forgetCachedData(DECK);
     });
 
     test('the sidecar sits beside the document', () => {
@@ -128,5 +135,66 @@ describe('SlideTransitionManager', () => {
         await manager.deleteMetaDataFile(DOC);
         expect(fsDeleteFileMock).not.toHaveBeenCalled();
         expect(fileSources.get(META).fireUpdateEvent).toHaveBeenCalledTimes(2);
+    });
+
+    describe('a PowerPoint deck', () => {
+        test('comes in with no transition by default, and reading writes nothing', async () => {
+            const manager = new SlideTransitionManager();
+            expect(await manager.getTransition(DECK)).toBe('none');
+            expect(await manager.resolveSlideTransition(DECK, 2)).toBe('none');
+            expect(await manager.getAllTransitions(DECK)).toEqual({
+                self: 'none',
+            });
+            expect(files.has(DECK_META)).toBe(false);
+        });
+
+        test('a slide of its own still wins over the default', async () => {
+            files.set(DECK_META, JSON.stringify({ '2': 'zoom' }));
+            const manager = new SlideTransitionManager();
+            expect(await manager.resolveSlideTransition(DECK, 2)).toBe('zoom');
+            expect(await manager.resolveSlideTransition(DECK, 3)).toBe('none');
+        });
+
+        test('unticking keeps the choice to follow the screen, re-choosing None removes it', async () => {
+            const manager = new SlideTransitionManager();
+            await manager.setTransition(DECK, undefined, undefined);
+            expect(JSON.parse(files.get(DECK_META)!)).toEqual({ self: null });
+            expect(await manager.getTransition(DECK)).toBeUndefined();
+            expect(
+                await manager.resolveSlideTransition(DECK, 1),
+            ).toBeUndefined();
+            // Read back from the sidecar, not the copy the write left.
+            await manager.forgetCachedData(DECK);
+            expect(await manager.getAllTransitions(DECK)).toEqual({});
+
+            await manager.setTransition(DECK, undefined, 'fade');
+            expect(JSON.parse(files.get(DECK_META)!)).toEqual({
+                self: 'fade',
+            });
+            expect(await manager.getTransition(DECK)).toBe('fade');
+
+            await manager.setTransition(DECK, undefined, 'none');
+            expect(files.has(DECK_META)).toBe(false);
+            expect(fsDeleteFileMock).toHaveBeenCalledWith(DECK_META);
+            expect(await manager.getTransition(DECK)).toBe('none');
+        });
+
+        test('a slide unticked leaves the default in place', async () => {
+            const manager = new SlideTransitionManager();
+            await manager.setTransition(DECK, 4, 'move');
+            expect(JSON.parse(files.get(DECK_META)!)).toEqual({ '4': 'move' });
+            await manager.setTransition(DECK, 4, undefined);
+            expect(files.has(DECK_META)).toBe(false);
+            expect(await manager.resolveSlideTransition(DECK, 4)).toBe('none');
+        });
+    });
+
+    test('a `null` document entry means nothing for a document with no default', async () => {
+        files.set(META, JSON.stringify({ self: null, '1': 'fade' }));
+        const manager = new SlideTransitionManager();
+        expect(await manager.getAllTransitions(DOC)).toEqual({ '1': 'fade' });
+        // Rewriting drops it rather than carrying it along.
+        await manager.setTransition(DOC, 1, 'zoom');
+        expect(JSON.parse(files.get(META)!)).toEqual({ '1': 'zoom' });
     });
 });

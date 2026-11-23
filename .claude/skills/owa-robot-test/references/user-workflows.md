@@ -21,7 +21,57 @@ still matches the live app.
 5. `Verify:` lists the coverage-matrix rows that prove the workflow. Verifying a
    tutorial or learning doc = running those rows.
 
-**workflowsVersion: 2026-11-15e** (**W-03, W-05 and W-10 — the Mini Screen's `Tr:` buttons read SL, BG and FG.** The user, with a picture of the footer's _Slide:_, _Background:_ and _Foreground:_ circled: _change transition name to `SL` `BG` `FL`_, `FG` chosen when asked, to match the clear buttons in the card's header. The three buttons show the codes, untranslated like the clear buttons' and `St:`; each keeps its translated **[en:tran:Slide transition]** / **[en:tran:Background transition]** / **[en:tran:Foreground transition]** as its tooltip and its name for a screen reader. Seen live 2026-11-15 on the dev Presenter in English: both Mini Screens' footers read `Tr: SL BG FG`, each button named _Slide transition_ / _Background transition_ / _Foreground transition_; the menu each opens is unchanged and held by the unit tests. SP-06.)
+**workflowsVersion: 2026-11-22a** (**W-21 — a video from a link is saved at up to 1080p, H.264 first.** From robot run 20261122-1806: the canonical link came down as 3840x2160 AV1, 100 MB for one song, which an older computer decodes in software if at all; and a download whose picture stream failed was handed over as its audio-only `.webm`. The note under the steps now says what a video is saved as. Seen live on the dev Presenter 2026-11-22: the same link saved as a 53 MB H.264 1920x1080 `.mp4` with AAC sound, and a download stopped part way told so with nothing left in the temporary folder.)
+
+Previous: **workflowsVersion: 2026-11-21h** (**W-65 — a SmartArt's boxes added, taken out or moved in any layout, and another diagram's layout.** The goal _chatbot can change do everything on a given pptx_, the gap after 2026-11-21g: step 9 (a box in ANY layout; the layout of another diagram in the file) and _Not there?_ (only a layout no diagram of the file has stays PowerPoint's; a box the layout has no room for and a layout not read rightly are answered with nothing changed). Seen live 2026-11-21 in the help window of a scratch dev instance (Auto → gemma4:cloud, the app in French): _In the SmartArt on slide 3, add a box Serve after Pray._, _… move Go before Plan._, _Dans l'organigramme, retire la case B1._ on an organisation chart PowerPoint saved (B1 out, its boxes up under the top box) and _Add a step called Pray between a and b in the chevrons._ -- each one change, drawn by LibreOffice from the diagram's definition, each put back byte for byte by **[en:tran:Undo this change]**; the add, which had first changed a deck read earlier in the same chat as well, asked again after its fix in a new chat (one deck read, then the other attached): one deck changed, the earlier one's bytes untouched. Not seen live: PowerPoint itself; a layout taken from another diagram (held by unit tests: no test deck has two). CB-209; `EC-787`.)
+
+Previous: **workflowsVersion: 2026-11-21g** (**W-65 — a Venn and a Hierarchy, and words on every slide decided by what was written.** The goal _chatbot can change do everything on a given pptx_, the gaps after 2026-11-21f: step 9 (overlapping circles or a tree are PowerPoint's Basic Venn and Hierarchy, still a SmartArt; a diagram with boxes under its boxes keeps them as a Hierarchy; words a slide says too are changed by what was written, not asked about) and _Not there?_ (a box under two others, an organisation chart's assistants, a list of blocks and a matrix stay PowerPoint's). Seen live 2026-11-21 in the help window of a scratch dev instance (Auto → gemma4:cloud): in Khmer a Venn of the steps diagram and a Hierarchy of a nested one, and a nested one asked for as a cycle offered the Hierarchy, its yes made; in French _Mets le SmartArt de la diapositive 3 en diagramme de Venn_, _Affiche le SmartArt de la diapositive 3 en organigramme hiérarchique_ and _Transforme le SmartArt de la diapositive 3 en cycle._ on the nested one (the Hierarchy offered); in Khmer _the church name at the bottom of each slide, green and bold_ (the box on every slide alone) and _every Grace Church in the file, green_ (every place) three times each, no question -- each file read without an error by Microsoft's Open XML validator, laid out by LibreOffice from the diagram's definition alone, and put back byte for byte by **[en:tran:Undo this change]**. Not seen live: PowerPoint itself. CB-208; `EC-785`, `EC-786`, `EC-783`.)
+
+Previous: **workflowsVersion: 2026-11-21f** (**W-65 — a SmartArt given another layout and kept a SmartArt.** The goal _chatbot can change do everything on a given pptx_, the gap after 2026-11-21e: step 9 (a cycle, a row of steps or a pyramid is PowerPoint's Basic Cycle, Basic Process or Basic Pyramid, still a SmartArt; a column of plain shapes is the turn into shapes) and _Not there?_ (every other layout, and a diagram with boxes under its boxes, stay PowerPoint's; PowerPoint draws it again its own way). Seen live 2026-11-21 in the help window of a scratch dev instance (Auto → gemma4:cloud): _Transforme le diagramme des étapes (Plan, Pray, Go) en cycle._ and _Fais du diagramme des étapes une pyramide._ in French, _សូមប្ដូរដ្យាក្រាមជំហាន (Plan, Pray, Go) ទៅជារង្វង់វដ្ត។_ with the app in Khmer -- each one change, the file's SmartArt parts read without an error by Microsoft's Open XML validator and drawn by LibreOffice (the cycle also by LibreOffice's own engine from the diagram's definition alone), each put back byte for byte by **[en:tran:Undo this change]**; and in Khmer, the two _every slide_ asks of 2026-11-21e three times each, each asked which and made as answered. Not seen live: PowerPoint itself. CB-207; `EC-784`, `EC-783`.)
+
+Previous: **workflowsVersion: 2026-11-21e** (**W-65 — a SmartArt made a cycle, a file open in PowerPoint, and words on every slide that a slide says too.** The goal _chatbot can change do everything on a given pptx_, the three gaps after 2026-11-21d: step 5 (a file open in PowerPoint, Word or LibreOffice is not changed, and the answer says so), step 9 (a cycle, a row or a column; the ask which) and _Not there?_ (a real SmartArt of another layout stays; a lock file left behind). Seen live 2026-11-21 in the help window of a scratch dev instance (Auto → gemma4:cloud): _Transforme le diagramme des étapes (Plan, Pray, Go) en cycle_ in French and the same in Khmer with the app in Khmer (asked first there); with PowerPoint's lock file beside the deck, _Mets le titre de la diapositive 1 en rouge_ (nothing changed, the answer saying to close it), then _Je l'ai fermé dans PowerPoint. Réessaie._; in Khmer, _the church's name at the bottom of every slide, green and bold_ and _every Grace Church in the file, green_ on a deck whose first slide says it too, each asked which and made as answered -- each drawn by LibreOffice and put back byte for byte by **[en:tran:Undo this change]**. Asked in French after, _my presentation is open in PowerPoint but PowerPoint is closed, what do I do?_ → this page's lock-file sentence, its four steps, no file made (`EC-783`: it had made a slide document). Not seen live: PowerPoint itself (the lock file was written by hand). CB-206; `EC-780`..`EC-783`.)
+
+Previous: **workflowsVersion: 2026-11-21d** (**W-65 — the slide master's own words and logo, and a SmartArt's colours and shapes.** The goal _chatbot can change do everything on a given pptx_, the two refusals left: the opening sentence, step 9 and _Not there?_ (the master's own shapes and a SmartArt's colours and shapes leave it; another SmartArt layout stays). Seen live 2026-11-21 in the help window of a scratch dev instance (Auto → gemma4:cloud), the app in French: _Le nom de l'église en bas de chaque diapositive : mets-le en vert et en gras_ (the master's box), _Enlève aussi le logo rouge en haut de toutes les diapositives_, _L'église s'appelle maintenant Hope Church : change le nom partout_, _Dans le diagramme des étapes (Plan, Pray, Go), mets les trois cases en vert_ (asked first), _Oui, convertis-le en formes_ (turned and green in one change), _Et fais de la case « Go » un cercle_, and the video step 8 promised, _Ajoute cette vidéo sur la diapositive 2 : https://www.w3schools.com/html/mov_bbb.mp4_; and the app in Khmer, the same SmartArt asks and the green church name (which coloured the same words in the subtitle too) -- each drawn by LibreOffice and put back byte for byte by **[en:tran:Undo this change]**. Not seen live: a file open in PowerPoint on Windows. CB-205; `EC-778`, `EC-779`.)
+
+Previous: **workflowsVersion: 2026-11-21c** (**W-65 — a picture, a video or a sound from an address typed in the question.** The goal _chatbot can change do everything on a given pptx_, its one refusal left: step 8 and _Not there?_ (the internet's media leaves it; a page, a video site, the church's network and WebP/AVIF/HEIC/SVG stay). Seen live 2026-11-21 in the help window of a scratch dev instance (Auto → gemma4:cloud, the app in French): _Mets cette image en haut à droite de la diapositive 2 : http://www.w3.org/Icons/w3c_home.png_ (two redirects, the logo drawn by LibreOffice); _Mets ce son sur la diapositive 3, qu'il joue tout seul : https://www.w3schools.com/html/horse.mp3_; _Ajoute l'image https://www.w3.org/ sur la diapositive 3_ (a page: nothing changed, the picture's own address asked for); _Put the logo at http://192.168.1.1/logo.png on slide 1_ (refused before any request); _Ajoute cette image au début du document : https://www.w3.org/Icons/w3c_home.png_ in a Word file (at its own size) -- each put back byte for byte by **[en:tran:Undo this change]**. Not seen live: a video from a link (held by unit tests), a file open in PowerPoint. CB-204; `EC-777`.)
+
+Previous: **workflowsVersion: 2026-11-21b** (**W-65 — a pattern, the theme, SmartArt's words, and a slide named by its words.** The goal _chatbot can change do everything on a given pptx_, its last refusals: the goal sentence, step 9 and _Not there?_ (a pattern, the theme and SmartArt's words leave it; SmartArt's shape and the master's own shapes stay). Seen live 2026-11-21 in the help window of a scratch dev instance (Auto → gemma4:cloud, the app in French): _Put a navy background on the prayers slide_ in a deck with none asked which slide, the four slides as buttons, nothing changed; _Give the John 3:16 slide a background of navy stripes on white_; _Mets les titres de toute la présentation en Georgia et la couleur d'accent 1 du thème en vert foncé_ (the chart's columns followed); _Change the deck's theme fonts: headings in Georgia and body text in Verdana_; _Dans le diagramme de la diapositive 3, remplace « Pray » par « Worship »_ on a copy of the deck with a three-step SmartArt -- each drawn by LibreOffice and put back byte for byte by **[en:tran:Undo this change]**. Not seen live: a Word file in these asks, a file open in PowerPoint. CB-203; `EC-774`..`EC-776`.)
+
+Previous: **workflowsVersion: 2026-11-21a** (**W-65 — the rest of a PowerPoint, by asking.** The goal _chatbot can change do everything on a given pptx_: a slide from a layout, a table's rows and colours, a chart's data and kind, an animation, a video or sound, a box's own look, shapes, links, a line through, slide numbers and a footer, a blend of colours, and a Word page's colour and picture -- step 9 and _Not there?_. Seen live in the help window of a scratch dev instance, in English and in French, each change undone byte for byte; `EC-771`..`EC-773`.)
+
+Previous: **workflowsVersion: 2026-11-20c** (**W-65 — a PowerPoint's boxes, words' sizes, the show, the slide size and pictures, by asking.** The goal _chatbot can change do everything on a given pptx_. Seen live 2026-11-20 in the help window of a scratch dev instance on Auto, in English, on a copy of the user's own hymn deck put back to its own MD5 before each ask: _Make the words bigger on every slide_ (each by a fifth of its own size), _Move the title on slide 2 to the bottom_, _Add a fade between the slides_, _Add a text box that says Welcome at the bottom of slide 1_, _Make the slides 4:3_, _Put a plain black background on every slide instead of the curtain_; and a JPEG and a PNG dragged from the disk onto the box beside the file: _Put this photo on slide 2, on the right side_ (put in whole, the answer saying it lies over the verse and offering to move it), _Use this picture instead of the curtain on every slide_ (all seven slides, the first slide's curtain under another name included), _Add this picture small in the bottom right corner of the first slide_; **[en:tran:Undo this change]** putting the file back byte for byte. Steps 7-8 added and _Not there?_ changed. Not seen live: a picture attached with the paperclip, another language, a Word file in these asks. CB-201.)
+
+Previous: **workflowsVersion: 2026-11-20b** (**W-65 — the look of a PowerPoint or Word file's words, a slide's background and the picture covering it.** The user, after _change color to green_ was answered _I cannot change the color of text or backgrounds, as that must be done directly in PowerPoint or Word_: the goal _chatbot can change do everything on a given pptx_. Seen live 2026-11-20 in the help window of a scratch dev instance, in English, on a copy of the user's own hymn deck (seven slides, each a curtain picture the size of the slide): _change color to green_ made every line's words green in one change; _Make the background dark blue_ said the colour was hidden behind the pictures, named them and offered in words to take them off; _yes, take the pictures off_ took both off in one change and the Presenter's preview showed dark blue behind green words with **[en:tran:Omit Background]** unticked; every change put back to the file's own MD5. Steps 4-6 and _Not there?_ changed; a size, bold and alignment asked through the tool only. CB-200.)
+
+Previous: **workflowsVersion: 2026-11-20a** (**W-65 — Change a PowerPoint or Word file with the assistant**, and W-57's _Not there?_ corrected. The user: _open pptx or docx in chatbot then interact to edit the powerpoint_, _able to undo_, the goal _chatbot smart enough to help editor the pptx and docx file_. Seen live 2026-11-20 in the help window of a scratch dev instance, in English, on fixture files: a `.pptx` row's **[en:tran:Open in Chatbot]**, the caution's **Open**, the card and its five buttons; _Change Lord to God everywhere_ changing the two lines that said it, and **[en:tran:Undo this change]** putting the file back byte for byte; a slide copied to the end and its title changed in one answer, one Undo taking both back; a `.docx` row's card, a word replaced and a paragraph added, undone the same; **[en:tran:Make a song from it]** drafting a song and leaving the file as it was. Not seen live: a file open in PowerPoint or Word, another language. W-57 had said only a slide document could be changed by the assistant. CB-198.)
+
+Previous: **workflowsVersion: 2026-11-19m** (**W-08 and W-09 — [en:tran:Dark] / [en:tran:Light] on the animations, every category on both sides.** The user: _`Animations` of background and foreground should support dark/light mode, keep the pin. all category should have dark/light_, then _check `Fills` for its dark/light mode work_. W-08: the switch at the top of **[en:tran:Animations]**, as on **[en:tran:Fills]**, swapping all 57 categories' tiles between their deep grounds and pale ones, the same effects in the same order; a Light tile named _(Light)_; the switch opening on the side the screen holds; **[en:tran:Pinned]** keeping Dark and Light tiles together on either side; the slide show walking the category on the side of the one up. W-09: Fill Show's and Animation Show's tiles under the same switch. The Dark side is the samples there were, src for src, so saved presets, sessions and run sheets keep their names. Seen live 2026-11-19 on the dev Presenter in English, no screen showing: screen 0 holding _Christmas - Fireworks (Light)_, its picker opening on Light with the tile lit and the lyric over it in black; Dark showing Christmas's deep snowfalls and Light its pale ones, shaders and CSS, through Starry Night, Candlelight, Stained Glass, Cross, Flames, Sunrise, Confetti and Hearts; the two pins kept above on both sides; **[en:tran:Animation Show]** opening on Dark with the same pins and switching to Light; no console error. Found and fixed on the way: the Sunrise shader drew its hill as a grey band on a pale ground. Not seen live: a Light tile on a showing screen, the slide show walking a Light row, and another language -- the unit tests drive them, and `Dark`, `Light` and `Animations` are keys every package has.)
+
+Previous: **workflowsVersion: 2026-11-19l** (**Forty-two recipes read against the code, and W-22c, no app** (`/owa-enhance-agent-docs`, HEAD `412035019`): every recipe whose words or cited code had moved since it was last read, step by step against the files its Verify rows cite, and every correction read again by a reader told no reason (65 of 65 held). Corrected: W-04 (the slide-show strip runs on **[en:tran:Fills]** and **[en:tran:Animations]**, and in Fill Show and Animation Show, too); W-06 step 6 and W-42 step 8 (the Bible Reader's **[en:tran:Go Back to Presenter]** asks first, since 2026-11-15); W-07 step 3 (the arrow that folds the sample verse to **[en:tran:Preview]**); W-08 (a tile of the other kind closes the code panel; a fill's show walks the side it is on); W-09 (Fill Show and Animation Show take the picture presets and no Dark / Light switch); W-22 (a gradient, a pattern or an animation as a background line, with no original to reveal); W-22c (fourteen per-widget clears, Fill Show `FL` and Animation Show `AN` among them); W-28 (a gradient or a pattern dims the canvas and adds nothing); W-37 (a quoted passage's **[en:tran:Collapse]** chevron, RD-137); W-45 (a gradient, pattern or animation goes into the deck as one plain colour); W-53 (where **[en:tran:Atom Mode]** sits). Not published, because no run has seen them work: W-37's **[en:tran:Export to MS Word]** writing a real file and **[en:tran:Copy to Bible Notes]** (RD-136) -- `references/live-checks.md` of `owa-enhance-agent-docs` holds both for `/owa-robot-test`. The French and Khmer pages carry every change. W-03, W-26, W-28, W-48 and W-49b were read again after `ce95ac12a` (a Space press now reaches every screen at once): nothing they say moved.)
+
+Previous: **workflowsVersion: 2026-11-19k** (**W-08 — [en:tran:Save as image] (PNG) and [en:tran:Save as video] (MP4) beside the [en:tran:Customize] preview.** The user: _for animation add button to save to image|video. for both background|foreground, for video let user choose dimention and duration_, then _save to background image (if active folder section available), same to video, same to foreground_, _for image have to be png_. W-08: the two buttons, the size asked (a video's seconds and frame rate too), the file in the session folder of Images / Videos -- from Animation Show, Image Show / Video Show -- or a toast when there is none, and a video's progress toast with Stop. Seen live 2026-11-19 on the dev Presenter in English, no screen showing: a shader's PNG and MP4 into Images and Videos, a CSS effect's PNG and MP4 from Animation Show into Image Show's and Video Show's folders, the progress toast holding still and Stop at 42% leaving no file. Not seen live: the no-folder toast, a 4K or 60 fps export, a Custom size and another language -- the unit tests drive them. PM-203.)
+
+Previous: **workflowsVersion: 2026-11-19j** (**W-48 step 1 — a PowerPoint file starts on [en:tran:No Transition].** The user, with the cyan transition icon beside a PowerPoint file's ⋮ circled: _for pptx only, make it own slide transition `None` by default. story: pptx normally has animation, only None transition not breaking the animation_. Step 1: a PowerPoint file's slides preview has its own transition ticked on **[en:tran:No Transition]** with no sidecar written, the icon showing it; another effect can still be picked, and unticking keeps the file following the screen (`{"self":null}`). Step 9: that kept untick is the one entry left when every level is off; choosing **[en:tran:No Transition]** again removes it. Verify unchanged (PM-154 gains it). Seen live 2026-11-19 on the dev Presenter in English, on `bg-test` with no `.transition.json`: the cyan ⊘ beside the ⋮ reading _Slides preview transition: No Transition_, and its box opening ticked on the ⊘. Not seen live: the untick and re-pick (the box is the person's to answer; the unit tests drive them), a deck's animation on a projector, and another language.)
+
+Previous: **workflowsVersion: 2026-11-19i** (**W-03 — a PowerPoint file's slides without their own background: [en:tran:Omit Background].** The user, with the empty strip over a PowerPoint file's slides circled: _add a checkbox here for `Omit Background`, checked by default, when checked build pptx without background, checked per file, when changed have rebuild the pptx html_. A new tip under W-03: the box at the left of that strip is ticked, so the slides are built without the background they were made with and the app's own background shows behind them; unticking builds them again with it, for that file alone; a file opened for the first time since is built again once, by itself. Verify gains PM-202. Seen live 2026-11-19 on the dev Presenter in English, on `bg-test`: ticked, its white, gradient and marble slides were their shapes alone; unticked, the backgrounds came back; ticked again, gone. Not seen live: such a slide on a projector, and another language.)
+
+Previous: **workflowsVersion: 2026-11-19h** (**W-07 step 5 — [en:tran:Screen Scale], each screen's own factor of the size.** The user, with the Font Family … Letter Spacing rows of Bible/LongText Properties circled: _add screen scale factor somewhere. fact: all sizing can't be applied to all screens, some screens are smaller or bigger_, _I recommend a collapsible under_ those rows, _1 on each screen by default. can change between 0.1-10_. Step 5: the size is one for every screen, and the **[en:tran:Screen Scale]** fold under the rows gives each screen a factor of it, 0.1 to 10, 1 until changed, with an arrow back to 1; Verify gains PM-201. Seen live 2026-11-19 on the dev Presenter in English, with screen 0 not showing: its verse at 130px for 2 and at half size for 0.5 on its Mini Screen, the dot on the folded title, the arrow back to 1. Not seen live: a showing screen window and another language.)
+
+Previous: **workflowsVersion: 2026-11-19g** (**W-08 — the animations by [en:tran:Category], [en:tran:Pinned] ones kept above, and six new effects.** The user: _for the css and glsl (background, foreground), add categroy control. I want to swhich category. e.g. sunday worship, christmas, thanksgiving, resurection day, ..._, _give maximum sample for each category_, _add all possible category_, _and also should be able to pin the item. so even category change it should be seen_, then _add more example, e.g. christmas should have like falling snow_. W-08: a **[en:tran:Category]** list of 57 occasions in six groups above the tiles; a category draws every effect of both kinds in its colours, the ones it is known by first and those in more than one look (numbered: _Christmas - Snowfall 2_), leaving out what does not suit the day; **[en:tran:Falling Leaves]**, **[en:tran:Fireworks]**, **[en:tran:Petals]**, **[en:tran:Candlelight]**, **[en:tran:Confetti]** and **[en:tran:Hearts]** in both kinds; a tile's pin, and **[en:tran:Pin]** / **[en:tran:Unpin]** in its menu, keep it in **[en:tran:Pinned]** whatever the category, on Animation Show too, thirty at most; the slide show walks the session's saved ones, else the pinned, else the category. The samples there were before keep their looks, and with them their place in saved presets, sessions and run sheets; a few are named by their new category (_Resurrection Day - Sunrise_ for the old _Easter - Sunrise_). The Bible text-contrast check now judges an animation by its ground with its colours over as much of it as its effect covers: a dark night with a few bright bursts had read as light and turned white words black. Seen live 2026-11-19 on the dev Presenter in English, screen 0 not showing: the list on Hope, then Christmas and Thanksgiving chosen through it; Christmas opening on Snowfall to Snowfall 4, Starfield to Starfield 3 and Bokeh, Bokeh 2 (CSS) and Snowfall to Snowfall 4, Starry Night to Starry Night 3 and Candlelight, Candlelight 2 (shaders), every shader's still drawn; Thanksgiving opening on Falling Leaves and Candlelight; Christmas - Snowfall pinned and kept in Pinned through the switch to Thanksgiving, and the pin and the category both kept through two reloads; Thanksgiving - Fireworks put up turning the Bible words black, found and fixed: Christmas - Snowfall 2 (shader) put up turned them white again, with its toast, and the red Christmas - Snowfall after kept them white; no console error. Not seen live: the thirty-pin limit, the pins on Animation Show, the slide show walking pinned tiles, a screen showing, and a pass in another language -- the unit tests drive them. PM-187, PM-189, PM-199.)
+
+Previous: **workflowsVersion: 2026-11-19f** (**W-08 — [en:tran:Edit Code] opens on the animation picked, and follows it.** The user, Glory (Light Rays) picked and **[en:tran:CSS Code]** showing the drifting-lights example: _css code editor not starting from current selected_. W-08: **[en:tran:CSS Code]** opens on the CSS effect picked, written as CSS -- each of the ten built-in effects has its CSS, drawn as the effect draws, its parts in the colors the effect gives them (`var(--accent)` and `var(--accent-1)` .. `var(--accent-6)`, new beside `--density`) -- or on a Custom CSS animation's own code; while open, either code panel follows another tile or **[en:tran:Effect]** (a built-in shader's source too), a color, speed or density changing nothing in it; **[en:tran:Reset]** goes back to the code of the animation picked; the 🤖 offers **[en:tran:Explain the CSS code]** on every CSS animation, and the chip _Write it as CSS code_ is gone. Seen live 2026-11-19 on the dev Presenter, screen 0 not showing: **[en:tran:Edit Code]** on Glory opening on _Light Rays, written as CSS_ with its rays in the preview and **[en:tran:Apply]** enabled; the Heaven tile clicked with the panel open bringing _Clouds, written as CSS_ in, its preview the built-in's clouds, and Glory clicked bringing Light Rays back; the assistant's `set` of Bokeh, Snowfall, Aurora, Waves, Starfield, Breathe, Clouds, Cross and Embers each bringing that effect's CSS into the open panel, its preview drawing it; **[en:tran:Apply]** on the Light Rays code making the animation **[en:tran:Custom CSS]** with the same look; **[en:tran:Shader Code]** open on Ripples following a change to Flames; with three colors, the Waves code's bands taking the colors as the built-in's do. Not seen live: Ctrl+Z after a follow and **[en:tran:Reset]** pressed by hand (a key in the editor needs the window in front), and the 🤖's chips on a built-in CSS effect (opening the help window asks a person first) -- the unit tests drive them. PM-198.)
+
+Previous: **workflowsVersion: 2026-11-19e** (**W-08 — a CSS animation's own code in [en:tran:CSS Code], by hand and by the assistant.** The goal _chatbot can help handle css and glsl code editing_: a CSS animation had no code to edit. W-08: **[en:tran:Edit Code]** on a CSS animation opens **[en:tran:CSS Code]** with a short example; applied, the animation is **[en:tran:Custom CSS]**, its CSS styling the boxes the app draws (`.scene`, six `.layer`, a `.dot` per **[en:tran:Density]**) in the animation's colours; CSS that loads anything or animates more than movement and fading is refused with the reason, kept in the panel, and the screen keeps what it had; the 🤖 offered _Write it as CSS code_ on a built-in CSS effect and **[en:tran:Explain the CSS code]** on a custom one. Seen live 2026-11-19 on the dev Presenter: through the assistant's tool, CSS typed into CSS Code on Animation Show and applied, the Mini Screen and the panel's preview drawing it; a `url()` and a keyframe animating `background` each refused, kept under **[en:tran:CSS error:]** with **[en:tran:Apply]** disabled; CSS sent to a shader made it a CSS animation, and sent with `apply: false` changed nothing; the 🤖 in the CSS Code title bar opening the help window on **Custom CSS** with **[en:tran:Make it slower]**, **[en:tran:Use warmer colors]** and **[en:tran:Explain the CSS code]**; a typed line in the help window (the no-cost shared assistant) rewriting the CSS as falling snow, applied, and a second line (_they all fall in one line at the left edge_) fixing where the dots sit -- the tool now says so itself when no `.dot` reads `--x` -- and its **[en:tran:Undo this change]** pressed, putting the first version back; the panel in Khmer (**[en:tran:CSS Code]**, Reset and Apply in Khmer). Not seen live: Ctrl+Z in the panel and Reset/Apply pressed by hand (typing needs the window in front), **[en:tran:Copy Code]** on a custom CSS animation, a CSS animation on a showing screen, and printing one -- the unit tests drive them. PM-198.)
+
+Previous: **workflowsVersion: 2026-11-19d** (**W-08 — the assistant on an animation in [en:tran:Customize] and [en:tran:Shader Code].** The user, the Shader Code panel open: _add chatbot icon to open in chatbot and let chatbot control editor_, the goal _chatbot can help handle css and glsl code editing_. W-08: a 🤖 (**[en:tran:Open in Chatbot]**) at the end of the Customize row and in the Shader Code title bar opens the help window on that animation, with what can be changed and three things to ask; the assistant changes what Customize changes and writes a shader's code into Shader Code, putting it on the screen only once it compiles. Seen live 2026-11-19 on the dev Presenter in English: both 🤖s opening the help window on Living Water - Ripples with **[en:tran:Make it slower]**, **[en:tran:Use warmer colors]** and **[en:tran:Explain the shader code]**; through the assistant's own tool, colours and speed changed on screen 0, code that compiles applied, code that does not kept in the panel with its error and the screen unchanged, and one undo taking all three back. Not seen live: a model's answer to a typed question (a model's round on the person's own tab), the **[en:tran:Undo this change]** press itself (its tool's undo was), a CSS animation's card and code sent for one, and Ctrl+Z in the panel (typing needs the window in front) -- the unit tests drive them. PM-197.)
+
+Previous: **workflowsVersion: 2026-11-19c** (**W-29 — the lookup language menu ends with [en:tran:Add Language Plugin].** The user, with the menu of `en - English` and `km - Khmer` circled: _at the bottom add `Add Language Plugin` to let user open language quickly to install a language plugin_. Step 2: the last row of the **[en:tran:Names and locations language]** menu, under a divider, opens Settings → **[en:tran:Languages]**. Seen live 2026-11-19 in the Bible Reader, in English.)
+
+Previous: **workflowsVersion: 2026-11-19b** (**W-15 — an Open Lyric `.ol.md` song becomes a song, and a song goes back out as one.** The user: _I want the app recognize \*.ol.md file as lyric file but must not support it in document, have to convert to .owl first before using and has option to export .owl to .ol.md_. A `.ol.md` dropped on the **[en:tran:Documents]** list becomes a `.owl` of the same name, its Markdown the song's, and is never listed or copied in as it is; another Markdown file dropped there is left alone; a song row's menu has **[en:tran:Export to Open Lyric File]** under **[en:tran:Export]**, writing `<song>.ol.md` into Downloads. Seen live 2026-11-19 in English: two songs from a hymnal folder and a `readme.md` dropped together, two songs made with the words of their files and nothing else in the folder; the export byte for byte the file the song came from. **[en:tran:Add Local Files]** takes a picked `.ol.md` the same way (it offers every `.md`) -- unit tested, not driven live: the OS file dialog is the person's.)
+
+Previous: **workflowsVersion: 2026-11-19a** (**W-15 — a song's history row above its words too.** The user, with the Stage Previewer's **[en:tran:Undo]** / **[en:tran:Redo]** / **[en:tran:Discard changed]** / **[en:tran:Save]** row circled: _add the history control to the preview of lyric as well_. The same row now sits above the rendered song in the pane over the Stage Previewer, outside its scroll, on the Presenter only, and takes no room while the song has no history. Seen live 2026-11-19 on the dev Presenter in English: a changed song showed the row in both places, each with **[en:tran:Undo]** and **[en:tran:Discard changed]** lit; a song with no history showed neither, the words starting at the pane's top. Not pressed live: the buttons are the Stage Previewer row's own (`FileEditingMenuComp`), held by its unit tests; **Ctrl+S** is still registered by the Stage Previewer's row alone, so it saves once. PM-168.)
+
+Previous: **workflowsVersion: 2026-11-15e** (**W-03, W-05 and W-10 — the Mini Screen's `Tr:` buttons read SL, BG and FG.** The user, with a picture of the footer's _Slide:_, _Background:_ and _Foreground:_ circled: _change transition name to `SL` `BG` `FL`_, `FG` chosen when asked, to match the clear buttons in the card's header. The three buttons show the codes, untranslated like the clear buttons' and `St:`; each keeps its translated **[en:tran:Slide transition]** / **[en:tran:Background transition]** / **[en:tran:Foreground transition]** as its tooltip and its name for a screen reader. Seen live 2026-11-15 on the dev Presenter in English: both Mini Screens' footers read `Tr: SL BG FG`, each button named _Slide transition_ / _Background transition_ / _Foreground transition_; the menu each opens is unchanged and held by the unit tests. SP-06.)
 
 Previous: **workflowsVersion: 2026-11-15d** (**W-08 and W-09 — sessions and a slide show on [en:tran:Fills] and [en:tran:Animations], and a slide show on [en:tran:Fill Show] and [en:tran:Animation Show].** The user, with the Images tab's session row and its ▶ `5` s show circled: _like background image, `Fills` and `Animations` should support session and auto-play_, then _`Fills Show` and `Animations Show` should support auto-play as well_. W-08: the two tabs carry the session row; a session keeps its own saved ones; once one is up the row carries the slide show, which moves every screen holding one on to the next tile of its row with its fit and look; one show per tab; F7 ends it. W-09: the same show in Fill Show's and Animation Show's pinned row, per session, ended by F10. Seen live 2026-11-15 on a scratch instance of the dev app, in Afrikaans: the session row on both tabs and the show only once something was up; the shaders walked in their drawn order (Easter - Sunrise, then the crosses, on through the glass and the aurora) every five seconds; **＋** made a second session, whose show ended Default's, its ▶ leaving Default's button; the dark gradients walked from the first to the fifth; **[en:tran:Clear Background]** took the show away and a sunrise put up after stayed put; on Animation Show, Glory - Light Rays walked to Heaven - Clouds, **[en:tran:Clear Foreground]** took the show away and the rays put up after stayed put; no console error. Not seen live: a fill saved into a session's own list (its name box is the person's), removing a session, Fill Show's show, a foreground session's ▶ and the Foreground menu's mark, and an English pass -- the unit tests drive them.)
 
@@ -35,49 +85,7 @@ Previous: **workflowsVersion: 2026-11-15** (**W-02 — the Bible Reader's 🖥�
 
 Previous: **workflowsVersion: 2026-11-14o** (**W-08 — every color in Customize has its own [en:tran:Opacity].** The user, with Customize's color wells circled: _make all color in customizing panel support transparency setting_. A gradient's colors are one to a line, each its well, an [en:tran:Opacity] slider from 0 to 255 and its Remove; a pattern's [en:tran:Background Color] and [en:tran:Color] carry one each, and the pattern's separate Opacity row is gone. A well is drawn at its color's opacity over a checkerboard. A gradient with a see-through color paints nothing under itself, which had made the faint stop solid. Seen live 2026-11-14 on the dev app with a gradient up: Color 2 at 43 drawn faint over the checkerboard and the Mini Screen fading to it. Not seen live: a pattern's two sliders (the unit test drives them). PM-184.)
 
-Previous: **workflowsVersion: 2026-11-14n** (**W-08, W-28 and W-48 — the Background panel's Colors tab is [en:tran:Fills]: a color, a gradient or a pattern.** The user asked for gradients, then patterns under a name that covers both (_Fills_), moving ones, Customize and saved fills, then the layout: _make each section collapsible_, _make the collapsing icon colored follow screen color_, _add a toggle icon somewhere in the gradient|pattern panel to open/close the customizing panel_, _the preset section should be part of gradient|pattern_, _each element (gradient pattern) should be able to copy the css_. Seen live 2026-11-14 on the dev app: a tile pressed goes up and is lit; Dark / Light swaps the rows below it; a moving tile's wind mark, and neither the tile nor the Mini Screen moving; a screen's section folded to its line by the arrow in its color, its number and what it holds kept; Customize's rows, a change going up after the pause, and its toggle at the end of the Gradients line; a saved fill's button under the patterns; the Fills tab's and a tile's right-click offering [en:tran:Transition]; **[en:tran:Copy CSS]** on a still and a moving tile and on a saved button, its toast, and what it copied painting -- and the moving ones moving -- in a page of its own. Not seen: the motion on a showing screen, the save itself (its name box is the person's) and a press on a saved fill. W-28's table row reads _Fills — a colour_, the one a slide takes. PM-181..PM-186.)
-
-Previous: **workflowsVersion: 2026-11-14m** (**The AI-agent recipe is W-64 now; W-62 is the song from a PowerPoint alone.** Two recipes had carried W-62 since 2026-11-13e, so the help read one page for both and neither could be marked read. The one added later, _Connect your own AI agent to the app (MCP)_, took the next free id, with its known questions, the French and Khmer pages and every note that named it; a `W-62` about the AI agent in an entry from 2026-11-13e on means W-64. `docs:gen` and a gate test now refuse an id used twice. No step changed.)
-
-Previous: **workflowsVersion: 2026-11-14l** (**Forty-four recipes read against the code, no app** (`/owa-enhance-agent-docs`, HEAD `0285748bb`): every recipe whose words or code had moved since it was last read, step by step against the files its Verify rows cite. Corrected: W-42 step 1 and step 5 (the Screen Mirror page has a top bar with the 🤖 too, and is a choice under ASKING ABOUT); W-57 steps 2 and 3 (the card has six buttons, **[en:tran:Make a song from it]** the sixth); W-63 (with no assistant, a look other than the size answers _Done._ alone); W-06 step 7 (the Lookup saves and shows by its own **[en:tran:Save bible item and show on screen]**, not by a double-click); W-14 step 1 (a Markdown row's menu: Open in Chatbot while AI is on, and Duplicate and Reload in the usual tail); W-61 step 2 (the strip's **＋** opens no menu, and the Long Text Show panel has no transition button); W-07 step 1 (Long Text Show keeps the book and gear at the far end of the row Add Language starts); controls written as templates in W-05, W-42 and W-62's song recipe. Not seen live (no app was running; `references/live-checks.md` of `owa-enhance-agent-docs` lists each): W-14 Open in Chatbot on a Markdown row, W-37 step 6, W-42 step 6's third topic button, W-50 step 2's 🤖, W-61 step 3, W-62's Read the words off the pictures, W-63 step 4. **Two recipes carry the id W-62**: the song from a PowerPoint (2026-11-11c) and the AI agent (2026-11-13e), so the help reads one page for both; left for a decision, nothing renumbered.)
-
-Previous: **workflowsVersion: 2026-11-14k** (**W-63 — a new screen, asked for.** The user's goal, _chatbot is very smart to help user control screen_ … _should cover everything in screen control_: the Mini Screen menu's **[en:tran:Add New Screen]** was the one control of the screens no ask could reach (EC-630). Seen live 2026-11-14 on a scratch profile, the Presenter with screen 0 showing John 3:16 and screen 1 off, Auto answering on the shared no-cost assistant: _Add a new screen for the stage_ in the English window, the menu's own Spanish label and an everyday Spanish line in a Spanish window, that Spanish line in the English window, a French line in a French window and the Khmer label and a Khmer line in a Khmer window each added screen 2, off and not ticked, the answer naming it, and **[en:tran:Undo this change]** took it away each time; with no assistant (the hourly limit paused it) _add a new screen_ got **[en:tran:Add New Screen]**, pressed it added screen 2 and its Undo took it away. Step 5 and W-63's last paragraph say so. CB-197.)
-
-Previous: **workflowsVersion: 2026-11-14j** (**W-50 step 2 — the guest’s page carries the Presenter header’s buttons, and the 🤖 opened there answers about it.** The user, with a picture of the Screen Mirror page beside the Presenter’s header: _screen mirror page should has all of this buttons_, the story _as a user I want chatbot help control screen mirror page as well especially ask for help_. Seen live 2026-11-14 on a scratch instance, Screen Mirror page: at the right of its top bar the [en:tran:Stay Awake] cup, the gear, 🤖, ✨ and **?**; **?** opened its menu ([en:tran:Open Online Help], [en:tran:Open Chatbot], [en:tran:Report a Problem]); the 🤖 asked the AI caution first (pressed [en:tran:Cancel] by the run — the caution’s **Open** is a person’s press, so the help window’s own picker on the page was not seen); the guide search asked from the page put this recipe first, its questions came up as the page’s own, and Help → [en:tran:All tips] listed the page’s lesson, which a walkthrough shows in words. A new paragraph says what to check when no host is listed. SP-32.)
-
-Previous: **workflowsVersion: 2026-11-14i** (**W-42 step 20 — the Bibles panel's **[en:tran:Add Bible Item]** asks how, and **[en:tran:Open in Chatbot]** opens a chat with its first line written.** The user, with the button circled: _when click `Add Bible Item` should open a context menu for `Bible Lookup` and `Open in Chatbot`, `Open in Chatbot` should open the chatbot and put pretext prompt to let user continue editing by pasting more bible paragraph_, the story _as a user I want to open chatbot with pre-existing prompt for letting assistant help extract bible items for me_. Seen live 2026-11-14 on a scratch instance, Presenter, no assistant: the button opened a menu of the two under it; **[en:tran:Open in Chatbot]** asked the AI caution first (pressed **[en:tran:Cancel]** by the run, which handed nothing over; the caution's **Open** is a person's press), and the request left as the button leaves it opened a new chat with _Add the Bible passages in this text to my Bibles list:_ in the box and the caret under it; a sermon paragraph pasted under it saved Psalm 23 -- read in the middle of a sentence -- John 3:16-17, Romans 5:8, 1 Corinthians 13:4-7 and Genesis 1:1 to Default; the line sent alone was answered and put back in the box; with the app in Khmer the menu, the line, a Khmer paragraph's passages (saved in the Khmer Bible) and both answers were Khmer (EC-760). PR-20, CB-181.)
-
-Previous: **workflowsVersion: 2026-11-14h** (**W-06 step 7 — a passage the assistant puts up is saved to the Bibles list first.** The user's rule, _the rule is bible verse have to save to list first (if not added) before show on screen_: _show gen 3 on screen_ had put Genesis 3 up, and the list never got it (EC-704). Seen live 2026-11-14 on a scratch instance, Presenter, Auto. `/verse Romans 8:28` saved the passage and put it up, and the answer said it was saved. _show gen 2 on screen_ and _put john 1:1 on the screen_ were each saved once and put up. A passage the list already held was put up and not saved again. Step 7 says so, in French and Khmer too. CB-61.)
-
-Previous: **workflowsVersion: 2026-11-14g** (**W-63 — with no assistant, the change as a button.** The user's goal, _chatbot is very smart to help user control screen_: with no assistant answering, a screen ask was told the setting and that nothing had changed, and nothing in the window could make the change (EC-627). Seen live 2026-11-14 on a scratch profile with the hourly limit paused, the window in English, screen 0 showing John 3:16 (KJV): a bigger verse, a lock, a zoom slide transition, another version (both side by side on the Mini Screen), _Centre it_ typed under the answer, bold and the Bible taken off screen 0 were each offered as a button, each pressed and each put back with **Undo this change**; a Spanish lock in the English window the same. W-63's last paragraph says so. CB-196.)
-
-Previous: **workflowsVersion: 2026-11-14f** (**W-42 step 20 — adding a passage is never showing it.** The user's report, _chatbot confused between adding bible item and showing bible verse on screen_: _add bible items for me for: john 3:16 gen 1_ had put Genesis 1 on the screen and saved nothing. Seen live 2026-11-14 on a scratch instance, Presenter, Auto: that line saved both passages with no assistant and the screen stayed blank; asked for _the verse that says the Lord is my shepherd_, the answer offered **Psalm 23:1** and pressing it saved it (EC-703).)
-
-Previous: **workflowsVersion: 2026-11-14e** (**W-42 step 20 — a list of passages pasted as it is, or inside a paragraph, saved to a Bibles list, and what is unclear asked.** The user's story: _sometime I carry a list of bible verses so I expect chatbot can parse and add those items into to the list_, _parse a messy bible verse_, _extract from a given paragraph, if ambigous bible verse then have to follow up to ask for user input_. Seen live 2026-11-14 on a scratch instance with the KJV and a Khmer Bible, the Bible Reader in front, no assistant: a messy list of four saved two at once and asked about an open range and a Bible not installed, each press saving its passage; a paragraph saved three and asked which book _Ph_ meant; with the app in Khmer the questions and **Skip** were Khmer (EC-626).)
-
-Previous: **workflowsVersion: 2026-11-14d** (**W-06 step 7 — a passage asked for in another language, with no assistant.** The user's goal, _chatbot is very smart to help user control screen_: with no assistant answering, a passage asked for in a language other than English, to put it up or to read it, had been answered with a guide page, because the offline reader knew English words only (EC-622). Seen live 2026-11-14 on a scratch profile with the hourly limit paused, the window in English, a Khmer Bible and the KJV installed: a Khmer line putting John 3:16 on the screen was read from the Khmer Bible, written as it names the book, with one button, which put it on the screen when pressed; a Spanish one, and a Spanish question about John 3:16 in the NVI, with no Spanish Bible installed, said the passage could not be read and offered **[en:tran:Import a Bible for me]**, whose press listed the 31 Spanish Bibles of the free collection; an English one was put up as before. A Spanish how-to is still answered from the wrong guide page (EC-454). Step 7 says so, in French and Khmer too. CB-61.)
-
-Previous: **workflowsVersion: 2026-11-14c** (**W-63 — with no assistant, the setting asked about.** The user's goal, _chatbot is very smart to help user control screen_, _check display_: with no assistant answering (the hourly limit paused it), a screen ask had been answered with what each screen showed — _check the display: which monitor is each screen on?_ named no monitor, and _make the Bible text on screen 1 bigger_ never said that nothing had changed (EC-625). Seen live 2026-11-14 on a scratch profile with the limit paused, the window in English: the monitor each screen is on, the transitions, the lock, the groups, the Bible versions, Line Sync, the Bible text's size, the stage and the tick, each said per screen, then what each screen shows and how to make the change; a Spanish monitor ask in the English window the same. W-63's last paragraph says so. CB-195.)
-
-Previous: **workflowsVersion: 2026-11-14b** (**W-63 — a line typed in another language.** The user's goal, _should cover everything in screen control_: until now only English asks went to the screens. Each installed language reads its own words for the screens' controls (EC-614), and W-63 says so in one paragraph. Seen live 2026-11-14 on a scratch profile, the assistant paused by its hourly limit: in an English window with Spanish installed, a Spanish line making the Bible text on screen 1 bigger and one locking screen 1 were each taken as about the screens and answered with what each screen is showing; a Spanish HOW question and a verse put up were not. The same in Japanese, which does not space its words: its style and lock asks were taken, its how-to and a song's words made bigger were not. Not yet seen with an assistant answering, so no step says what it changes. CB-194.)
-
-Previous: **workflowsVersion: 2026-11-14a** (**New W-63 — change the screens with the assistant.** The user: _chatbot is very smart to help user control screen_ -- _change font-size color or style for bible showing_, _add another bible version to existing showing bible_, _change transition_, _check display_, _group screen_, _should cover everything in screen control_. Typed in the help window on a scratch profile, the Bible text's size, colour, bold and shadow, centring, outline, line spacing and the style back to normal; a second Bible added beside John 3:16, lined up verse by verse and taken off; the slide and background transitions; the stage, the tick and a clear were changed by the assistant (`owa_screen_edit`, EC-611, EC-615), and _Undo that_ put a change back; which display each screen is on, what is showing, the versions and the transitions were read. Only those steps are written: moving a screen to another display, grouping screens and locking one were driven through the tool alone, and pressing **[en:tran:Undo this change]** in the window is not seen yet. CB-192, CB-193.)
-
-Previous: **workflowsVersion: 2026-11-13l** (**W-05 step 15 — a song's `Note` blocks shown, read-only, under its slides.** The user, with the song's `Note` block circled in the Lyric Editor, its slides showing nothing, and a PowerPoint's and a slide document's note boxes beside them: _like pptx I want those are rendered as read-only note, render all note on one whole document note, just make it looks division for each note element_, then _`Note *` is the special element that should be render in slide note_. Every `ol:Note` / `ol:Note N` block is a division of one **[en:tran:Document Note]** box under the Stage Previewer, the Presenter's only, there only for a song that has one. Seen live 2026-11-13 on the dev app in English, on the user's song: the box under the Stage Previewer with its one `Note` division, the collapsed Previewer above left as it was. Not yet seen live: a second note added and the last one removed in the Lyric Editor (held by `LyricHandlerComp.test.tsx`), a non-English pass. Verify: PM-180.)
-
-Previous: **workflowsVersion: 2026-11-13k** (**W-09 — a countdown a day or more away reads its days first.** The user, shown that 42 days read `⏳ 1001:54:52`, chose _41d 17:54:52, translated_. W-09's duration line said 25 h reads `25:00:00`; it reads `1d 01:00:00`, the day in the app's language. Seen live 2026-11-13 on a scratch instance in Khmer: 25 h 0 m 7 s and **[en:tran:Show Countdown]** read `⏳ 1 ថ្ងៃ 01:00:07` in the Mini Screen, and a countdown to Christmas `⏳ 41 ថ្ងៃ 23:16:57`. The French and Khmer pages say it too. Verify: PM-18.)
-
-Previous: **workflowsVersion: 2026-11-13j** (**W-57's "Not there?" — a PDF, PowerPoint or Word row carries **[en:tran:Open in Chatbot]** too.** Since 2026-11-13i a PowerPoint, Word or PDF row in **[en:tran:Documents]** carries the item, and the line still said a slide document only. Seen live 2026-11-13 on a scratch instance of the dev app, in Khmer: the item second in the menu of a PowerPoint, a Word, a PDF and a slide document row; not pressed (it asks the AI caution first). W-57 now says only a slide document has slides the assistant can change, and sends a song from such a file to W-42 step 18. Verify: PL-108.)
-
-Previous: **workflowsVersion: 2026-11-13i** (**W-42 step 18 — a song from a PowerPoint, a slide document, a Word file or a PDF in your Documents list.** The user: _chatbot have to support turning powerpoint to lyric, it related to creating lyric from documents file_, then _it should use the tool pptx-to-html-conv like what the app using, then extract text from the html_, _after powerpoint to lyric then appdocument to lyric_ and _also add other support like docx pdf ..._. _new lyric from powerpoint_ had been answered that the app cannot. Seen live 2026-11-13 on a scratch instance of the dev app holding a copy of the user's eight hymnal decks, a slide document, a Word file and a PDF, in English and in Khmer, no assistant asked: six decks listed as buttons and the way to the other two said; each deck written out under its whole title, all eight; a slide document's song saved through **[en:tran:Create]**; a Word file named in the question, and attached; a PDF's button; the slide document's card's **[en:tran:Make a song from it]**. Not pressed live: a Documents row's **[en:tran:Open in Chatbot]** (it asks the AI caution first) and a Resources file's card. W-42's Verify gains CB-189, which step 6's change named, and CB-190.)
-
-Previous: **workflowsVersion: 2026-11-13h** (**W-62 step 2 — choose your own AI program, and the agent asks which app.** The user: _for mcp connection, let user choose tool specific like chatgpt clause or just binary file path and so on_, _provide maximum options for user_, then _make the mcp to remind agent to check mcp version and app version_ and _this machine running 3 instances of open worship app so the mcp should check and let user pick one to work with_. The **[en:tran:AI agents (MCP)]** line is a picker now: a terminal command, a settings file's text, a plain JSON block or the program's path for the program chosen, one **[en:tran:Copy]**, and **[en:tran:Copy JSON]** gone. Seen live 2026-11-13 on the dev app and a scratch instance in Khmer: Claude Code, Cursor, the Codex config file, Continue and the program path copied exactly as shown, the choice kept; with two and three apps open a fresh server listed them and drove only the one chosen. Verify: ST-93.)
-
-Previous: **workflowsVersion: 2026-11-13g** (**W-42 step 6 — a word or two on its own is asked about first, and up to five buttons under an answer; steps 18 and 19 say which ⋮.** The user, with _lyric_ typed alone and answered with an apology: _when user type only few word, chatbot should follow up, before provide result should confirm_ -- the job in mind was a lyric file made from a PowerPoint -- and _keep providing user with maximum amount of options_. A word or two typed alone in a new chat is answered by the window with no assistant: a question and up to six of its own questions as buttons, a PowerPoint song into a lyric file among them; further down a conversation the assistant asks the same way. An answer ends with up to five buttons (two or three before). And the attach in steps 18 and 19 names the ⋮ at the left of the box -- the assistant had sent people to the TAB's ⋮. Seen live 2026-11-13 on a scratch instance of the dev app (Auto, the shared gemma4:cloud): _lyric_ answered at once with six buttons, the PowerPoint one pressed and answered with the attach steps, _background_ further down answered with a question and five options; in a French window _chant_ answered in French. CB-189.)
-
-Previous: **workflowsVersion: 2026-11-13f** (**W-42 steps 18 and 19 — several songs at once, from their links or their PowerPoint slides.** The user: _it work for only one url, I wish it could create multiple … also multiple files_, with eight PowerPoint decks of a hymnal dropped into their Documents to test with. Three links in one message had offered only the third song, two links were no song link at all, and a PowerPoint file could not be attached. Seen live 2026-11-13 on a scratch instance of the dev app, Auto on gemma4:cloud: four decks attached under _Create lyric files from these_ drafted in 2 s with no assistant asked, and **Create all 4 songs** saved four; three links in one message drafted three in 8 s and **Create all 3 songs** saved them; `/lyric` with two links drafted two in 6 s; all seven valid. A Word file is read the same way and unit-tested, not driven live, so this page names PowerPoint only. Verify: CB-188.)
-
-Older entries — 380 of them, 2026-11-13e and before, with the notes that followed them — are in [user-workflows-history.md](./user-workflows-history.md), moved there unchanged on 2026-11-14 (`AD-33`): they were nearly half of this file, read whole by every agent that opened it for a row or a recipe. New entries still go on top here; when the head passes about 20, the oldest move to the top of that file.
+Older entries — 401 of them, 2026-11-14n and before, with the notes that followed them — are in [user-workflows-history.md](./user-workflows-history.md), moved there unchanged on 2026-11-14 (`AD-33`) and on 2026-11-19 (21 more): they were nearly half of this file, read whole by every agent that opened it for a row or a recipe. New entries still go on top here; when the head passes about 20, the oldest move to the top of that file.
 
 ---
 
@@ -271,12 +279,20 @@ Tips:
   and in the Slide Editor: press it and the slides that differ take the display's size,
   and the button goes away. One slide at a time is the Slide Editor's **[en:tran:Width]** and
   **[en:tran:Height]** boxes, with **[en:tran:Apply All Slides]** for the whole document.
+- **A PowerPoint file's own background, or yours.** At the left of the row over a
+  PowerPoint file's slides — the row the document's ⋮ sits at the end of — **[en:tran:Omit Background]**
+  is ticked: the slides are built without the background they were made with, so the
+  background you put up from the **[en:tran:Background]** panel (W-08) shows behind them.
+  Untick it to have the file's own backgrounds back; the slides are built again, which
+  takes a moment on a long file. The choice is that file's alone, and goes with it when
+  it is renamed or moved to the trash. A PowerPoint file opened for the first time since
+  this box came is built again once, by itself.
 
 - **More than one folder of songs and slides.** The row of buttons under the
   **[en:tran:Documents]** title — **[en:tran:Default]** and **＋** — keeps other folders
   one press away (W-58).
 
-_Verify: PL-01, PM-05..09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM-170._
+_Verify: PL-01, PM-05..09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM-170, PM-202._
 
 ### W-04 — Auto-play slides on a timer
 
@@ -307,13 +323,13 @@ _Verify: PL-01, PM-05..09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM
    the bottom left of the slides previewer, in place of the stopwatch. Click its
    **pause** button to stop, or its **✕** to stop and collapse it back to the stopwatch.
 
-The same strip runs a show over a **[en:tran:Background]** list — **[en:tran:Images]**,
-**[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
-screen — and over each **[en:tran:Image Show]** / **[en:tran:Video Show]** / **[en:tran:Web Show]** session, where it
+The same strip runs a show over a **[en:tran:Background]** list — **[en:tran:Fills]**,
+**[en:tran:Animations]**, **[en:tran:Images]**, **[en:tran:Videos]** and **[en:tran:Webs]**, appearing once that list has something on a
+screen — and over each **[en:tran:Fill Show]** / **[en:tran:Animation Show]** / **[en:tran:Image Show]** / **[en:tran:Video Show]** / **[en:tran:Web Show]** session, where it
 rides the panel's top row. On the Webs list a saved **URL** is stepped just like a page
 file.
 
-_Verify: PM-10, PM-137, PM-138, PM-140._
+_Verify: PM-10, PM-137, PM-138, PM-140, PM-195, PM-196._
 
 ### W-05 — Present song lyrics
 
@@ -341,14 +357,14 @@ _Verify: PM-10, PM-137, PM-138, PM-140._
 5. Links the app cannot show — a PDF, or a line that is not a web address — still get
    their named slide, just an empty one.
 6. **One song can be previewed at several stages at once.** **[en:tran:Add Stage]** in
-    the Stage Previewer header opens the same menu the mini screen's **St:** badge does:
-    **[en:tran:Stage] 0** to **[en:tran:Stage] 5** — a stage already on screen is listed but greyed out — and
-    **[en:tran:Increment] · [en:tran:Stage] N** at the foot, which adds one past the highest stage you have.
-    Increment is how you get past Stage 5, and it is what matches a screen whose **St:**
-    number you have already pushed up there. Each stage arrives as its own chip and its
-    own pane, in its own colour; the **×** on a chip (**[en:tran:Hide Stage] N**) hides
-    that stage's pane again — its look under **⚙** is kept for when you add it back — and
-    the padlocked **[en:tran:Stage] 0** stays. 📸
+   the Stage Previewer header opens the same menu the mini screen's **St:** badge does:
+   **[en:tran:Stage] 0** to **[en:tran:Stage] 5** — a stage already on screen is listed but greyed out — and
+   **[en:tran:Increment] · [en:tran:Stage] N** at the foot, which adds one past the highest stage you have.
+   Increment is how you get past Stage 5, and it is what matches a screen whose **St:**
+   number you have already pushed up there. Each stage arrives as its own chip and its
+   own pane, in its own colour; the **×** on a chip (**[en:tran:Hide Stage] N**) hides
+   that stage's pane again — its look under **⚙** is kept for when you add it back — and
+   the padlocked **[en:tran:Stage] 0** stays. 📸
 7. To change how a stage's slides **look**, click the **⚙** on that stage's chip
    (`Stage 0`, `Stage 3`, …) in the Stage Previewer header. A small **[en:tran:Stage Style]** window
    opens — drag it anywhere, it remembers where you left it. It sets the
@@ -491,7 +507,8 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, PM-17
    press **Ctrl+→** (or **Alt+→**): the screen moves on by as many verses as it is showing —
    John 3:16 becomes 3:17, John 3:16-18 becomes 3:19-21 — into the next chapter when the
    chapter ends, and **Ctrl+←** goes back. It only works while the main window is on the
-   Presenter: from the Bible Reader, press **[en:tran:Go Back to Presenter]** first. Nothing
+   Presenter: from the Bible Reader, press **[en:tran:Go Back to Presenter]** first, and once
+   more in the question it asks (W-02). Nothing
    on the mini screen card steps the verse; from the Presenter itself, present the next
    passage the same way you presented this one.
    **Another version on the screen.** If no passage is on the screen yet, press **Ctrl+B**,
@@ -552,7 +569,7 @@ _Verify: PL-07..08, PM-11, PM-115, PM-116, PM-117, PM-127, PM-148, PM-169, PM-17
     slide; the file is named after them all. Each Bible verse is a
     part named after its number (`Verse 22`, `Verse 23` …), and in it one line
     per version, the verse number first — `22: A cheerful heart is good
-    medicine …` — in that version's own digits. Edit it like any other song
+medicine …` — in that version's own digits. Edit it like any other song
     (W-05); with **[en:tran:Atom Mode]** on, each version's line is a slide of
     its own. 📸
 12. To put the passage up as a short notice over whatever is on the screen,
@@ -593,6 +610,9 @@ the edge or shadow that keeps them readable over a picture. A
    background. Press **[en:tran:Dark]** when the words go over a dark picture
    or video — they turn white — or **[en:tran:Light]** for a light background —
    they turn black. The look you had is kept and edged the other way round.
+   The arrow at the start of the line they are on folds the verse away and leaves
+   only that line, named **[en:tran:Preview]**; the panel opens folded until you
+   press it again.
 4. **Pick a look.** Each tile under the verse is two letters wearing it:
    **[en:tran:Normal]** is plain words; **[en:tran:Thin Outline]**,
    **[en:tran:Outline]** and **[en:tran:Heavy Outline]** edge the letters;
@@ -603,7 +623,14 @@ the edge or shadow that keeps them readable over a picture. A
    read over a busy picture. One press changes every screen at once, and the
    tile in use is ringed.
 5. **Change the size.** Drag **[en:tran:Font Size]**, or type a number in the
-   box beside it.
+   box beside it. That size is one for every screen. A screen that draws it too
+   big or too small — a smaller or a larger projector — takes a factor of its
+   own: press **[en:tran:Screen Scale]**, the fold right under these rows, and
+   each screen has a row (**[en:tran:Screen]: 0**, **[en:tran:Screen]: 1**, …,
+   its icon in the colour of its Mini Screen). Every screen starts at `1`; drag
+   or type from `0.1` to `10` — `2` draws that screen's words twice the size,
+   `0.5` half. The arrow at the end of a row puts it back to `1`. While any
+   screen is not at `1`, the folded title carries a dot.
 6. **Change the colour.** Press the small square at the end of the
    **[en:tran:Text Color]** row; a colour picker opens under it. Pick a colour
    and the words on the screen change at once. Press the square again to close
@@ -641,10 +668,10 @@ the edge or shadow that keeps them readable over a picture. A
    Right-click a saved tile for **[en:tran:Rename Preset]**,
    **[en:tran:Replace with Current Look]** and **[en:tran:Remove Preset]**.
 10. **[en:tran:Reset]**, at the bottom, goes back to plain words and keeps the
-   size. The font goes back to each Bible's own, and both highlight colours
-   to their own.
+    size. The font goes back to each Bible's own, and both highlight colours
+    to their own.
 
-_Verify: PM-13..14, PM-57, PM-159..162, PM-167, SP-21._
+_Verify: PM-13..14, PM-57, PM-159..162, PM-167, PM-200, PM-201, SP-21._
 
 ### W-08 — Set the background (color / image / video / web)
 
@@ -681,6 +708,30 @@ _Verify: PM-13..14, PM-57, PM-159..162, PM-167, SP-21._
      Every tile is still; rest the pointer on one to see it move, and click it to put it on
      the screen. Only the screen moves: the Mini Screen and every preview show one still
      frame. 📸
+   - **[en:tran:Category]**, above the tiles, picks the occasion they are made for: a
+     Sunday service, **[en:tran:Christmas]**, **[en:tran:Thanksgiving]**, a wedding, a
+     season, a theme — 57 of them, in six groups. A category shows every effect of both
+     kinds in its colours, the ones it is known by first and those in more than one look:
+     **[en:tran:Christmas]** opens on four snowfalls of each kind (**[en:tran:Snowfall]**,
+     _Snowfall 2_ … _Snowfall 4_), then starry nights and candles. A solemn day leaves out
+     **[en:tran:Fireworks]**, **[en:tran:Confetti]** and **[en:tran:Hearts]**; a summer one
+     leaves out snow. Besides snow, stars, light rays, clouds, waves, a cross and the rest,
+     both kinds draw **[en:tran:Falling Leaves]**, **[en:tran:Fireworks]**,
+     **[en:tran:Petals]**, **[en:tran:Candlelight]**, **[en:tran:Confetti]** and
+     **[en:tran:Hearts]**. The list keeps the category you chose; until you have chosen one, it
+     opens on the category of the animation the screen holds.
+   - **[en:tran:Dark]** / **[en:tran:Light]** at the top, as on **[en:tran:Fills]**, swaps
+     every category's tiles between deep grounds that white words read on and pale ones that
+     black words read on — the same effects in the same order, in the occasion's light
+     colours. A Light tile's name ends in _(Light)_: _Christmas - Snowfall (Light)_. It opens
+     on the side of the animation the screen holds, and moves by itself only when a tile of
+     the other side goes up.
+   - Pin a tile to keep it at hand whatever the category or side: the pin at its top corner (it shows
+     under the pointer), or **[en:tran:Pin]** in its right-click menu. It joins
+     **[en:tran:Pinned]** above **[en:tran:Category]**, in the order you pinned them, on the
+     Background tab and on **[en:tran:Animation Show]** alike, Dark and Light tiles together
+     whichever side is shown; pressing a pinned tile does not change the category. **[en:tran:Unpin]** takes it out. Thirty can be pinned; then
+     the pin says **[en:tran:Unpin one to pin another]**.
    - **[en:tran:Customize]**, beside the tiles while a screen holds an animation, changes its
      **[en:tran:Effect]**, its colors (the first is the **[en:tran:Background Color]**, each
      with its own **[en:tran:Opacity]**), **[en:tran:Speed]**, **[en:tran:Density]** (CSS)
@@ -688,14 +739,47 @@ _Verify: PM-13..14, PM-57, PM-159..162, PM-167, SP-21._
      animation's **[en:tran:Opacity]** and its **[en:tran:Blend Mode]** with what is behind
      the screen; the screen follows half a second after you stop. **[en:tran:Save as Preset]**
      keeps it as a button under **[en:tran:Presets]**.
-   - A shader's **[en:tran:Edit Code]** opens **[en:tran:Shader Code]**: its code beside a
-     moving preview. A mistake shows under the preview with its line, and
-     **[en:tran:Apply]** waits until there is none; **[en:tran:Reset]** puts the code back
-     as it was. Short shaders written for Shadertoy (a `mainImage`, no textures) can be
-     pasted in.
+   - **[en:tran:Edit Code]** opens the code of the animation picked beside a moving
+     preview: **[en:tran:Shader Code]** for a shader, **[en:tran:CSS Code]** for a CSS
+     animation — a built-in one's too. While it is open it follows the animation: click
+     another tile of its kind, or pick another **[en:tran:Effect]**, and that one's code
+     comes in (a tile of the other kind closes it); a
+     color, the speed or the density changes nothing in it. A mistake shows under the
+     preview, and **[en:tran:Apply]** waits until there is none; **[en:tran:Reset]** puts
+     back the code of the animation picked. Short shaders written for Shadertoy (a
+     `mainImage`, no textures) can be pasted in.
+   - **[en:tran:CSS Code]** opens on the CSS effect picked, written as CSS (Light Rays as
+     its sheets of rays, Clouds as its clouds), or on a **[en:tran:Custom CSS]**
+     animation's own code. Applied, the animation is **[en:tran:Custom CSS]**: as it
+     stands, it looks as the effect did; changed, it is yours. The CSS styles boxes the
+     app draws: `.scene` (the whole picture), six `.layer` inside it and dots (`.dot`)
+     inside each layer, as many as the **[en:tran:Density]** says (`--density` is 0, 1 or
+     2); use `var(--color-1)` to `var(--color-4)`, or `var(--accent)` — a color after the
+     first, the next one for each layer and dot in turn — and the color wells still change
+     it. To stay light on an old computer and safe on the screen, it may load nothing (no
+     `url()` or `@import`) and its `@keyframes` may only move, turn, grow or fade
+     (`transform`, `opacity`) — the error line says what to change.
+   - The 🤖 (**[en:tran:Open in Chatbot]**) at the end of the **[en:tran:Customize]** row,
+     and in the code panel's title bar, opens the help window on that animation: it says
+     what the assistant can change and offers three things to ask, such as
+     **[en:tran:Make it slower]**, **[en:tran:Explain the shader code]** or, for a CSS one,
+     **[en:tran:Explain the CSS code]**. Ask in your own words: the assistant changes what
+     Customize changes, and writes or fixes the code in its panel, putting it on the
+     screen only once it works.
    - Right-click a tile → **[en:tran:Copy Code]** to take the animation somewhere else: a
      CSS one as a whole web page (paste it into a page file of your own in the Web Editor,
      W-15, and the **[en:tran:Webs]** tab shows it), a shader as its code.
+   - **[en:tran:Save as image] (PNG)** and **[en:tran:Save as video] (MP4)**, the two
+     buttons right of the **[en:tran:Customize]** preview, keep the animation as a file.
+     Each asks for its **[en:tran:Resolution]** (the usual sizes, your screens' own, or
+     **[en:tran:Custom]**); a video asks too for its **[en:tran:Duration]** in seconds
+     and its **[en:tran:Frame Rate]** (24, 30 or 60). The file goes into the folder of the
+     session in use on **[en:tran:Images]** or **[en:tran:Videos]** — from
+     **[en:tran:Animation Show]**, on **[en:tran:Image Show]** or **[en:tran:Video Show]** —
+     named after the animation and its size, ready to put up; with no folder set there it
+     says so and saves nothing. A picture keeps the see-through parts. A video is drawn
+     frame by frame, its toast counting **[en:tran:Exporting]** up to 100% with a
+     **[en:tran:Stop]** that leaves no file behind. 📸
    - **[en:tran:Images] / [en:tran:Videos]:** **click** an item to make it the live background;
      click the same item again to take it off. 📸
    - **[en:tran:Cameras]:** pick a connected camera device.
@@ -744,15 +828,16 @@ youth service's; Default's are the ones **[en:tran:Fill Show]** and **[en:tran:A
 offer too (W-09). Removing a session forgets its saved ones and its show. Once a screen holds the
 tab's kind, the row also carries the slide show: press **[en:tran:Start Slide Show]** (▶) and,
 every so many seconds — the number beside it — each screen holding one moves on to the next tile
-of the row the one up is in: the next shader, the next CSS animation, the next gradient or
-pattern on the side **[en:tran:Dark]** / **[en:tran:Light]** shows, or the session's next saved
-one when the one up is among them. How the screen had it fitted and styled goes with it. A colour
+of the row the one up is in: the session's next saved one when the one up is among them, else
+the next **[en:tran:Pinned]** one when it is pinned, else the next shader or CSS animation of
+its category on its side, in the order the tiles are drawn, or the next gradient or pattern on the side
+**[en:tran:Dark]** / **[en:tran:Light]** it is on. How the screen had it fitted and styled goes with it. A colour
 from the palette, or a tile changed in **[en:tran:Customize]**, belongs to no row and stays where
 it is. A screen has one background, so a tab runs one show: starting it in another session stops
 the first, and the blue ▶ moves to that session's button. **[en:tran:Clear Background]**
 (**F7**) ends the show, and putting a tile up afterwards does not start it again.
 
-_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, PM-181..192, PM-195, KB-04._
+_Verify: PM-26..33, PM-101, PM-114, PM-144, PM-145, PM-181..192, PM-195, PM-197, PM-198, PM-199, PM-203, KB-04._
 
 ### W-09 — Play audio, and foreground extras (countdown, clock, marquee bottom…)
 
@@ -798,7 +883,7 @@ button:
   how many seconds the text stays and how its markdown is set: the first line
   becomes the title — **bold** for a song, a heading for a verse, a speaker,
   a sermon, a session or an announcement — and a song's or a sermon's lines
-  under it turn *italic* (and upright again with any other preset). With
+  under it turn _italic_ (and upright again with any other preset). With
   nothing typed yet (the box empty, or still its sample) a preset fills in an
   example to type over: **[en:tran:Bible Verse]** puts in (KJV) John 3:16.
   **[en:tran:Bible Verse]** is a band the full width of the bottom (dark, or
@@ -908,7 +993,8 @@ button:
 - **[en:tran:Fill Show]** and **[en:tran:Animation Show]:** a colour, gradient or
   pattern, or a moving animation, shown _over_ the slide the way **[en:tran:Image Show]**
   shows a picture. Their tiles are the ones the Background panel's **[en:tran:Fills]**
-  and **[en:tran:Animations]** tabs offer, CSS and GLSL alike. Click a tile to put it up,
+  and **[en:tran:Animations]** tabs offer, CSS and GLSL alike, under the same
+  **[en:tran:Dark]** / **[en:tran:Light]** switch. Click a tile to put it up,
   click it again to take it off, or drag it onto the Mini Screen. The overlay is the
   shape of the screen, as wide as _Properties_ says and placed where it says, so a
   colour can sit in one corner over the live slide and an animation in the middle. It
@@ -984,11 +1070,11 @@ button:
   **[en:tran:Urgent Alert]** (a faster one); [en:tran:Countdown] and [en:tran:Stopwatch]
   **[en:tran:Top Right]**, **[en:tran:Bottom Right]**, **[en:tran:Center]** (large, in
   the middle) and **[en:tran:Bottom Banner]**; [en:tran:Time] **[en:tran:Top Left]**, **[en:tran:Top Right]**, **[en:tran:Bottom Right]** and
-  **[en:tran:Center]**; the picture, screen and web shows
+  **[en:tran:Center]**; the picture, fill, animation, screen and web shows
   **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]**, **[en:tran:Center]** and a small corner;
   the camera **[en:tran:Full Screen]**, **[en:tran:Picture in Picture]** and **[en:tran:Bottom Left]**.
   At the right of the _Presets_ name, in every component with words and a box
-  (all but the picture, screen and web shows), is **[en:tran:Dark]** /
+  (all but the picture, fill, animation, screen and web shows), is **[en:tran:Dark]** /
   **[en:tran:Light]** — light words on a dark box for a dark slide, or dark words
   on a light box for a light one. The side lit is read off the words' colour.
   Pressing the other one keeps both colours and only makes them lighter or
@@ -1126,8 +1212,8 @@ menu.
    then slowing into place, so a room reading along is not lost — a Bible
    passage's selected verse moves the same way.
 
-   **Every line on a row of its own.** Press **[en:tran:Atom Mode]**, beside
-   the book and gear at the top of the panel, and each LINE of a part
+   **Every line on a row of its own.** Press **[en:tran:Atom Mode]**, the first of
+   the three buttons before the book and gear at the top of the panel, and each LINE of a part
    becomes a card, a button and a screen row of its own, numbered on
    through the whole song: a verse of four lines is `1 Verse 1` to
    `4 Verse 1`, and the chorus after it starts at `5 Chorus`. A blank line
@@ -1160,6 +1246,7 @@ menu.
    presenter remote. It stops at the last part, and at the first: it never
    goes round to the beginning. A part that is not lit keeps its own keys —
    **Space** presses that one.
+
 8. **Give a language its own font and size.** The whole text is drawn in
    **[en:tran:Bible/LongText Properties]**, the book and gear at the right
    end of the row at the top of the panel (W-07): its colour, boldness, alignment, shadow
@@ -1281,6 +1368,7 @@ has no header tabs.
    the verse from the buttons that appear; the passage opens. This is the preferred
    route for a non-English Bible because the buttons use that Bible's own names and
    numbers. 📸
+
    > Typing a full reference such as `John 3:16` is an optional shortcut when the
    > selected Bible recognizes it. **Tab** completes a piece, **Escape** clears the
    > last piece and **Shift+Escape** clears the box.
@@ -1295,9 +1383,10 @@ has no header tabs.
    (**[en:tran:Show the next chapter]**): each click adds the next chapter, and
    the button goes once the last one is shown. 📸
    **Open a reference in a section heading.** Some Bibles print references in their section headings — `(… យ៉ូហាន
-   ១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
+១៨.៣៩-១៩.១៦)` under a heading of Mark 15. Click one and the whole passage it
    names opens in a small floating panel — a long one the same way, three chapters
    and **...** — and the passage you are reading stays as it is.
+
 2. If the words are too small, click the small **⋯** at the bottom-left of the
    passage to open the hidden controls. Then press and hold the
    **[en:tran:Font Size]** slider, move it to the right, and let go when the words are
@@ -1539,6 +1628,17 @@ _Verify: PR-03, PU-03, KB-11, PM-170, PL-111._
 a name into the row that appears and press **Enter** (or click the ✓). Both kinds live
 in the same documents folder. 📸
 
+**Bringing in an Open Lyric song file (`.ol.md`):** drag one or more `.ol.md` files
+from your file manager onto the **[en:tran:Documents]** list. Each becomes a song (♪)
+named after its file — the app keeps its songs as `.owl`, so the `.ol.md` itself is only
+read, never copied in or changed. A name already in the list gets a number, `(2)`.
+Any other Markdown file dropped there is left alone. 📸
+
+**Saving a song as an Open Lyric file:** right-click a song row and choose
+**[en:tran:Export to Open Lyric File]**, just under **[en:tran:Export]**. It writes
+`<song>.ol.md` into your **Downloads** folder (a second export beside the first is
+numbered), ready for an Open Lyric editor. 📸
+
 **Slides** ([en:tran:Slide Editor]):
 
 1. Select a slide document, then click the **[en:tran:Slide Editor]** header tab. 📸
@@ -1638,8 +1738,9 @@ use an HTML box for rich formatting. Existing files are kept as saved.
 in its own window; edit the text/chords and save with **Ctrl+S**. 📸
 Once a song has been changed, the Presenter also shows **[en:tran:Undo]**, **[en:tran:Redo]**,
 **[en:tran:Discard changed]** and **[en:tran:Save]** in a row under its **[en:tran:Stage Previewer]**
-header — the same row a slide document has above its slides. **[en:tran:Undo]** steps every stage
-back at once; **[en:tran:Save]** is lit while a change is not saved yet (a red **\*** beside the
+header — the same row a slide document has above its slides — and again above the song's words in
+the pane over it, where the row stays put however far the words are scrolled. Both rows act on the
+same song. **[en:tran:Undo]** steps every stage back at once; **[en:tran:Save]** is lit while a change is not saved yet (a red **\*** beside the
 song's name), and **Ctrl+S** saves the song from anywhere in the Presenter.
 
 **Web backgrounds:** **[en:tran:Background]** panel → **[en:tran:Webs]** tab, then the
@@ -1650,7 +1751,7 @@ folder; right-click that page → **[en:tran:Edit]** to open the Web Editor in i
 its code beside a preview. The Web Editor saves itself as you type, so there is no Save
 to press.
 
-_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, ED-55, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, PM-33, PM-124, PM-168._
+_Verify: ED-01..11, ED-21, ED-25, ED-45, ED-46, ED-47, ED-48, ED-52, ED-53, ED-55, PU-02, PU-04, PL-09, PL-11, PL-24, CM-23, CM-27, CM-32, CM-33, CM-43, CM-104, DD-20, PM-33, PM-124, PM-168._
 
 ### W-43 — Remove a song, document or file (Move to Trash)
 
@@ -1801,8 +1902,9 @@ like a picture of slides you like.
 
 **Not there?** **[en:tran:Open in Chatbot]** is in a document's menu only while AI is on
 (**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). A PDF,
-PowerPoint or Word file carries it too, but only an Open Worship slide document has slides
-the assistant can change; to make a song from such a file's words, see W-42 step 18. When no
+PowerPoint or Word file carries it too: the assistant changes a PowerPoint's or a Word
+file's own words in the file itself (W-65); to make a song from such a file's words, see
+W-42 step 18. When no
 assistant can answer, the chat says so and offers **[en:tran:Open AI settings]**.
 
 _Verify: PL-108, CB-167._
@@ -1899,6 +2001,7 @@ row's own **[en:tran:Delete]** (a notes file's **[en:tran:Move to Trash]**).
    in your browser and **[en:tran:Copy Selected Text]** copies them, with no assistant.
    Select other words and press the robot again: they go under the first ones, in the
    same chat.
+
 2. The help window opens a chat of its own with that one note attached under the box, and a
    card that says what it can do, with five buttons. 📸 The chat works in the note's own
    window: at the top it is asking about **[en:tran:Bible Note]**, and **[en:tran:Working in]** above the box
@@ -2138,6 +2241,122 @@ _Verify: CB-188, PM-179._
 
 ---
 
+### W-65 — Change a PowerPoint or Word file with the assistant
+
+**Goal:** have the help window change a PowerPoint (`.pptx`) or Word (`.docx`) file in your
+Documents list for you — fix its spelling, change a word everywhere, rewrite, add or remove a
+line, change a slide's speaker notes, add a slide from a layout, copy, move, hide or remove a
+slide, change the look of the words (colour, size, bold, font, alignment, a line through, a
+link) or a slide's background (a colour, a blend of colours or a pattern), move, size,
+colour, turn or flip a box, add a text box, a shape, a transition, an animation, slide
+numbers, a footer, a picture, a video or a sound, change a table, a chart, the words in a
+SmartArt diagram or its colours and shapes, change what the slide master puts on every slide
+(a church's name, a logo), the deck's theme colours and fonts or the slide size — and take the
+change back with one press.
+
+1. In **[en:tran:Documents]**, right-click the PowerPoint or Word file, or click the faint
+   **⋮** at its right-hand end (W-01b), and choose **[en:tran:Open in Chatbot]**. 📸
+2. Answer the **[en:tran:Be careful with AI]** question with **[en:tran:Open]**.
+3. The help window opens a chat of its own with the file attached under the box, and a card
+   that says what it can change, with five buttons: two to put the words into another
+   language (in place of them, or under each line), **[en:tran:Check the spelling]**,
+   **[en:tran:Make a song from it]** and **[en:tran:What is this file about?]**. 📸
+4. Press a button, or type what you want and press **[en:tran:Send]**: _Change Lord to God
+   everywhere_, _Make a copy of the welcome slide at the end, then change the title on the
+   copy to "See You Next Week"_, _Replace Wednesday with Thursday everywhere, and add a
+   paragraph at the end: Pray for the sick in our church._, _Change color to green_ (every
+   line's words), _Make the title of slide 3 bigger and bold_, _Make the background dark
+   blue_. One question can ask for several changes.
+5. The answer says what changed. The change is **in the file at once** — there is no Save,
+   and whatever look you did not ask about (font, size, colour, bold) stays as it was. A file
+   open in PowerPoint, Word or LibreOffice is not changed: the answer says it is open there
+   (on this computer or another sharing its folder) — close it there and ask again.
+6. A slide covered by a picture the size of the slide (a curtain or a photo behind the
+   words) hides its background colour: the answer says so and offers to take that picture
+   off. Say _yes, take the pictures off_ and the colour shows;
+   **[en:tran:Undo this change]** brings the pictures back. 📸
+7. In a PowerPoint, the boxes, the sizes and the show change the same way: _Move the title on
+   slide 2 to the bottom_ (the box moves, its words stay in it), _Make the words bigger on
+   every slide_ (each grows from its own size, a big verse and a small number alike), _Add a
+   text box that says Welcome at the bottom of slide 1_, _Add a fade between the slides_,
+   _Make the slides 4:3_ (every box follows the new size).
+8. A picture: drag a picture file (PNG, JPEG, GIF or BMP) from your computer onto the box
+   under the chat, beside the PowerPoint, then ask: _Put this photo on slide 2, on the right
+   side_, _Add this picture small in the bottom right corner of the first slide_, _Use this
+   picture instead of the curtain on every slide_. It goes in whole, its shape kept; one put
+   over the whole slide goes behind the words, as a background. When it lies over words the
+   answer says so and offers to move it or make it smaller. A video or a sound file goes in
+   the same way: _Put this video on slide 3 and play it by itself_. A picture, a video or a
+   sound on the internet needs no file: type its own address in the question — _Put this
+   picture at the top right of slide 2: https://…/logo.png_. The help window downloads it
+   and puts it in; a link to a web page rather than to the picture itself is answered with
+   nothing changed and a request for the picture's own address (right-click the picture,
+   **Copy Image Address**). 📸
+9. Almost everything else on a slide is asked for the same way: _Add a new slide at the end
+   from the Title and Content layout that says Closing Prayer_, _Add a row to the table on
+   slide 2: Offering, Deacons_, _Make the chart a pie chart_, _Make each line of the verse
+   fade in one at a time_, _Make the box behind the verse dark and half see-through, and put
+   the words at the bottom_, _Make the photo darker_, _Turn the title a little and send the
+   picture to the back_, _Add an arrow on slide 3 that says Next_, _Link the title to our
+   website_, _Cross out "his only Son"_, _Put slide numbers and the church's name at the
+   bottom of every slide_ (a title slide is skipped, and the answer says so), _Make the
+   background dark blue to purple, left to right_, _Give the John 3:16 slide a background of
+   navy stripes on white_, _Change the theme fonts: headings in Georgia and body text in
+   Verdana_, _Make the theme's accent 1 dark green_ (every chart, shape and word that takes
+   the theme follows), _In the diagram on slide 3, change Pray to Worship_. A SmartArt
+   diagram's colours and shapes change once it is turned into ordinary shapes, as PowerPoint's
+   Convert to Shapes does: _Make the three boxes in the diagram green_ is answered with that
+   question first, and on a yes it is turned and coloured at once; after that each box is
+   changed by its words (_Make Go a circle_). _Make the steps diagram a cycle_ (or a row of
+   steps, a pyramid, overlapping circles, or a tree) gives it PowerPoint's Basic Cycle (Basic
+   Process, Basic Pyramid, Basic Venn, Hierarchy) and it stays a SmartArt, its words and
+   colours kept; a diagram with boxes under its boxes keeps them under them as a Hierarchy,
+   and asked for as a cycle is answered with that offer first; _Make the steps a column of plain shapes_
+   turns it into ordinary shapes laid out that way, with an arrow between each two. In ANY
+   SmartArt layout a box is added, taken out or moved and it stays that layout: _Add a box
+   Serve after Pray in the diagram_, _In the org chart, take out B1_ (the boxes under it move
+   up; the lines written inside a box go with it), _Move Go before Plan_, _Put Serve under
+   Plan_. _Give the steps diagram the same layout as the one on slide 5_ takes another
+   diagram's layout from the same file.
+   Words or a logo on EVERY slide belong to the slide master: _Make the church's name at the
+   bottom of every slide green_, _Take the red logo off every slide_; when a slide also says
+   those words itself, what you wrote decides: _the church name at the bottom of every slide_
+   changes the one on every slide alone, _every "Grace Church" in the file_ (the words
+   themselves written) changes every place they are written. A slide can be
+   named by its words (_the John 3:16 slide_); when no slide says them, or several do, the
+   answer asks which one and offers the slides as buttons. In a Word file: _Make the page
+   light yellow_, or a picture dragged in beside it. 📸
+10. **[en:tran:Undo this change]** under the answer puts the file back exactly as it was,
+    every change of that answer at once, and says _… is back as it was before that change._
+    **[en:tran:Show it in the list]** finds the file's row. 📸
+11. **[en:tran:Make a song from it]** does not change the file: it writes the words out as a
+    song for you to create (W-62).
+
+**Not there?** **[en:tran:Open in Chatbot]** is in a file's menu only while AI is on
+(**[en:tran:Settings]** → **[en:tran:AI Providers]** → **[en:tran:Enable AI features]**). An old
+`.ppt` or `.doc` file is not changed here: save it as `.pptx` or `.docx` in PowerPoint or Word
+first. A picture, video or sound from the internet is downloaded only from the address you
+typed, and only from the internet: a link to a page (a video site's included), to a computer
+in the church's own network, or to a WebP, AVIF, HEIC or SVG picture is answered with
+nothing changed — save the file as PNG or JPEG and drag it in. A SmartArt layout that no
+diagram of the same file has (beyond a cycle, a row of steps, a pyramid, a Venn and a
+Hierarchy), a diagram whose box sits under two others, and in a Word file a table, a list, a link, page numbers
+or the page layout, are changed in PowerPoint or Word. A box the layout has no room for (a
+gear's fourth, a second centre) is answered with nothing changed, and so is a diagram whose
+layout the app does not read rightly: use **SmartArt Design** → **Add Shape** in PowerPoint.
+PowerPoint lays a changed diagram out again its own way as it opens the file. Told a file is
+open or locked in PowerPoint when PowerPoint is closed: a hidden file named like it with `~$` in
+front was left behind by PowerPoint; delete it and ask again. A diagram turned into shapes is no longer a
+SmartArt: to have it back, press **[en:tran:Undo this change]**. A
+picture pasted
+into the box, or a picture of the screen, has no file to put in: drag the picture's file
+itself. The Presenter's preview of a deck draws no slide background while
+**[en:tran:Omit Background]** above the slides is ticked.
+
+_Verify: CB-198, CB-200, CB-201, CB-202, CB-203, CB-204, CB-205, CB-206, CB-207, CB-208, CB-209._
+
+---
+
 ### W-63 — Change the screens with the assistant (the Bible text's look, another version, a transition, the display)
 
 **Goal:** have the help window change what a screen's Mini Screen card and the Bible text
@@ -2241,8 +2460,8 @@ _Verify: CB-192, CB-193, CB-194, CB-195, CB-196, CB-197._
    - **[en:tran:Show Tips of the Day automatically]:** controls whether each app window shows
      its own automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
-2a. **[en:tran:Path Settings]** tab (below **[en:tran:Languages]**): where everything
-    lives on disk.
+     2a. **[en:tran:Path Settings]** tab (below **[en:tran:Languages]**): where everything
+     lives on disk.
    - **Directories:** where documents, lyrics, and bibles are stored on disk. A data
      folder is required: everything you make and set up — songs, slides, Bibles, notes
      and most settings — is kept in it, so it can be backed up, carried on a stick and
@@ -2306,8 +2525,8 @@ _Verify: CB-192, CB-193, CB-194, CB-195, CB-196, CB-197._
    **[en:tran:Delete Permanently]** box follows, and that cannot be undone.)
 4. **[en:tran:AI Providers]** tab: the AI master switch, the provider keys and the
    custom servers — see **W-42**.
-4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
-    this computer, turned on or off, and the ones to install (those two — see **W-55**).
+   4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
+   this computer, turned on or off, and the ones to install (those two — see **W-55**).
    - **[en:tran:Language]** (at the top): click **English** or
      another language you installed — the list holds the languages turned on under
      **[en:tran:Installed Languages]** just below it. Each language is listed under its
@@ -2663,8 +2882,9 @@ downloads with the ones you have. They are also kept up to date in **[en:tran:Se
    a new thumbnail in the Videos tab, the audio as a new row under **[en:tran:Audios]**. 📸 From there
    it behaves like any other background (W-08) or track (W-09).
 
-> Notes: audio is always converted to **MP3**, video keeps the site's best quality
-> (`.webm`/`.mp4`). If a file with that name is already in the folder, the new one is
+> Notes: audio is always converted to **MP3**. Video is saved at up to 1080p, in the kind
+> an older computer plays most easily: an H.264 `.mp4` where the site has one, otherwise
+> usually `.webm`. If a file with that name is already in the folder, the new one is
 > saved as `name (1)`. Pasting something that is not a web link gets you an
 > **[en:tran:Invalid URL]** message and nothing is downloaded. Downloads need an internet connection — and
 > a busy site can cut a large download off partway, in which case just try again.
@@ -2712,7 +2932,7 @@ foreground presets — into one running order you can work down live.
    its row — in the Documents list, or in the Bible list — drag it over to the Presenting
    Flows list and let go on the row that shows the presenting flow’s name. It is added
    at the end. Anything you can present can go in:
-   - a **background** — a colour, image, video, camera or website;
+   - a **background** — a colour, gradient, pattern, animation, image, video, camera or website;
    - a **document** — a slide document or a **song** (a song is a document too): drag its row out of the Documents list;
    - a **single slide** — from the previewer, or from a document already in the presenting flow;
    - a **Bible verse** — from the Bible list;
@@ -2753,8 +2973,8 @@ foreground presets — into one running order you can work down live.
    element itself, on the document it belongs to, on the presenting flow, and on the
    **[en:tran:Presenting Flows]** heading — so you can see at a glance where you are in the running order.
 7. Not sure which "5.jpg" a line means? Right-click it → **[en:tran:Reveal Original]** — the app scrolls to the real item elsewhere in the window and
-   flashes it. This works on the slides inside an opened document too. A colour or a
-   camera has no original to point at, and the panel holding the original has to be
+   flashes it. This works on the slides inside an opened document too. A colour, a gradient,
+   a pattern, an animation or a camera has no original to point at, and the panel holding the original has to be
    open already.
 
 **What else a running order can do** — each has a page of its own:
@@ -2857,7 +3077,8 @@ it — rather than something to show.
 
    Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
-   marquee running: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) and **[en:tran:Clear FG Web Show]** (`WB`). Each does exactly what that widget's own hide button in the **[en:tran:Foreground]** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
+   marquee running: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Fill Show]** (`FL`), **[en:tran:Clear FG Animation Show]** (`AN`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) and **[en:tran:Clear FG Web Show]** (`WB`). Each does exactly what that widget's own hide button in the **[en:tran:Foreground]** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Fill Show`, `Animation Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
+
 2. **A screen action is run, not shown.** Click it to clear, drag it onto one mini screen
    to clear only that one, or right-click → **[en:tran:Apply on Screens]** to choose. It never
    lights up as "live", because there is nothing of it on the screen to be live. In the
@@ -2889,9 +3110,10 @@ it — rather than something to show.
    Clicking one goes to the screens it names and nowhere else; **[en:tran:Apply on Screens]**
    still asks, since that entry is you saying "send this one somewhere else" — but it
    does not change what the line is pinned to.
+
 4. **Where the actions live in the menu.** **[en:tran:Add Action]** opens with **[en:tran:Clear Screen]** —
    one row that adds nothing and opens the five clears, with **[en:tran:Other Clear FG Items]**
-   under them for the twelve per-widget foreground clears — then **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, then the five that drive the run.
+   under them for the fourteen per-widget foreground clears — then **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, then the five that drive the run.
 
 ---
 
@@ -3025,6 +3247,7 @@ where you say, and a running order that can go back to an earlier line.
    pair of them cannot send the run back and forth for ever.) If it has nothing attached,
    or the line it named has since been deleted, it says so instead of quietly doing
    nothing.
+
 5. **A loop of slides before the service, from start to finish.** The slides of the set
    are lines of the presenting flow already. (a) Right-click the presenting flow →
    **[en:tran:Add Action]** → **[en:tran:Next: Interval]**, type the seconds each slide
@@ -3153,6 +3376,7 @@ where you say, for as long as you say.
      slide went to. Tick one and it works **only** where the slide also landed. It is
      controlling the media the slide put on a screen, so a screen the slide never reached
      has nothing on it to control.
+
 2. The new line appears as a CC element under the slide, reading what it will do —
    `Slide: Media Control (Play +3s 10s→70s 70% 2x)` — with a small **cyan gear** at its
    right. Click the gear (or right-click → **[en:tran:Media Control Settings]**) to change it later;
@@ -3164,6 +3388,7 @@ where you say, for as long as you say.
    presenter machine, exactly as it does when you press play by hand, so the **[en:tran:Volume]** is
    the level you hear at the desk; the projected screen stays silent and simply keeps in
    step, at the same speed.
+
 3. **Moving off the slide stops it.** When you put another slide on that screen — or clear
    the screen — everything the Media Control started is stopped and anything still waiting
    (a "stop at 1:10", a delayed start) is dropped, so nothing carries over to whatever you
@@ -3201,6 +3426,7 @@ line you cannot fire by accident.
    **[en:tran:Show on Screens]** still asks which screen you mean. If the pinned screen has been
    closed, nothing is projected anywhere and the app tells you so ("Please make sure the
    screen is open") rather than quietly using a different screen.
+
 2. A **document** line can be pinned too — its slides then all follow it — and you can pin
    **one slide on its own**: open the document's arrow, right-click the slide and set its
    screen. That slide overrides the document; its neighbours keep following the document.
@@ -3239,42 +3465,42 @@ line you cannot fire by accident.
 machine as one file.
 
 1. Right-click the presenting flow → **[en:tran:Export]**. A small panel asks for a
-    **[en:tran:Password]** and a **[en:tran:Confirm Password]**.
-    **Leave both empty and press Ok** for the ordinary bundle: one
-    `<name>.owapf.tar.gz` file in your **Downloads** folder, and the folder opens. It
-    contains the presenting flow _and every file it needs_ — the full documents behind your
-    slides, the images and videos, and any background attached to those documents.
-    (See step 1a to put a password on it instead.)
-    1a. **To protect it with a password**, type the same password in both fields and press
-    **[en:tran:Ok]**. **[en:tran:Show Password]** reveals what you typed if you want to
-    check it. You get `<name>.owapf.enc` instead — the same bundle, locked. If the two
-    fields do not match the panel says **[en:tran:Passwords do not match]** and asks again rather than exporting, keeping what you
-    already typed so you only fix the half that is wrong. Clearing both fields is always
-    allowed — that just means "no password".
+   **[en:tran:Password]** and a **[en:tran:Confirm Password]**.
+   **Leave both empty and press Ok** for the ordinary bundle: one
+   `<name>.owapf.tar.gz` file in your **Downloads** folder, and the folder opens. It
+   contains the presenting flow _and every file it needs_ — the full documents behind your
+   slides, the images and videos, and any background attached to those documents.
+   (See step 1a to put a password on it instead.)
+   1a. **To protect it with a password**, type the same password in both fields and press
+   **[en:tran:Ok]**. **[en:tran:Show Password]** reveals what you typed if you want to
+   check it. You get `<name>.owapf.enc` instead — the same bundle, locked. If the two
+   fields do not match the panel says **[en:tran:Passwords do not match]** and asks again rather than exporting, keeping what you
+   already typed so you only fix the half that is wrong. Clearing both fields is always
+   allowed — that just means "no password".
 
-    > **There is no way to recover a forgotten password.** Nobody — not you, not the app,
-    > not the person you send it to — can open the bundle without it. Write it down
-    > somewhere safe before you hand the file over, and send it by a different route than
-    > the file itself.
+   > **There is no way to recover a forgotten password.** Nobody — not you, not the app,
+   > not the person you send it to — can open the bundle without it. Write it down
+   > somewhere safe before you hand the file over, and send it by a different route than
+   > the file itself.
 
 2. **Import on the receiving machine.** First open **[en:tran:Settings]** →
-    **[en:tran:Path Settings]** and choose the destination folders for the file
-    types in the bundle. Then right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
-    file from your file manager onto the Presenting Flows list**, which imports it the same way.
-    A protected bundle asks for its password first, saying **This archive is password
-    protected** ([en:tran:This archive is password protected]); get it wrong and it says
-    **[en:tran:Wrong password, try again]** and lets
-    you retype it, up to three tries. An ordinary bundle never asks. The songs, documents
-    and media are re-created in that machine's own folders, Bible verses are added to the
-    **Default** list, and every link inside the presenting flow is re-pointed at the local
-    copies. 📸
+   **[en:tran:Path Settings]** and choose the destination folders for the file
+   types in the bundle. Then right-click an empty part of the **[en:tran:Presenting Flows]** list → **[en:tran:Import]** and pick that file — or just **drag the `.owapf.tar.gz` (or `.owapf.enc`)
+   file from your file manager onto the Presenting Flows list**, which imports it the same way.
+   A protected bundle asks for its password first, saying **This archive is password
+   protected** ([en:tran:This archive is password protected]); get it wrong and it says
+   **[en:tran:Wrong password, try again]** and lets
+   you retype it, up to three tries. An ordinary bundle never asks. The songs, documents
+   and media are re-created in that machine's own folders, Bible verses are added to the
+   **Default** list, and every link inside the presenting flow is re-pointed at the local
+   copies. 📸
 3. If the bundle is on a web server or a machine sharing it over the local network,
-    you can skip copying the file about: right-click the **[en:tran:Presenting Flows]** list →
-    **[en:tran:Import From URL]**, paste the link and press **[en:tran:Ok]**. (If the link is
-    already on your clipboard it is filled in for you.) The app downloads the bundle to a
-    temporary folder, imports it exactly as above and then deletes the download — you end
-    up with the presenting flow and nothing else left over. A plain `http://…` address with a
-    port, such as one served off another laptop, works as well as `https://`. 📸
+   you can skip copying the file about: right-click the **[en:tran:Presenting Flows]** list →
+   **[en:tran:Import From URL]**, paste the link and press **[en:tran:Ok]**. (If the link is
+   already on your clipboard it is filled in for you.) The app downloads the bundle to a
+   temporary folder, imports it exactly as above and then deletes the download — you end
+   up with the presenting flow and nothing else left over. A plain `http://…` address with a
+   port, such as one served off another laptop, works as well as `https://`. 📸
 
 > Notes: a picture, video or other media file that is already there **with the same
 > contents** is reused rather than duplicated. The presenting flow itself, its songs and its
@@ -3299,6 +3525,7 @@ machine as one file.
 > the running order still works; remove that line and re-add it.
 
 ---
+
 ### W-23 — Share one document (song, sermon slides, PDF) with another machine
 
 Sometimes you only want to hand over **one** item, not a whole service. A document
@@ -3390,6 +3617,8 @@ PowerPoint file anyone can open.
 > file is a copy: changing it changes nothing in the app. A YouTube box becomes the
 > video's picture when the computer is online; a camera box, a camera background and a
 > live web page as a background cannot be exported, the same as printing leaves them out.
+> A gradient, a pattern or an animation behind a slide comes out as one plain colour, the
+> one it reads as from across the room.
 > PowerPoint on another computer uses the fonts THAT computer has, so for the same look
 > there install the same fonts (the lines break in the same places either way).
 
@@ -3618,7 +3847,9 @@ walking the Insert menu — just drag it out of the panel you are already browsi
    **repaints that box** — no new box is added. Drop it on **empty canvas** and you get a
    new coloured rectangle instead. That rectangle is an ordinary text box underneath, so
    you can double-click it and type into it later. A **locked** box (🔒) keeps its colour:
-   the app says _[en:tran:This item is locked]_ and adds nothing — unlock it first. 📸
+   the app says _[en:tran:This item is locked]_ and adds nothing — unlock it first. A gradient
+   or a pattern from **[en:tran:Fills]** dims the canvas too, but adds and changes nothing: a
+   box takes a colour alone. 📸
 5. Anything you drop in is an ordinary box: move it, resize it, reorder it, and **[en:tran:Undo]**
    (Ctrl+Z) takes it straight back out. Save with **Ctrl+S**.
 
@@ -3659,6 +3890,9 @@ your Bible reading.
    in — one installed from Settings → **[en:tran:Languages]** (W-55), such as `km - Khmer
 (ភាសាខ្មែរ)` — and the lookup list and the
    "in your reading" panel switch to it at once, with nothing to reload.
+   A language that is not in the menu yet is one to install: the menu's last row,
+   **[en:tran:Add Language Plugin]**, opens Settings → **[en:tran:Languages]** (W-55)
+   straight away, and the language joins the menu once it is installed.
    Person and location windows already open keep their own language. The choice is
    remembered for next time, and it is **separate** from the app's own language
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
@@ -4234,26 +4468,26 @@ _Verify: ST-93, MD-05._
 
 Every page lists its own keys, searchable, under **Help → [en:tran:Keyboard Shortcuts]** (W-49). This table is the short version.
 
-| Keys                                 | Does                                                                    | Where                                                                 |
-| ------------------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| `Ctrl+B`                             | Open Bible Lookup                                                       | Presenter / Editor                                                    |
-| `Ctrl+Q`                             | Close the Bible Lookup popup                                            | Presenter / Editor, Bible Lookup open                                 |
-| `F5`                                 | Show / hide the selected screens (all, when none is selected)           | Presenter                                                             |
-| `F6` / `F7` / `F8` / `F9` / `F10`    | Clear All / Background / Slide / Bible / Foreground                     | Presenter                                                             |
-| `Ctrl/Alt+ArrowLeft/Right`           | Previous / next Bible verse                                             | the output screen                                                     |
-| Arrows, `PageUp`/`PageDown`, `Space` | Next / previous slide (`Shift+Space` goes back)                         | slide thumbnails focused                                              |
-| Arrows, `PageUp`/`PageDown`, `Space` | Next / previous part, stopping at either end (`Shift+Space` goes back)  | Long Text Show, its lit part focused                                  |
-| `Tab` / `Escape` / `Shift+Escape`    | Complete the reference / remove its last part / clear it                | lookup & reader                                                       |
-| `Ctrl+Enter`                         | Focus the editing canvas                                                | Slide Editor                                                          |
-| `Ctrl+S`                             | Save                                                                    | Slide Editor, Bible Note, Lyric Editor (Web Editor saves itself)      |
-| `Enter` / `Escape`                   | Confirm / cancel                                                        | confirmation dialogs                                                  |
-| `Ctrl+Shift+P`                       | Start or stop Presenting Control (draw & spotlight on the app)          | every window                                                          |
-| `V` / `B` / `E` / `F`                | Arrow / brush / eraser / spotlight                                      | Presenting Control open (not while typing)                            |
-| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo the drawing                                                 | Presenting Control **armed** (buttons work in any tool)               |
-| `C`                                  | Clear the drawing (one Undo brings it back)                             | Presenting Control **armed** (button works in any tool)               |
-| `Escape`                             | Back to the arrow tool                                                  | Presenting Control **armed** (the app keeps Escape otherwise)         |
-| `K`                                  | Show / hide the Keyboard Screencast                                     | Presenting Control on the **arrow** tool (an armed tool turns it off) |
-| _every other key_                    | Nothing — swallowed by the overlay                                      | Presenting Control **armed**                                          |
+| Keys                                 | Does                                                                   | Where                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `Ctrl+B`                             | Open Bible Lookup                                                      | Presenter / Editor                                                    |
+| `Ctrl+Q`                             | Close the Bible Lookup popup                                           | Presenter / Editor, Bible Lookup open                                 |
+| `F5`                                 | Show / hide the selected screens (all, when none is selected)          | Presenter                                                             |
+| `F6` / `F7` / `F8` / `F9` / `F10`    | Clear All / Background / Slide / Bible / Foreground                    | Presenter                                                             |
+| `Ctrl/Alt+ArrowLeft/Right`           | Previous / next Bible verse                                            | the output screen                                                     |
+| Arrows, `PageUp`/`PageDown`, `Space` | Next / previous slide (`Shift+Space` goes back)                        | slide thumbnails focused                                              |
+| Arrows, `PageUp`/`PageDown`, `Space` | Next / previous part, stopping at either end (`Shift+Space` goes back) | Long Text Show, its lit part focused                                  |
+| `Tab` / `Escape` / `Shift+Escape`    | Complete the reference / remove its last part / clear it               | lookup & reader                                                       |
+| `Ctrl+Enter`                         | Focus the editing canvas                                               | Slide Editor                                                          |
+| `Ctrl+S`                             | Save                                                                   | Slide Editor, Bible Note, Lyric Editor (Web Editor saves itself)      |
+| `Enter` / `Escape`                   | Confirm / cancel                                                       | confirmation dialogs                                                  |
+| `Ctrl+Shift+P`                       | Start or stop Presenting Control (draw & spotlight on the app)         | every window                                                          |
+| `V` / `B` / `E` / `F`                | Arrow / brush / eraser / spotlight                                     | Presenting Control open (not while typing)                            |
+| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | Undo / redo the drawing                                                | Presenting Control **armed** (buttons work in any tool)               |
+| `C`                                  | Clear the drawing (one Undo brings it back)                            | Presenting Control **armed** (button works in any tool)               |
+| `Escape`                             | Back to the arrow tool                                                 | Presenting Control **armed** (the app keeps Escape otherwise)         |
+| `K`                                  | Show / hide the Keyboard Screencast                                    | Presenting Control on the **arrow** tool (an armed tool turns it off) |
+| _every other key_                    | Nothing — swallowed by the overlay                                     | Presenting Control **armed**                                          |
 
 _Verify: KB-01..13, SC-03._
 
@@ -4887,6 +5121,11 @@ all count as book-level too.
      are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
      when text is pasted into it; the preview shows what is written.
+     A Bible passage quoted the way the app quotes one into a study — a quote that opens on
+     its bold reference and its Bible, `> **John 3:1-21** (KJV)`, with the verses under it —
+     has a chevron before the reference, **[en:tran:Collapse]**: press it and the passage
+     folds to that line; press it again (**[en:tran:Expand]**) to open it. The fold is on
+     screen only.
      **People, places, verses and other files named in the page are links too**, drawn in
      the link colour with a dotted underline, as the names in a Bible Reader verse are: a
      person or place of the chapter the file is named after (a `JHN.3.…` file links Nicodemus
@@ -4922,7 +5161,7 @@ all count as book-level too.
      with how many verses, names and places it found. **[en:tran:Add and Print]** adds them
      after the page's last line: the words of each passage, from the Bible named in
      brackets right after its reference when that Bible is installed (`John 3:1-36
-     (Amplified)` from the Amplified), else from the Bible whose book names it is written
+(Amplified)` from the Amplified), else from the Bible whose book names it is written
      in (a Khmer reference from a Khmer Bible), else the KJV. A passage already printed as
      part of a longer one is not printed again, and one that begins within it goes on from
      that one's Bible: a longer one from any Bible of its language holds it, or from its
@@ -5054,7 +5293,7 @@ all count as book-level too.
 > A file you expected that is simply **not listed** is usually more than two folders down:
 > add the folder it sits in (or the one above it) as a group of its own.
 
-_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-129, RD-130, RD-131, RD-132, RD-133, RD-134, RD-135, CM-93._
+_Verify: RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-129, RD-130, RD-131, RD-132, RD-133, RD-134, RD-135, RD-137, CM-93._
 
 ---
 
@@ -5807,7 +6046,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
    arrows wait, greyed, while an answer is on its way. An answer to one of the
    `/` commands has none — pressed again, a command would just do the same
    thing again.
-   **Asked about reading the Bible from the wrong page?** A stray press is enough
+   **Asked about reading the Bible from the wrong page?** The Reader asks first, but two hurried presses are still enough
    to leave the Bible Reader for the Presenter. Ask something like _how can I open
    bible_ or _where do I find the Bible to read_ while the main window is on the
    Presenter or the Document Editor, and the answer ends with one more line and
@@ -6261,7 +6500,7 @@ holy bible"` are fine), and with no assistant to ask it says so and offers
     the blocks and it uses them. Typed on one line works too: _Create a song called
     Morning Praise with these words: Verse 1: We lift our eyes to you this morning,
     Chorus: Holy, holy, holy Lord._ — each label with a colon after it starts a part
-    of its own, a ` / ` between words starts a new line, and the title you named is
+    of its own, a `/` between words starts a new line, and the title you named is
     the song's. Without labels each block becomes a verse, and a
     block repeated word for word is written once and sung each time it appears. Chord
     lines above the words are left out — Open Lyric puts chords inside the words —
@@ -6548,6 +6787,12 @@ its slide, then its document, then the screen when its own choice is unticked.
    or untick the document's choice. It disappears when the document follows
    the screen
    again. 📸
+   A PowerPoint file starts with that icon already there, on
+   **[en:tran:No Transition]**: a deck plays its own animations, and only a
+   cut leaves them as they were made — a fade, slide or zoom runs over them.
+   Pick another effect if you want one, or untick
+   **[en:tran:Own transition]** to follow the screen; the file keeps either
+   choice.
 2. **One slide.** Press the ⋮ on that slide's card (or right-click it) and
    choose **[en:tran:Transition]** — it reads _Zoom (Slides preview)_, because
    it follows its document. Tick **[en:tran:Own transition]**, pick
@@ -6580,7 +6825,9 @@ its slide, then its document, then the screen when its own choice is unticked.
 8. A marquee band that has no transition of its own keeps sliding in from its
    edge; **[en:tran:Slide In]** is that same slide.
 9. To go back to the screen's transition, open the same box and untick
-   **[en:tran:Own transition]**. Nothing is kept once every level is unticked.
+   **[en:tran:Own transition]**. Nothing is kept once every level is unticked
+   — except a PowerPoint file's own, which is kept as unticked; choosing
+   **[en:tran:No Transition]** for it again keeps nothing.
 10. The choices travel with the document: renaming it, moving it to the trash,
     and sharing it as an archive take its transitions along.
 11. **One canvas item.** Open the document in the **[en:tran:Slide Editor]**,
@@ -6691,6 +6938,7 @@ when you cannot walk back to the computer to click a panel.
    the running order that takes the keys. When none of the four has anything
    going, three presses change nothing — there is nothing a key could move —
    so click what you want to present first.
+
 4. **Nothing at all has the keys** — you closed the panel you were in, say:
    there is no need for three presses. The first press goes to the same
    panel, in the same order, and moves it on.
@@ -6848,6 +7096,7 @@ A virtual display is a monitor that exists only inside the app. Screens are
 shown on it exactly as on a real monitor, and any phone, TV or computer can
 watch it — in a web browser, or as a video in a media player — without a
 cable or a second copy of the app.
+
 1. On the Presenter, click **[en:tran:Mini Screen Options]** — the ⋮ at the
    bottom right of the Mini Screen list — and in the menu it opens click
    **[en:tran:Virtual Screens Manager]**, then pick the floating panel's

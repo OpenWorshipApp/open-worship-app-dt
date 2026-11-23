@@ -55,6 +55,7 @@ vi.mock('./help.mjs', async (importOriginal) => ({
 import { genForegroundExpression } from './agentForeground.mjs';
 import { genPresenterStateExpression } from './agentPresenter.mjs';
 import { genHighlightSelectorExpression } from './domMatch.mjs';
+import { genInspectExpression } from './inspect.mjs';
 import {
   genDestructiveReason,
   genPressRefusalReason,
@@ -65,7 +66,11 @@ import {
   GUIDE_CARD_LABEL_KEY_MAP,
   GUIDE_CARD_TITLE_KEY,
 } from './guide.mjs';
-import { registerOwaTools } from './owaTools.mjs';
+import {
+  APP_STATE_EXPRESSION,
+  FONT_FAMILY_CREATE_ONLY_REASON,
+  registerOwaTools,
+} from './owaTools.mjs';
 import {
   PICKER_HINT_TEMPLATE,
   genPickerReadExpression,
@@ -251,6 +256,59 @@ describe('owa_app_state', () => {
       genPresenterStateExpression(),
       { port: 9222, match: undefined },
     ]);
+  });
+});
+
+describe('owa_app_state while a page loads (F-17)', () => {
+  it('answers that the window is loading when it has no root yet', () => {
+    // The page's own expression, run against a document mid-navigation.
+    const read = new Function('document', 'location', `return ${APP_STATE_EXPRESSION};`);
+    const loading = read(
+      {
+        documentElement: null,
+        title: '',
+        querySelectorAll: () => {
+          throw new Error('read nothing while loading');
+        },
+      },
+      { pathname: '/app/presenter.html' },
+    );
+    expect(loading).toEqual({
+      title: '',
+      page: 'presenter.html',
+      isLoading: true,
+      note: 'The window is loading a page right now. Ask again in a moment.',
+    });
+    const loaded = read(
+      {
+        documentElement: { lang: 'km', getAttribute: () => 'dark' },
+        title: 'Presenter',
+        querySelectorAll: () => [],
+      },
+      { pathname: '/app/reader.html' },
+    );
+    expect(loaded).toEqual({
+      title: 'Presenter',
+      page: 'reader.html',
+      language: 'km',
+      theme: 'dark',
+      tabs: [],
+    });
+  });
+
+  it('asks the Presenter nothing more while it loads', async () => {
+    app.listTargets.mockResolvedValue([
+      { id: 'P', title: '', url: 'http://localhost/presenter.html' },
+    ]);
+    const loading = {
+      page: 'presenter.html',
+      isLoading: true,
+      note: 'The window is loading a page right now. Ask again in a moment.',
+    };
+    state.answer = () => ({ value: loading });
+    const result = JSON.parse(answer(await call('owa_app_state', {})));
+    expect(result.mainWindow).toEqual(loading);
+    expect(appCalls()).toHaveLength(1);
   });
 });
 
@@ -492,6 +550,23 @@ describe('the document file tools', () => {
     expect(
       refusal(await call('owa_slide_file', { action: 'info', name: 'Sunday' })),
     ).toBe('This window did not answer.');
+  });
+
+  it('takes a song face on create alone and refuses it elsewhere (F-41)', async () => {
+    // `update` had answered "updated" with the face dropped.
+    for (const action of ['update', 'rename', 'info']) {
+      const text = refusal(
+        await call('owa_lyric_file', {
+          action,
+          name: 'Grace',
+          newName: 'Grace 2',
+          content: '```ol:Config\n- Title: Grace\n- Structure: V1\n```',
+          fontFamily: 'Georgia',
+        }),
+      );
+      expect(text).toBe(FONT_FAMILY_CREATE_ONLY_REASON);
+    }
+    expect(app.evaluateInApp).not.toHaveBeenCalled();
   });
 
   it('checks the new name of a rename before anything else', async () => {
@@ -828,6 +903,26 @@ it('owa_highlight_selector rings exactly the selector it was given', async () =>
   ).toEqual({ found: true });
   expect(appCalls()[0]).toEqual([
     genHighlightSelectorExpression('[data-widget-name="Bibles"]', true),
+    { match: 'reader.html' },
+  ]);
+});
+
+it('owa_inspect reads the selector it was given, with the styles asked for', async () => {
+  state.answer = () => ({ value: { count: 1, matches: [] } });
+  expect(
+    JSON.parse(
+      answer(
+        await call('owa_inspect', {
+          selector: '.pane',
+          page: 'reader.html',
+          styles: ['height'],
+          limit: 2,
+        }),
+      ),
+    ),
+  ).toEqual({ count: 1, matches: [] });
+  expect(appCalls()[0]).toEqual([
+    genInspectExpression('.pane', { styles: ['height'], limit: 2 }),
     { match: 'reader.html' },
   ]);
 });

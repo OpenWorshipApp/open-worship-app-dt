@@ -129,15 +129,13 @@ describe('the verses of a passage a card read', () => {
 
 describe('the words of a verse', () => {
     it('splits Khmer at its zero-width spaces and keeps a joined word', () => {
-        expect(
-            listStudyWords(`ព្រះ\u200Cយេហូវ៉ា${ZW}ទ្រង់${ZW}ធុំ${ZW}ទ្រង់។`),
-        ).toEqual(['ព្រះ\u200Cយេហូវ៉ា', 'ទ្រង់', 'ធុំ']);
+        expect(listStudyWords(`ព្រះ\u200Cយេហូវ៉ា${ZW}ទ្រង់${ZW}ធុំ${ZW}ទ្រង់។`)).toEqual(
+            ['ព្រះ\u200Cយេហូវ៉ា', 'ទ្រង់', 'ធុំ'],
+        );
     });
 
     it('cuts a long run with no spaces into words', () => {
-        const words = listStudyWords(
-            'ព្រះយេហូវ៉ាទ្រង់ធុំក្លិនឈ្ងុយរួចទ្រង់សំរេច',
-        );
+        const words = listStudyWords('ព្រះយេហូវ៉ាទ្រង់ធុំក្លិនឈ្ងុយរួចទ្រង់សំរេច');
         expect(words.length).toBeGreaterThan(3);
         expect(words).toContain('ទ្រង់');
     });
@@ -270,8 +268,7 @@ describe('studying the words, step by step', () => {
     // "Θεὸς Genesis 1:1 meaning": _I'd like to learn the word not the verse_.
     // Both "All words" answers about HebrewTD's Genesis 1:1, 2026-10-23.
     it('puts back a verse word copied with another script’s letter', () => {
-        const verse =
-            'בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃';
+        const verse = 'בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃';
         // A Khmer ro (U+179A) where the verse has a Hebrew resh.
         expect(repairStudiedWords('הָאָֽ\u179Aֶץ — אֶרֶץ — ផែនដី', verse)).toBe(
             'הָאָֽרֶץ — אֶרֶץ — ផែនដី',
@@ -307,20 +304,12 @@ describe('studying the words, step by step', () => {
         );
         // Greek with no mark of the old texts is Greek.
         expect(search('Θεός')).toBe('"Θεός" Greek word meaning');
-        expect(search('אֱלֹהִים')).toBe(
-            '"אֱלֹהִים" biblical Hebrew word meaning',
-        );
+        expect(search('אֱלֹהִים')).toBe('"אֱלֹהִים" biblical Hebrew word meaning');
         // As a lexicon writes it: the vowels kept, the chant's accents not.
-        expect(search('אֱלֹהִ֑ים')).toBe(
-            '"אֱלֹהִים" biblical Hebrew word meaning',
-        );
-        expect(search('הָאָֽרֶץ')).toBe(
-            '"הָאָרֶץ" biblical Hebrew word meaning',
-        );
+        expect(search('אֱלֹהִ֑ים')).toBe('"אֱלֹהִים" biblical Hebrew word meaning');
+        expect(search('הָאָֽרֶץ')).toBe('"הָאָרֶץ" biblical Hebrew word meaning');
         // A Khmer word without the joiners it carries in the Bible's text.
-        expect(search('ព្រះ\u200Cយេហូវ៉ា')).toBe(
-            '"ព្រះយេហូវ៉ា" Khmer word meaning',
-        );
+        expect(search('ព្រះ\u200Cយេហូវ៉ា')).toBe('"ព្រះយេហូវ៉ា" Khmer word meaning');
         // A word in Latin letters names no language.
         expect(search('remembered')).toBe('"remembered" meaning');
     });

@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-01, ST-02, ST-03, ST-04, ST-05, ST-06, ST-07, ST-08, ST-09, ST-20, ST-22, ST-52, ST-54, ST-55, ST-58, ST-83, ST-84, ST-85, ST-86, ST-87, ST-92, CB-163, LT-02, LT-03, LT-04]
 screenshots: 5
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-16 — Settings: language, theme, fonts, folders
 
@@ -44,8 +44,8 @@ workflowsVersion: "2026-11-15"
    - **[en:tran:Show Tips of the Day automatically]:** controls whether each app window shows
      its own automatic tip after the next app launch.
    - Panel sizes are no longer reset from here — see **W-31**.
-2a. **[en:tran:Path Settings]** tab (below **[en:tran:Languages]**): where everything
-    lives on disk.
+     2a. **[en:tran:Path Settings]** tab (below **[en:tran:Languages]**): where everything
+     lives on disk.
    - **Directories:** where documents, lyrics, and bibles are stored on disk. A data
      folder is required: everything you make and set up — songs, slides, Bibles, notes
      and most settings — is kept in it, so it can be backed up, carried on a stick and
@@ -109,8 +109,8 @@ workflowsVersion: "2026-11-15"
    **[en:tran:Delete Permanently]** box follows, and that cannot be undone.)
 4. **[en:tran:AI Providers]** tab: the AI master switch, the provider keys and the
    custom servers — see **W-42**.
-4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
-    this computer, turned on or off, and the ones to install (those two — see **W-55**).
+   4a. **[en:tran:Languages]** tab: the language the app is shown in, the languages on
+   this computer, turned on or off, and the ones to install (those two — see **W-55**).
    - **[en:tran:Language]** (at the top): click **English** or
      another language you installed — the list holds the languages turned on under
      **[en:tran:Installed Languages]** just below it. Each language is listed under its
@@ -132,5 +132,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-01` · `ST-02` · `ST-03` · `ST-04` · `ST-05` · `ST-06` · `ST-07` · `ST-08` · `ST-09` · `ST-20` · `ST-22` · `ST-52` · `ST-54` · `ST-55` · `ST-58` · `ST-83` · `ST-84` · `ST-85` · `ST-86` · `ST-87` · `ST-92` · `CB-163` · `LT-02` · `LT-03` · `LT-04`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

@@ -37,6 +37,7 @@ import { reportPackageUpdates } from '../helper/packageUpdateHelpers';
 import { useStateSettingString } from '../helper/settingHelpers';
 import { tran } from '../lang/langHelpers';
 import { copyToClipboard, showFileOrDirExplorer } from '../server/appHelpers';
+import appProvider from '../server/appProvider';
 import { checkIsVersionOutdated } from '../server/updatingAppHelpers';
 import SettingOthersSectionComp from './SettingOthersSectionComp';
 
@@ -157,6 +158,37 @@ function RenderMcpClientWhereComp({
     );
 }
 
+// The same MCP server, published on npm for a computer with Node.js
+// (2026-11-20, the user: _put a clickable link somewhere for
+// https://www.npmjs.com/package/open-worship-app-mcp so user know to use npm
+// package_).
+const MCP_NPM_PACKAGE_NAME = 'open-worship-app-mcp';
+const MCP_NPM_PACKAGE_URL = `https://www.npmjs.com/package/${MCP_NPM_PACKAGE_NAME}`;
+
+/**
+ * The npm package's page, opened in the system browser. A registry name and a
+ * package name are not language, so nothing inside goes through `tran()` (as
+ * the AI Providers tab's `RenderServiceLinkComp`). Shown whether the pack is
+ * installed or not: without the pack, npm is the other way to the server.
+ */
+function RenderMcpNpmLinkComp() {
+    const handleOpeningPage = useCallback(() => {
+        appProvider.browserUtils.openExternalURL(MCP_NPM_PACKAGE_URL);
+    }, []);
+    return (
+        <button
+            className="btn btn-link btn-sm p-0 border-0 align-self-start text-start mt-1"
+            type="button"
+            title={MCP_NPM_PACKAGE_URL}
+            onClick={handleOpeningPage}
+        >
+            <i className="bi bi-box-seam me-1" />
+            {`npm: ${MCP_NPM_PACKAGE_NAME}`}
+            <i className="bi bi-box-arrow-up-right ms-1" />
+        </button>
+    );
+}
+
 /**
  * The pack's MCP server as an AI client takes it (2026-11-13, the user: _as an
  * ai user I want to install open-worship-app's extra-bin and have the
@@ -254,6 +286,7 @@ function RenderMcpClientComp({ mcpBinPath }: Readonly<{ mcpBinPath: string }>) {
                     )}
                 </span>
             </span>
+            <RenderMcpNpmLinkComp />
         </div>
     );
 }
@@ -506,7 +539,11 @@ ${tran('Reveal Folder')}`}
                 ) : null}
                 {mcpBinPath !== null ? (
                     <RenderMcpClientComp mcpBinPath={mcpBinPath} />
-                ) : null}
+                ) : (
+                    <RenderDetailComp label="AI agents (MCP)" isWide>
+                        <RenderMcpNpmLinkComp />
+                    </RenderDetailComp>
+                )}
             </div>
             {/* The repair actions, secondary to whichever primary button sits
                 up in the header. No "Reveal Folder" among them: the Location

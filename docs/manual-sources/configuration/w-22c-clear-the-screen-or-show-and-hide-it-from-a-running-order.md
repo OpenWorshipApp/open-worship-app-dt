@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-22c — Clear the screen, or show and hide it, from a running order
 
@@ -25,7 +25,8 @@ it — rather than something to show.
 
    Under those five, **[en:tran:Other Clear FG Items]** offers a **finer clear
    for one foreground widget at a time**, so you can take the countdown down and leave the
-   marquee running: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) and **[en:tran:Clear FG Web Show]** (`WB`). Each does exactly what that widget's own hide button in the **[en:tran:Foreground]** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
+   marquee running: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Fill Show]** (`FL`), **[en:tran:Clear FG Animation Show]** (`AN`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) and **[en:tran:Clear FG Web Show]** (`WB`). Each does exactly what that widget's own hide button in the **[en:tran:Foreground]** panel does; the `Messages`, `Time`, `Video Show`, `Image Show`, `Fill Show`, `Animation Show`, `Camera Show`, `Screen Show` and `Web Show` ones clear all of their items at once.
+
 2. **A screen action is run, not shown.** Click it to clear, drag it onto one mini screen
    to clear only that one, or right-click → **[en:tran:Apply on Screens]** to choose. It never
    lights up as "live", because there is nothing of it on the screen to be live. In the
@@ -57,6 +58,7 @@ it — rather than something to show.
    Clicking one goes to the screens it names and nowhere else; **[en:tran:Apply on Screens]**
    still asks, since that entry is you saying "send this one somewhere else" — but it
    does not change what the line is pinned to.
+
 4. **Where the actions live in the menu.** **[en:tran:Add Action]** opens with **[en:tran:Clear Screen]** —
    one row that adds nothing and opens the five clears, with **[en:tran:Other Clear FG Items]**
-   under them for the twelve per-widget foreground clears — then **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, then the five that drive the run.
+   under them for the fourteen per-widget foreground clears — then **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]**, then the five that drive the run.

@@ -107,7 +107,15 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
         return jsonData;
     }
 
-    async getItems() {
+    /**
+     * `isQuiet`: a read made in the background -- the Presenting Flows
+     * list's on-screen mark re-reads every listed sheet whenever anything
+     * is on a screen -- says nothing about a damaged entry. Its toast had
+     * come up on a press of a fill, about a sheet nobody touched, and used
+     * up the once-a-minute notice the person would get on opening it (F-36
+     * of robot run 20261120-2021).
+     */
+    async getItems({ isQuiet = false }: { isQuiet?: boolean } = {}) {
         const jsonData = await this.getJsonData();
         if (jsonData === null) {
             return null;
@@ -124,7 +132,13 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                     // a forwarded log reads it rather than `[object Object]`.
                     // What the operator is told is the same phrase the row they
                     // are about to see reads.
-                    if (checkShouldNoticeInvalidItem(this.filePath, json)) {
+                    // The sheet is named: the toast had said "Invalid item"
+                    // alone, and read as if whatever was just pressed were
+                    // the invalid thing.
+                    if (
+                        !isQuiet &&
+                        checkShouldNoticeInvalidItem(this.filePath, json)
+                    ) {
                         loggerHelpers.appError(
                             error,
                             `in ${this.filePath}:`,
@@ -132,7 +146,7 @@ export default class PresentingFlow extends AppEditableDocumentSourceAbs<Present
                         );
                         showSimpleToast(
                             tran('Instantiating Presenting Flow Item'),
-                            tran('Invalid item'),
+                            `${tran('Invalid item')}: ${this.fileSource.name}`,
                         );
                     }
                 }

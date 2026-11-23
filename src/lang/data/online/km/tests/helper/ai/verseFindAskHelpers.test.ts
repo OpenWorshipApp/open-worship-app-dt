@@ -40,9 +40,9 @@ describe('asking the assistant to find a verse', () => {
                 'Help me find a Bible verse in "KJV": love your enemies',
             ),
         ).toEqual({ bibleKey: 'KJV', remembered: 'love your enemies' });
-        expect(
-            readVerseFindAsk('find a verse in ពគប: ព្រះយេស៊ូសួរពេត្រុស?'),
-        ).toEqual({ bibleKey: 'ពគប', remembered: 'ព្រះយេស៊ូសួរពេត្រុស' });
+        expect(readVerseFindAsk('find a verse in ពគប: ព្រះយេស៊ូសួរពេត្រុស?')).toEqual(
+            { bibleKey: 'ពគប', remembered: 'ព្រះយេស៊ូសួរពេត្រុស' },
+        );
         expect(
             readVerseFindAsk('Help me find a Bible verse: shepherd'),
         ).toEqual({ bibleKey: null, remembered: 'shepherd' });

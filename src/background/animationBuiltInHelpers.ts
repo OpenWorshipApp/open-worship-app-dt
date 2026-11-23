@@ -1,203 +1,425 @@
-import type { AppColorType } from '../others/color/colorValueHelpers';
+import type { ColorModeType } from '../others/color/colorContrastHelpers';
 import {
+    checkIsColorDark,
+    type AppColorType,
+} from '../others/color/colorValueHelpers';
+import {
+    CSS_ANIMATION_NAME_LIST,
+    GLSL_ANIMATION_NAME_LIST,
+    parseAnimation,
+    toAnimationReadColor,
     toAnimationSrc,
+    type AnimationLevelType,
+    type AnimationSpeedType,
     type AnimationType,
     type CssAnimationNameType,
     type GlslAnimationNameType,
 } from './animationValueHelpers';
+import {
+    ANIMATION_CATEGORY_DATA_MAP,
+    ANIMATION_CATEGORY_LIST,
+    type AnimationCategoryDataType,
+    type AnimationCategoryType,
+    type AnimationEffectNameType,
+} from './animationCategoryData';
+
+export {
+    ANIMATION_CATEGORY_GROUP_LIST,
+    ANIMATION_CATEGORY_LIST,
+    DEFAULT_ANIMATION_CATEGORY,
+    type AnimationCategoryGroupType,
+    type AnimationCategoryType,
+} from './animationCategoryData';
 
 /**
- * The samples the Animations tab starts with (2026-11-15, the user: _supply
- * maximum sample for christian worshiping background_): every effect, in
- * the colours of a season or a theme of worship -- Christmas snow, an Easter
- * sunrise, Pentecost flames, living water -- each in its one written form
- * (`toAnimationSrc`), so a tile is lit by a plain comparison. The first
- * colour is the ground. A person recolours any of them (Customize) and
- * keeps the result as a preset.
+ * The samples the Animations tab offers, by CATEGORY (2026-11-19, the user:
+ * _add categroy control. I want to swhich category. e.g. sunday worship,
+ * christmas, thanksgiving, resurection day, ..._, then _give maximum sample
+ * for each category_): every effect of both kinds in the colours of an
+ * occasion -- Christmas snow, a Resurrection Day sunrise, Thanksgiving
+ * leaves -- but those the occasion does not suit, the ones it is known by
+ * first. Each in its one written form (`toAnimationSrc`), so a tile is lit
+ * by a plain comparison. The first colour is the ground. A person recolours
+ * any of them (Customize) and keeps the result as a preset.
+ *
+ * The effects an occasion is known by come in more than one look (the same
+ * day: _add more example, e.g. christmas should have like falling snow_):
+ * its first lead effect of each kind in four, the second in three, the
+ * third in two -- each further look in another of the category's palettes,
+ * with more of it, or slower. Christmas opens on four snowfalls of
+ * each kind, `Snowfall` to `Snowfall 4`.
+ *
+ * Every category comes on both sides of a Dark / Light switch, as the Fills
+ * tab's gradients do (2026-11-19, the user: _all category should have
+ * dark/light_): the same effects in the same order, in the category's
+ * light palettes. The Dark side is what there always was, src for src.
+ *
+ * Nothing is built when this loads -- it sits in the Presenter's static
+ * closure through every animation's label -- and nothing is kept: a
+ * category's samples are built when the picker shows it, a few dozen
+ * strings, and a written animation's category is worked out per category
+ * from its one effect.
  */
 
-export const ANIMATION_THEME_LIST = [
-    'glory',
-    'heaven',
-    'holy-spirit',
-    'living-water',
-    'silent-night',
-    'christmas',
-    'advent',
-    'lent',
-    'easter',
-    'calvary',
-    'grace',
-    'peace',
-    'joy',
-    'majesty',
-    'worship',
-    'pentecost',
-    'hope',
-    'praise',
-    'baptism',
-    'light-of-the-world',
-    'morning-light',
-    'resurrection',
-    'communion',
-    'revival',
-] as const;
-export type AnimationThemeType = (typeof ANIMATION_THEME_LIST)[number];
+export type AnimationEngineType = AnimationType['engine'];
 
 export type AnimationSampleType = {
-    theme: AnimationThemeType;
+    category: AnimationCategoryType;
+    tone: ColorModeType;
     animation: AnimationType;
     src: string;
+    /** 1 for an effect's first look, 2 and on for its further ones. */
+    number: number;
 };
 
-function genCss(
-    theme: AnimationThemeType,
+export type AnimationCategorySamplesType = {
+    css: AnimationSampleType[];
+    glsl: AnimationSampleType[];
+};
+
+export type AnimationSampleFoundType = {
+    category: AnimationCategoryType;
+    tone: ColorModeType;
+    number: number;
+};
+
+export const ANIMATION_TONE_LIST: readonly ColorModeType[] = ['dark', 'light'];
+
+/**
+ * What one side of a category draws from: its palettes, and -- the Dark
+ * side alone -- the samples there were before categories.
+ */
+type CategoryToneDataType = Pick<
+    AnimationCategoryDataType,
+    'lead' | 'excluded' | 'palettes' | 'css' | 'glsl'
+>;
+
+function toCategoryToneData(
+    category: AnimationCategoryType,
+    tone: ColorModeType,
+): CategoryToneDataType {
+    const data = ANIMATION_CATEGORY_DATA_MAP[category];
+    if (tone === 'dark') {
+        return data;
+    }
+    return {
+        lead: data.lead,
+        excluded: data.excluded,
+        palettes: data.lightPalettes,
+    };
+}
+
+type SampleLookType = {
+    speed: AnimationSpeedType;
+    /** A CSS effect's density; a shader keeps its quality, which is cost. */
+    level: AnimationLevelType;
+};
+
+// How many looks a category's first, second and third lead effect of a kind
+// come in; every other effect comes in one.
+const LEAD_LOOK_COUNT_LIST = [4, 3, 2];
+const FIRST_LOOK: SampleLookType = { speed: 'normal', level: 'normal' };
+// A further look's pace and amount, in turn; its colours are another of the
+// category's palettes. Never faster -- a background behind words -- and
+// never fewer: a sparse snowfall's tile was an empty colour at tile size.
+const FURTHER_LOOK_LIST: readonly SampleLookType[] = [
+    { speed: 'normal', level: 'high' },
+    { speed: 'slow', level: 'high' },
+    { speed: 'slow', level: 'normal' },
+];
+
+type CategoryEffectType<T> = { name: T; lookCount: number };
+
+/** A category's effects of one kind, in the order its tiles are drawn. */
+function listCategoryEffects<T extends AnimationEffectNameType>(
+    nameList: readonly T[],
+    data: CategoryToneDataType,
+): CategoryEffectType<T>[] {
+    const excluded: readonly AnimationEffectNameType[] = data.excluded ?? [];
+    const checkIsOfKind = (name: AnimationEffectNameType): name is T => {
+        return (nameList as readonly AnimationEffectNameType[]).includes(name);
+    };
+    const lead = data.lead.filter(checkIsOfKind).filter((name) => {
+        return !excluded.includes(name);
+    });
+    const rest = nameList.filter((name) => {
+        return !lead.includes(name) && !excluded.includes(name);
+    });
+    return [...lead, ...rest].map((name, index) => {
+        const lookCount =
+            index < lead.length ? (LEAD_LOOK_COUNT_LIST[index] ?? 1) : 1;
+        return { name, lookCount };
+    });
+}
+
+function pickCategoryColors(
+    data: CategoryToneDataType,
+    engine: AnimationEngineType,
+    name: string,
+    index: number,
+): readonly string[] {
+    const overrideMap: Partial<Record<string, readonly string[]>> =
+        (engine === 'css' ? data.css : data.glsl) ?? {};
+    return overrideMap[name] ?? data.palettes[index % data.palettes.length];
+}
+
+function genCssAnimation(
     name: CssAnimationNameType,
-    colors: string[],
-): AnimationSampleType {
-    const animation: AnimationType = {
+    colors: readonly string[],
+    look: SampleLookType,
+): AnimationType {
+    return {
         engine: 'css',
         name,
-        colors: colors as AppColorType[],
-        speed: 'normal',
-        density: 'normal',
+        code: null,
+        colors: [...colors] as AppColorType[],
+        speed: look.speed,
+        density: look.level,
         opacity: 100,
         blend: 'normal',
     };
-    return { theme, animation, src: toAnimationSrc(animation) };
 }
 
-function genGlsl(
-    theme: AnimationThemeType,
+function genGlslAnimation(
     name: GlslAnimationNameType,
-    colors: string[],
-): AnimationSampleType {
-    const animation: AnimationType = {
+    colors: readonly string[],
+    look: SampleLookType,
+): AnimationType {
+    return {
         engine: 'glsl',
         name,
         code: null,
-        colors: colors as AppColorType[],
-        speed: 'normal',
+        colors: [...colors] as AppColorType[],
+        speed: look.speed,
         quality: 'normal',
         opacity: 100,
         blend: 'normal',
     };
-    return { theme, animation, src: toAnimationSrc(animation) };
 }
 
-export const CSS_ANIMATION_SAMPLE_LIST: AnimationSampleType[] = [
-    genCss('glory', 'rays', ['#0C1E3A', '#FDE68A', '#FFFFFF']),
-    genCss('heaven', 'clouds', ['#3B6FB6', '#FFFFFF', '#E0F2FE']),
-    genCss('holy-spirit', 'embers', [
-        '#1F0A05',
-        '#F97316',
-        '#FACC15',
-        '#EF4444',
-    ]),
-    genCss('living-water', 'waves', [
-        '#082F49',
-        '#0EA5E9',
-        '#38BDF8',
-        '#BAE6FD',
-    ]),
-    genCss('silent-night', 'stars', [
-        '#05060F',
-        '#FFFFFF',
-        '#BFDBFE',
-        '#FDE68A',
-    ]),
-    genCss('christmas', 'snow', ['#052E16', '#FFFFFF', '#DCFCE7']),
-    genCss('advent', 'bokeh', ['#2E1065', '#C084FC', '#F9A8D4', '#FDE68A']),
-    genCss('lent', 'breathe', ['#1E1B4B', '#6D28D9', '#7C3AED', '#A78BFA']),
-    genCss('easter', 'cross', ['#1E1B4B', '#FFFBEB', '#FDE68A', '#F59E0B']),
-    genCss('calvary', 'cross', ['#0A0505', '#E5E5E5', '#B91C1C', '#7F1D1D']),
-    genCss('grace', 'aurora', ['#0B1026', '#22D3EE', '#8B5CF6', '#10B981']),
-    genCss('peace', 'clouds', ['#1E3A5F', '#CBD5E1', '#F1F5F9']),
-    genCss('joy', 'bokeh', ['#1A1033', '#F59E0B', '#EC4899', '#FDE68A']),
-    genCss('majesty', 'rays', ['#2E1065', '#FACC15', '#FEF08A']),
-    genCss('worship', 'breathe', ['#0F172A', '#2563EB', '#7C3AED', '#DB2777']),
-    genCss('pentecost', 'embers', ['#450A0A', '#DC2626', '#F97316', '#FDE047']),
-    genCss('hope', 'aurora', ['#042F2E', '#2DD4BF', '#86EFAC', '#FDE68A']),
-    genCss('praise', 'waves', ['#1E1B4B', '#8B5CF6', '#EC4899', '#F59E0B']),
-    genCss('baptism', 'bokeh', ['#0C4A6E', '#7DD3FC', '#E0F2FE', '#FFFFFF']),
-    genCss('light-of-the-world', 'cross', [
-        '#0B1026',
-        '#FFFFFF',
-        '#FDE68A',
-        '#FEF3C7',
-    ]),
-    genCss('morning-light', 'rays', ['#1E293B', '#FDBA74', '#FEF3C7']),
-    genCss('revival', 'aurora', ['#1C1917', '#F59E0B', '#EF4444', '#FDE68A']),
-];
+/**
+ * The looks of one effect of a category, the first one first: it keeps the
+ * colours it was given (a sample of before categories keeps its own), each
+ * further one takes the next palette that is not the first look's.
+ */
+function genEffectAnimations(
+    data: CategoryToneDataType,
+    engine: AnimationEngineType,
+    name: CssAnimationNameType | GlslAnimationNameType,
+    index: number,
+    lookCount: number,
+): AnimationType[] {
+    const firstColors = pickCategoryColors(data, engine, name, index);
+    const paletteCount = data.palettes.length;
+    const furtherColorsList = data.palettes
+        .map((_, shift) => {
+            return data.palettes[(index + shift) % paletteCount];
+        })
+        .filter((colors) => {
+            return colors !== firstColors;
+        });
+    const lookList = [
+        { colors: firstColors, look: FIRST_LOOK },
+        ...FURTHER_LOOK_LIST.slice(0, lookCount - 1).map((look, lookIndex) => {
+            return { colors: furtherColorsList[lookIndex], look };
+        }),
+    ].filter((item) => {
+        return item.colors !== undefined;
+    });
+    return lookList.map(({ colors, look }) => {
+        return engine === 'css'
+            ? genCssAnimation(name as CssAnimationNameType, colors, look)
+            : genGlslAnimation(name as GlslAnimationNameType, colors, look);
+    });
+}
 
-export const GLSL_ANIMATION_SAMPLE_LIST: AnimationSampleType[] = [
-    genGlsl('heaven', 'clouds', ['#1D4ED8', '#FFFFFF', '#BFDBFE']),
-    genGlsl('holy-spirit', 'flames', [
-        '#1C0500',
-        '#F97316',
-        '#FACC15',
-        '#FFFFFF',
-    ]),
-    genGlsl('pentecost', 'flames', [
-        '#2A0A0A',
-        '#DC2626',
-        '#F97316',
-        '#FDE047',
-    ]),
-    genGlsl('living-water', 'ripples', [
-        '#042F49',
-        '#0EA5E9',
-        '#7DD3FC',
-        '#F0F9FF',
-    ]),
-    genGlsl('baptism', 'ripples', ['#0C4A6E', '#38BDF8', '#E0F2FE']),
-    genGlsl('silent-night', 'stars', [
-        '#020617',
-        '#1E3A8A',
-        '#BFDBFE',
-        '#FDE68A',
-    ]),
-    genGlsl('christmas', 'snow', ['#7F1D1D', '#FFFFFF', '#FECACA']),
-    genGlsl('easter', 'sunrise', ['#1E1B4B', '#F59E0B', '#FDE68A', '#FFFFFF']),
-    genGlsl('resurrection', 'cross', [
-        '#0B1026',
-        '#FFFFFF',
-        '#FDE68A',
-        '#F59E0B',
-    ]),
-    genGlsl('calvary', 'cross', ['#0A0505', '#E5E5E5', '#B91C1C', '#7F1D1D']),
-    genGlsl('light-of-the-world', 'rays', ['#111827', '#FDE68A', '#FFFFFF']),
-    genGlsl('grace', 'mesh', ['#4C1D95', '#DB2777', '#F59E0B', '#2563EB']),
-    genGlsl('peace', 'mesh', ['#0F172A', '#60A5FA', '#C4B5FD', '#99F6E4']),
-    genGlsl('joy', 'plasma', ['#0F0A1E', '#7C3AED', '#EC4899', '#F59E0B']),
-    genGlsl('worship', 'flow', ['#020617', '#0EA5E9', '#6366F1', '#22D3EE']),
-    genGlsl('majesty', 'glass', ['#0B0B0B', '#7C3AED', '#DC2626', '#F59E0B']),
-    genGlsl('communion', 'glass', ['#1C1917', '#B91C1C', '#F59E0B', '#1D4ED8']),
-    genGlsl('hope', 'aurora', ['#030712', '#34D399', '#22D3EE', '#A78BFA']),
-    genGlsl('praise', 'waves', ['#1E1B4B', '#7C3AED', '#EC4899', '#F59E0B']),
-    genGlsl('advent', 'stars', ['#1E1033', '#4C1D95', '#E9D5FF', '#FDE68A']),
-    genGlsl('morning-light', 'sunrise', [
-        '#0C4A6E',
-        '#FDBA74',
-        '#FEF3C7',
-        '#FFFFFF',
-    ]),
-    genGlsl('glory', 'rays', ['#1C1917', '#F59E0B', '#FEF3C7']),
-    genGlsl('lent', 'flow', ['#1E1B4B', '#6D28D9', '#A78BFA', '#4C1D95']),
-    genGlsl('revival', 'plasma', ['#1C0A00', '#DC2626', '#F59E0B', '#FDE047']),
-];
-
-const sampleThemeMap = new Map<string, AnimationThemeType>(
-    [...CSS_ANIMATION_SAMPLE_LIST, ...GLSL_ANIMATION_SAMPLE_LIST].map(
-        (sample) => {
-            return [sample.src, sample.theme];
+function listCategoryKindSamples(
+    category: AnimationCategoryType,
+    tone: ColorModeType,
+    engine: AnimationEngineType,
+): AnimationSampleType[] {
+    const data = toCategoryToneData(category, tone);
+    const nameList: readonly (CssAnimationNameType | GlslAnimationNameType)[] =
+        engine === 'css' ? CSS_ANIMATION_NAME_LIST : GLSL_ANIMATION_NAME_LIST;
+    return listCategoryEffects(nameList, data).flatMap(
+        ({ name, lookCount }, index) => {
+            return genEffectAnimations(
+                data,
+                engine,
+                name,
+                index,
+                lookCount,
+            ).map((animation, lookIndex) => {
+                return {
+                    category,
+                    tone,
+                    animation,
+                    src: toAnimationSrc(animation),
+                    number: lookIndex + 1,
+                };
+            });
         },
-    ),
-);
+    );
+}
 
-/** The theme a written animation is a sample of, if it is one as it is. */
-export function findAnimationSampleTheme(
+/**
+ * One side of one category's samples, CSS and GLSL, in the order they are
+ * drawn.
+ */
+export function listAnimationCategorySamples(
+    category: AnimationCategoryType,
+    tone: ColorModeType = 'dark',
+): AnimationCategorySamplesType {
+    return {
+        css: listCategoryKindSamples(category, tone, 'css'),
+        glsl: listCategoryKindSamples(category, tone, 'glsl'),
+    };
+}
+
+/** The written samples of one kind of a category's side: a show's row. */
+export function listAnimationCategorySrcs(
+    category: AnimationCategoryType,
+    engine: AnimationEngineType,
+    tone: ColorModeType = 'dark',
+): string[] {
+    return listCategoryKindSamples(category, tone, engine).map((sample) => {
+        return sample.src;
+    });
+}
+
+// Whole and plain, as every sample is: its pace and amount are the src's
+// to compare.
+function checkIsSampleLook(animation: AnimationType) {
+    if (animation.opacity !== 100 || animation.blend !== 'normal') {
+        return false;
+    }
+    return animation.engine === 'css' || animation.quality === 'normal';
+}
+
+/** Where `animation`'s effect is drawn in the category, null if it is not. */
+function findCategoryEffect(
+    animation: AnimationType,
+    data: CategoryToneDataType,
+): (CategoryEffectType<string> & { index: number }) | null {
+    if (animation.name === 'custom') {
+        return null;
+    }
+    const nameList: readonly (CssAnimationNameType | GlslAnimationNameType)[] =
+        animation.engine === 'css'
+            ? CSS_ANIMATION_NAME_LIST
+            : GLSL_ANIMATION_NAME_LIST;
+    const effectList = listCategoryEffects(nameList, data);
+    const index = effectList.findIndex((effect) => {
+        return effect.name === animation.name;
+    });
+    return index === -1 ? null : { ...effectList[index], index };
+}
+
+/** Whether any sample of the category stands on `ground`: a few compares. */
+function checkHasGround(
+    data: CategoryToneDataType,
+    engine: AnimationEngineType,
+    ground: string,
+) {
+    const overrideList = Object.values(
+        (engine === 'css' ? data.css : data.glsl) ?? {},
+    );
+    return [...data.palettes, ...overrideList].some((colors) => {
+        return colors !== undefined && colors[0].toUpperCase() === ground;
+    });
+}
+
+/**
+ * The category an animation is a sample of, which side of it and which look
+ * of its effect -- null for one recoloured, made see-through or of a
+ * person's own code. Each side of each category is asked for the few looks
+ * of that one effect: no list of every sample is ever built. Every label of
+ * an animation asks (`genAnimationLabel`), so a side whose grounds are not
+ * this one's is passed over first.
+ */
+export function findAnimationSample(
+    animation: AnimationType,
+): AnimationSampleFoundType | null {
+    if (animation.name === 'custom' || !checkIsSampleLook(animation)) {
+        return null;
+    }
+    const src = toAnimationSrc(animation);
+    const ground = animation.colors[0].toUpperCase();
+    for (const category of ANIMATION_CATEGORY_LIST) {
+        for (const tone of ANIMATION_TONE_LIST) {
+            const number = findToneSampleNumber(
+                toCategoryToneData(category, tone),
+                animation,
+                src,
+                ground,
+            );
+            if (number !== null) {
+                return { category, tone, number };
+            }
+        }
+    }
+    return null;
+}
+
+/** Which look of its effect `animation` is on one side, null if none. */
+function findToneSampleNumber(
+    data: CategoryToneDataType,
+    animation: AnimationType,
     src: string,
-): AnimationThemeType | null {
-    return sampleThemeMap.get(src) ?? null;
+    ground: string,
+): number | null {
+    if (
+        animation.name === 'custom' ||
+        !checkHasGround(data, animation.engine, ground)
+    ) {
+        return null;
+    }
+    const effect = findCategoryEffect(animation, data);
+    if (effect === null) {
+        return null;
+    }
+    const lookIndex = genEffectAnimations(
+        data,
+        animation.engine,
+        animation.name,
+        effect.index,
+        effect.lookCount,
+    ).findIndex((sample) => {
+        // The ground first: it rules out most looks at once.
+        return (
+            sample.colors[0].toUpperCase() === ground &&
+            toAnimationSrc(sample) === src
+        );
+    });
+    return lookIndex === -1 ? null : lookIndex + 1;
+}
+
+/** The category an animation is a sample of, or null. */
+export function findAnimationSampleCategory(
+    animation: AnimationType,
+): AnimationCategoryType | null {
+    return findAnimationSample(animation)?.category ?? null;
+}
+
+/** The side of the Dark / Light switch a sample is on; null for any other. */
+export function findAnimationTone(src: unknown): ColorModeType | null {
+    const animation = parseAnimation(src);
+    return animation === null
+        ? null
+        : (findAnimationSample(animation)?.tone ?? null);
+}
+
+/**
+ * The side the switch opens on: a sample's own, else the side an animation
+ * reads as (`toAnimationReadColor`), else Dark.
+ */
+export function toInitialAnimationTone(src: unknown): ColorModeType {
+    const animation = parseAnimation(src);
+    if (animation === null) {
+        return 'dark';
+    }
+    return (
+        findAnimationSample(animation)?.tone ??
+        (checkIsColorDark(toAnimationReadColor(animation)) ? 'dark' : 'light')
+    );
 }

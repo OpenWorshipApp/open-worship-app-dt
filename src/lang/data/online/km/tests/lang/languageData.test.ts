@@ -83,9 +83,7 @@ describe('Khmer language data', () => {
     });
 
     test('keeps only Khmer letters and digits in a search, one space between words', () => {
-        expect(km.sanitizeFindingText('  ព្រះ, John ៣:១៦!  ')).toBe(
-            'ព្រះ ៣ ១៦',
-        );
+        expect(km.sanitizeFindingText('  ព្រះ, John ៣:១៦!  ')).toBe('ព្រះ ៣ ១៦');
         expect(km.trimText('\u200B\u200Bព្រះ\u200B')).toBe('ព្រះ');
         expect(km.trimText('  ព្រះ  ')).toBe('ព្រះ');
         expect(km.endWord('ព្រះ')).toBe('ព្រះ\u200B');

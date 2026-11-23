@@ -27,7 +27,9 @@ failure was one press away and one state away from every graded answer, and
 **How to apply:** an `/owa-enhance-chatbot` run grades the panic shapes in
 BOTH screen states (off with a slide held; on with a slide showing — put a
 lyric slide on screen 0 first) and follows the offer through by pressing the
-reply chip; the driver pattern is `ask-corpus.mjs` + `follow.mjs` in
+reply chip; that day's scratch `ask-corpus.mjs` + `follow.mjs` were never
+kept -- the kept `screen-run.mjs` and `foreground-run.mjs` press an answer's
+button by its words (an ask's `press`), `corpus-run.mjs` none; traps in
 [[chatbot-cdp-driver-gotchas]]. Verify the screens tool against the app's
 own host (`isAnyShowing` alone is the OLD shape). Related:
 [[click-reports-effect-not-action]], [[mcp-model-hidden-tools]].

@@ -62,7 +62,6 @@ const h = vi.hoisted(() => {
             gitRepository: 'https://github.com/example/owa',
             titleFull: 'Open Worship App (test)',
             version: '2026.11.3',
-            description: 'A volunteer-first presenter.',
             homepage: 'https://owa.example.org',
         },
         browserUtils: {
@@ -1636,7 +1635,9 @@ describe('AboutComp', () => {
         const about = container.querySelector('#app') as HTMLElement;
         expect(about.dataset.bsTheme).toBe('dark');
         expect(container.textContent).toContain('Open Worship App (test)');
-        expect(container.textContent).toContain('A volunteer-first presenter.');
+        expect(container.textContent).toContain(
+            'Fully Open-Source and completely free forever for worship service.',
+        );
         const versions = Array.from(
             container.querySelectorAll('.module-version'),
         ).map((element) => element.textContent);
@@ -1645,6 +1646,7 @@ describe('AboutComp', () => {
             'Pptx to Html Converter (Loading...)',
             'Docx to Html Converter (N/A)',
             'Bible Note (0.9.4)',
+            'Open Worship App MCP',
         ]);
         const links = Array.from(container.querySelectorAll('a'));
         expect(links.map((link) => [link.textContent, link.href])).toEqual([

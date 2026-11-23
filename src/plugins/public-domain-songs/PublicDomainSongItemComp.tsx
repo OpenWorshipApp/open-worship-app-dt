@@ -18,7 +18,7 @@ export default function PublicDomainSongItemComp({
     // way to tell which song a press would import.
     const downloadLabel = `${tran('Download')}: ${song.title}`;
     return (
-        <li className="list-group-item p-2">
+        <li className="list-group-item p-2 app-selectable-text">
             <div
                 className={
                     'd-flex justify-content-between align-items-center gap-2'

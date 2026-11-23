@@ -17,7 +17,7 @@ presented nothing, with no toast and no console error.
 
 **Fixed 2026-08-06** — `getSlideById` falls back to the full list for exactly those ids (the
 slow path only runs for them), and an unresolvable presenting flow reference now toasts
-`Showing PresentingFlow Item / Fail to read file data` instead of failing silently.
+`Showing Presenting Flow Item / Fail to read file data` instead of failing silently.
 
 **Why:** the stage is stored correctly, so the file looks right and only a live present
 reveals it — matrix row PL-64 exists for this.

@@ -44,6 +44,10 @@ vi.mock('../server/fileHelpers', () => ({
         return size;
     },
     // As the real one: the converters' byte order mark taken off.
+    // no deck here is read by the app's own reader: as a file not there
+    fsReadFileBytes: async (filePath: string) => {
+        throw new Error(`ENOENT: ${filePath}`);
+    },
     fsReadFile: async (filePath: string) => {
         const text = diskState.textMap.get(filePath);
         if (text === undefined) {
@@ -94,6 +98,7 @@ vi.mock('../server/appProvider', () => ({
 import {
     MAX_DOCUMENT_WORDS_FILE_BYTES,
     readDocumentWords,
+    toOfficeReadBlocks,
 } from './documentWordsHelpers';
 
 const BOM = '\uFEFF';
@@ -246,6 +251,29 @@ describe('a deck or a Word file, through the converter', () => {
         expect(await readDocumentWords('/docs/Grace.pptx')).toBe(DECK_WORDS);
         expect(warn).toHaveBeenCalled();
         warn.mockRestore();
+    });
+
+    test("a deck's SmartArt words, read by the app's own reader, a slide a block", () => {
+        expect(
+            toOfficeReadBlocks({
+                slides: [
+                    {
+                        lines: [{ id: '1.1', text: 'Our team' }],
+                        boxes: [
+                            { kind: 'smartart', words: ['A', 'B1', ' '] },
+                            { kind: 'picture', words: ['not a word'] },
+                        ],
+                    },
+                    { lines: [], boxes: [] },
+                    { lines: [], boxes: [{ kind: 'smartart', words: ['C'] }] },
+                ],
+            }),
+        ).toEqual([['Our team', 'A', 'B1'], ['C']]);
+        expect(
+            toOfficeReadBlocks({ lines: [{ text: 'Grace' }, { text: '' }] }),
+        ).toEqual([['Grace']]);
+        expect(toOfficeReadBlocks({ lines: [] })).toEqual([]);
+        expect(toOfficeReadBlocks(null)).toEqual([]);
     });
 
     test('a deck with no words in it is none', async () => {

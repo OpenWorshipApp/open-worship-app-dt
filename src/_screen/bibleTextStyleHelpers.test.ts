@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 
+import { SCREEN_FONT_FAMILY } from './screenFontFamily';
 import {
     BIBLE_TEXT_FONT_FAMILY_VAR,
     type BibleTextStyleViewType,
@@ -226,10 +227,8 @@ describe('genBibleTextStyleCss', () => {
         }).split('\n');
         // The declaration for the row, the screen's own stack behind it for a
         // machine that does not have the font.
-        expect(lines).toContainEqual(
-            expect.stringMatching(
-                /^font-family: "Made Up Sans", app-Google-Sans, system-ui, .*;$/,
-            ),
+        expect(lines).toContain(
+            `font-family: "Made Up Sans", ${SCREEN_FONT_FAMILY};`,
         );
         // The variable a verse reads ahead of its language's own inline font.
         expect(lines).toContain(

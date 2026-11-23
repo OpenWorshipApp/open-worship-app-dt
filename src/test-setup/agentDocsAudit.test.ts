@@ -34,6 +34,8 @@ const HARD_CHECK_LIST = [
     'memory',
     'rules',
     'skills',
+    // `AD-43`: a home path naming an account, in anything that ships.
+    'privacy',
 ];
 // Printed beside the drift for a person to weigh, not a fault.
 const ADVISORY_LABEL_PATTERN = /^skill description lengths/;

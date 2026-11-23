@@ -11,6 +11,7 @@ import {
 } from 'vitest';
 
 import { DragTypeEnum } from '../../helper/DragInf';
+import { SCREEN_FONT_FAMILY } from '../screenFontFamily';
 
 const mocks = vi.hoisted(() => ({
     getSetting: vi.fn(),
@@ -171,6 +172,7 @@ vi.mock('../screenForegroundHelpers', () => ({
     genHtmlForegroundMessage: mocks.genQuickText,
     genHtmlForegroundCountdown: mocks.genCountdown,
     genHtmlForegroundMarquee: mocks.genMarquee,
+    FOREGROUND_MARQUEE_CLASS: 'foreground-marquee',
     genHtmlForegroundQuickText: mocks.genQuickText,
     genHtmlForegroundStopwatch: mocks.genStopwatch,
     genHtmlForegroundTime: mocks.genTime,
@@ -780,9 +782,7 @@ describe('non-Bible manager coverage', () => {
             lineHeight: 'normal',
             // The screen window's own stack, not whatever the host page
             // inherits into the mini preview's shadow root.
-            fontFamily: expect.stringMatching(
-                /^app-Google-Sans, system-ui, .*sans-serif/,
-            ),
+            fontFamily: SCREEN_FONT_FAMILY,
         });
 
         const timeA = {
@@ -1307,6 +1307,124 @@ describe('non-Bible manager coverage', () => {
             720,
         );
         manager.delete();
+    });
+
+    test("each session's marquee at an edge keeps a band of its own (F-38)", () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(46),
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        const behindRoot = document.createElement('div');
+        document.body.append(root, behindRoot);
+        manager.rootContainer = root;
+        manager.rootContainerBehind = behindRoot;
+
+        const bottomOne = { id: 'b1', text: 'One', sessionId: 'default' };
+        const bottomTwo = { id: 'b2', text: 'Two', sessionId: 'second' };
+        const bottomBehind = {
+            id: 'b3',
+            text: 'Behind',
+            sessionId: 'third',
+            isBehind: true,
+        };
+        const topOne = { id: 't1', text: 'Top', sessionId: 'default' };
+        const topTwo = { id: 't2', text: 'Top two', sessionId: 'second' };
+        const detached = { id: 'b4', text: 'Gone', sessionId: 'fourth' };
+        manager.foregroundData.marqueeBottomDataList = [
+            bottomOne,
+            detached,
+            bottomTwo,
+            bottomBehind,
+        ] as any;
+        manager.foregroundData.marqueeTopDataList = [topOne, topTwo] as any;
+        const addMarqueeElement = (data: any, height: number) => {
+            const container = manager.createDivContainer(data)!;
+            const marquee = document.createElement('div');
+            marquee.className = 'foreground-marquee';
+            marquee.style.bottom = '0px';
+            Object.defineProperty(marquee, 'offsetHeight', {
+                value: height,
+            });
+            container.appendChild(marquee);
+            return { container, marquee };
+        };
+        const one = addMarqueeElement(bottomOne, 40);
+        const gone = addMarqueeElement(detached, 1000);
+        gone.container.remove();
+        const two = addMarqueeElement(bottomTwo, 30);
+        const behind = addMarqueeElement(bottomBehind, 25);
+        const top = addMarqueeElement(topOne, 50);
+        const topSecond = addMarqueeElement(topTwo, 20);
+
+        manager.layOutMarquees();
+
+        // The first keeps the edge, the next sits just inside it; a detached
+        // one takes no band, and the behind root stacks on its own.
+        expect(one.marquee.style.bottom).toBe('0px');
+        expect(two.marquee.style.bottom).toBe('40px');
+        expect(behind.marquee.style.bottom).toBe('0px');
+        expect(top.marquee.style.top).toBe('0px');
+        expect(topSecond.marquee.style.top).toBe('50px');
+        manager.delete();
+    });
+
+    test('a marquee leaving closes its band once it is gone (F-38)', async () => {
+        const manager = new ScreenForegroundManager(
+            createScreenManagerBase(48),
+            createEffectManager(),
+        );
+        const root = document.createElement('div');
+        document.body.append(root);
+        manager.rootContainer = root;
+        const schedule = vi
+            .spyOn(manager, 'scheduleMarqueeLayout')
+            .mockImplementation(() => {});
+        const leaving = { id: 'b1', text: 'One', extraStyle: {} } as any;
+        const staying = { id: 'b2', text: 'Two', extraStyle: {} } as any;
+        manager.renderMarqueeBottom(leaving);
+        manager.renderMarqueeBottom(staying);
+        manager.foregroundData.marqueeBottomDataList = [staying];
+        manager.removeDivContainer(leaving);
+        await vi.waitFor(() => expect(schedule).toHaveBeenCalledTimes(1));
+        expect(root.children).toHaveLength(1);
+
+        // The last one off leaves nothing to lay out.
+        manager.foregroundData.marqueeBottomDataList = [];
+        manager.removeDivContainer(staying);
+        await vi.waitFor(() => expect(root.children).toHaveLength(0));
+        expect(schedule).toHaveBeenCalledTimes(1);
+        manager.delete();
+    });
+
+    test('marquee layout runs once a frame and stops with the manager', () => {
+        const callbacks: ((time: number) => void)[] = [];
+        const cancelFrame = vi.fn();
+        vi.stubGlobal(
+            'requestAnimationFrame',
+            (callback: (time: number) => void) => {
+                callbacks.push(callback);
+                return callbacks.length;
+            },
+        );
+        vi.stubGlobal('cancelAnimationFrame', cancelFrame);
+        try {
+            const manager = new ScreenForegroundManager(
+                createScreenManagerBase(47),
+                createEffectManager(),
+            );
+            const layout = vi.spyOn(manager, 'layOutMarquees');
+            manager.scheduleMarqueeLayout();
+            manager.scheduleMarqueeLayout();
+            expect(callbacks).toHaveLength(1);
+            callbacks[0](0);
+            expect(layout).toHaveBeenCalledTimes(1);
+            manager.scheduleMarqueeLayout();
+            manager.delete();
+            expect(cancelFrame).toHaveBeenCalledWith(2);
+        } finally {
+            vi.unstubAllGlobals();
+        }
     });
 
     test('a missing camera is explained in the presenter but stays quiet on screen', () => {

@@ -14,8 +14,8 @@ snapshot then showed it) while React state stayed `''`; the next press read
 the box as empty — four Report presses each answered "Tell me what went wrong
 first", which reads like an app bug but is the driver.
 
-**How to apply:** drive text entry through `owa_type` (it types with real key
-events and per-keystroke `onChange`), and when a press's effect contradicts a
+**How to apply:** drive text entry through `owa_type` (it writes through the box's own value setter and fires
+`input`, which React's value tracker reads as a change -- no key events), and when a press's effect contradicts a
 snapshot, distrust the snapshot's `value=` — it is the DOM property, not
 React state. Found 2026-10-20; contrast with §6e's input popup where `fill`
 works (that box is not React-controlled the same way).

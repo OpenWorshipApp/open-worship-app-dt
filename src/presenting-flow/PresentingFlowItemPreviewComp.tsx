@@ -37,6 +37,7 @@ import { useBibleFontFamily } from '../helper/bible-helpers/bibleStyleHelpers';
 import type { DroppedDataType } from '../helper/DragInf';
 import { dragStore } from '../helper/dragHelpers';
 import { handleError } from '../helper/errorHelpers';
+import { pressElementLikeButton } from '../helper/helpers';
 import { tran } from '../lang/langHelpers';
 import LoadingComp from '../others/LoadingComp';
 import type PresentingFlowItem from './PresentingFlowItem';
@@ -256,13 +257,27 @@ function PreviewFrameComp({
                     lineNumber={index + 1}
                     isCommand={presentingFlowItem.isAction}
                 />
+                {/* A control as the tree's own chevron is: named, a tab stop,
+                    Enter / Space. A bare `<i onClick>` folded one element for
+                    the mouse alone (F-34 of robot run 20261120-2021). */}
                 <i
                     className={
                         'bi app-presenting-flow-preview-item-chevron' +
                         ' app-caught-hover-pointer' +
                         ` bi-chevron-${isExpanded ? 'down' : 'right'}`
                     }
+                    role="button"
+                    tabIndex={0}
+                    aria-label={tran(isExpanded ? 'Collapse' : 'Expand')}
+                    aria-expanded={isExpanded}
                     onClick={handleToggling}
+                    onKeyDown={(event) => {
+                        // Kept off the preview: its own Space and Enter step
+                        // the run.
+                        if (pressElementLikeButton(event)) {
+                            event.stopPropagation();
+                        }
+                    }}
                 />
                 <i
                     className={`bi bi-${presentingFlowItem.iconName}`}

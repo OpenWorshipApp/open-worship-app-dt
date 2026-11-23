@@ -94,6 +94,17 @@ function useTiming(suffix: string) {
         const timeStr = nowArray()[1];
         return timeStr.substring(0, timeStr.lastIndexOf(':'));
     };
+    // What Reset puts in the boxes: the NEXT whole minute. The time box
+    // holds minutes only, so "now" was always a moment already gone, and
+    // Start refused the very value Reset had just put there -- with a toast
+    // saying to press Reset (F-14 of robot run 20261120-2021).
+    const nextMinuteParts = () => {
+        const date = new Date();
+        date.setSeconds(0, 0);
+        date.setMinutes(date.getMinutes() + 1 - date.getTimezoneOffset());
+        const [day, timeStr] = date.toISOString().split('T');
+        return { day, time: timeStr.substring(0, 5) };
+    };
     const [date, setDate] = useStateSettingString<string>(
         `foreground-date-setting${suffix}`,
         todayString(),
@@ -102,7 +113,15 @@ function useTiming(suffix: string) {
         `foreground-time-setting${suffix}`,
         nowString(),
     );
-    return { date, setDate, time, setTime, nowString, todayString };
+    return {
+        date,
+        setDate,
+        time,
+        setTime,
+        nowString,
+        todayString,
+        nextMinuteParts,
+    };
 }
 
 // `genTiming` is asked at the DROP, not when the drag began, so a countdown
@@ -167,8 +186,15 @@ function CountDownOnDatetimeComp({
     sessionId: string;
     suffix: string;
 }>) {
-    const { date, setDate, time, setTime, nowString, todayString } =
-        useTiming(suffix);
+    const {
+        date,
+        setDate,
+        time,
+        setTime,
+        nowString,
+        todayString,
+        nextMinuteParts,
+    } = useTiming(suffix);
     const getTargetDateTime = useCallback(() => {
         return new Date(date + ' ' + time);
     }, [date, time]);
@@ -191,11 +217,11 @@ function CountDownOnDatetimeComp({
     );
     const setDateRef = useAppCurrentRef(setDate);
     const setTimeRef = useAppCurrentRef(setTime);
-    const todayStringRef = useAppCurrentRef(todayString);
-    const nowStringRef = useAppCurrentRef(nowString);
+    const nextMinutePartsRef = useAppCurrentRef(nextMinuteParts);
     const handleResetting = useCallback(() => {
-        setDateRef.current(todayStringRef.current());
-        setTimeRef.current(nowStringRef.current());
+        const { day, time } = nextMinutePartsRef.current();
+        setDateRef.current(day);
+        setTimeRef.current(time);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleDateTimeShowingRef = useAppCurrentRef(handleDateTimeShowing);

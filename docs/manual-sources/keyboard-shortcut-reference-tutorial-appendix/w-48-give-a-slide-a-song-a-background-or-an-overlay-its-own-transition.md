@@ -5,7 +5,7 @@ section: "Keyboard shortcut reference (tutorial appendix)"
 verify: [PM-154, PM-155, PM-156, SP-06, ED-54]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-48 — Give a slide, a song, a background or an overlay its own transition
 
@@ -37,6 +37,12 @@ its slide, then its document, then the screen when its own choice is unticked.
    or untick the document's choice. It disappears when the document follows
    the screen
    again. 📸
+   A PowerPoint file starts with that icon already there, on
+   **[en:tran:No Transition]**: a deck plays its own animations, and only a
+   cut leaves them as they were made — a fade, slide or zoom runs over them.
+   Pick another effect if you want one, or untick
+   **[en:tran:Own transition]** to follow the screen; the file keeps either
+   choice.
 2. **One slide.** Press the ⋮ on that slide's card (or right-click it) and
    choose **[en:tran:Transition]** — it reads _Zoom (Slides preview)_, because
    it follows its document. Tick **[en:tran:Own transition]**, pick
@@ -69,7 +75,9 @@ its slide, then its document, then the screen when its own choice is unticked.
 8. A marquee band that has no transition of its own keeps sliding in from its
    edge; **[en:tran:Slide In]** is that same slide.
 9. To go back to the screen's transition, open the same box and untick
-   **[en:tran:Own transition]**. Nothing is kept once every level is unticked.
+   **[en:tran:Own transition]**. Nothing is kept once every level is unticked
+   — except a PowerPoint file's own, which is kept as unticked; choosing
+   **[en:tran:No Transition]** for it again keeps nothing.
 10. The choices travel with the document: renaming it, moving it to the trash,
     and sharing it as an archive take its transitions along.
 11. **One canvas item.** Open the document in the **[en:tran:Slide Editor]**,
@@ -93,5 +101,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-154` · `PM-155` · `PM-156` · `SP-06` · `ED-54`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

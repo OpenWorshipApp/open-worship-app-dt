@@ -141,7 +141,68 @@ const LATIN_PATTERN = /\p{Script=Latin}/u;
 export type AnswerKeepType = {
     scriptText?: string;
     isLatinKept?: boolean;
+    // The words of the file the answer is about -- an attached PowerPoint,
+    // Word or slide document, as read for the ask. A quotation of them is
+    // written as the file has them (2026-11-21: a French answer quoted the
+    // deck's «his only Son» with the dictionary's French for the label
+    // "Son" in place of its last word).
+    fileText?: string;
 };
+
+// What an answer quotes between quotation marks, in the languages here.
+const QUOTE_SPAN_PATTERN =
+    /([«“„"‘「『])([^\n«»“”„"‘’「」『』]{1,200})([»”“"’」』])/gu;
+// Stands for a kept quotation while the answer is cleaned: private-use
+// marks round its number, which no rule here reads as a letter or a word.
+const QUOTE_HOLD_OPEN = String.fromCharCode(0xe000);
+const QUOTE_HOLD_CLOSE = String.fromCharCode(0xe001);
+const QUOTE_HOLD_PATTERN = new RegExp(
+    `${QUOTE_HOLD_OPEN}(\\d+)${QUOTE_HOLD_CLOSE}`,
+    'gu',
+);
+const LETTER_IN_QUOTE_PATTERN = /\p{L}/u;
+
+function toQuoteKey(text: string) {
+    return text.replace(/\s+/gu, ' ').trim().toLowerCase();
+}
+
+/**
+ * `text` with every quotation of `fileText`'s own words held aside, and the
+ * way to put them back once the answer is cleaned (`AnswerKeepType`). Words
+ * the file does not hold are left to the rules as before.
+ */
+function holdFileQuotes(text: string, fileText?: string) {
+    const held: string[] = [];
+    if (fileText === undefined || fileText.length === 0) {
+        return { text, held };
+    }
+    const fileKey = toQuoteKey(fileText);
+    const shown = text.replace(
+        QUOTE_SPAN_PATTERN,
+        (match, open: string, words: string, close: string) => {
+            const key = toQuoteKey(words);
+            if (
+                key.length < 2 ||
+                !LETTER_IN_QUOTE_PATTERN.test(key) ||
+                !fileKey.includes(key)
+            ) {
+                return match;
+            }
+            held.push(words);
+            return `${open}${QUOTE_HOLD_OPEN}${held.length - 1}${QUOTE_HOLD_CLOSE}${close}`;
+        },
+    );
+    return { text: shown, held };
+}
+
+function restoreFileQuotes(text: string, held: string[]) {
+    if (held.length === 0) {
+        return text;
+    }
+    return text.replace(QUOTE_HOLD_PATTERN, (match, index: string) => {
+        return held[Number(index)] ?? match;
+    });
+}
 
 // The scripts of `text` other than Latin, each as a letter's test: a closed
 // list (`listTextScriptPatterns`), because JavaScript names no script of a
@@ -250,6 +311,12 @@ const LABEL_RUN_PATTERN = new RegExp(
         `(?:[ ]+(?:${LABEL_JOINER_SOURCE}[ ]+)*${LABEL_WORD_SOURCE})*`,
     'gu',
 );
+// A run right before a file's extension, or right after a folder's slash,
+// is a FILE's name, written as it is given (2026-11-21: a French answer
+// named the attached `Cross.png` with the dictionary's word for the
+// label "Cross").
+const FILE_EXTENSION_AFTER_PATTERN = /^\.[A-Za-z0-9]{1,5}(?![\p{L}\p{N}])/u;
+const FOLDER_SLASH_BEFORE_PATTERN = /[\\/]$/;
 
 function translateRun(
     run: string,
@@ -559,6 +626,10 @@ function translateEnglishLabels(
                     const before = all.slice(0, at);
                     if (
                         /[A-Za-z]:$/.test(before) ||
+                        FOLDER_SLASH_BEFORE_PATTERN.test(before) ||
+                        FILE_EXTENSION_AFTER_PATTERN.test(
+                            all.slice(at + run.length),
+                        ) ||
                         checkIsNativeMenuItemAt(all, at) ||
                         checkIsSongPartName(run, at, all) ||
                         (MENU_BAR_NAME_LIST.includes(run) &&
@@ -896,6 +967,53 @@ export function toRepliesShownInLanguage(
  * gloss. On an English screen the gloss is the word the reader has to find
  * there (Chinese for settings, then _(Settings)_), and stays.
  */
+// The window's own buttons an answer names (an office answer's "Undo this
+// change puts it back"). A model answering in another language can write one
+// half translated, its first word in the language and the rest in English
+// (2026-11-21, a French answer: the Undo button named with its first word
+// French and "this change" left English), which no reader of the language
+// can match to the button.
+const WINDOW_BUTTON_LABEL_LIST = ['Undo this change', 'Show it in the list'];
+
+/**
+ * A window button's name written half translated -- the start of its
+ * translation, then the end of its English -- written whole in the screen's
+ * words. Only those buttons, and only that shape: anything else may be a
+ * word being discussed.
+ */
+export function repairHalfTranslatedLabels(
+    text: string,
+    translateLabel: (label: string) => string,
+) {
+    let repaired = text;
+    for (const label of WINDOW_BUTTON_LABEL_LIST) {
+        const shown = translateLabel(label);
+        if (shown === label || shown.trim() === '') {
+            continue;
+        }
+        const labelWords = label.split(' ');
+        const shownWords = shown.trim().split(/\s+/u);
+        const halves: string[] = [];
+        for (let head = 1; head < shownWords.length + 1; head += 1) {
+            for (let tail = 1; tail < labelWords.length; tail += 1) {
+                halves.push(
+                    escapeForPattern(shownWords.slice(0, head).join(' ')) +
+                        '\\s+' +
+                        escapeForPattern(labelWords.slice(-tail).join(' ')),
+                );
+            }
+        }
+        repaired = repaired.replace(
+            new RegExp(
+                `(?<![\\p{L}\\p{M}])(?:${halves.join('|')})(?![\\p{L}\\p{M}])`,
+                'giu',
+            ),
+            shown,
+        );
+    }
+    return repaired;
+}
+
 export function toAnswerShownInLanguage(
     text: string,
     langCode: string,
@@ -910,6 +1028,27 @@ export function toAnswerShownInLanguage(
     if (language.code !== langCode) {
         return text;
     }
+    // A quotation of the file's own words is written as the file has it.
+    const { text: heldText, held } = holdFileQuotes(text, keep?.fileText);
+    return restoreFileQuotes(
+        toCleanAnswerText(
+            heldText,
+            language,
+            translateLabel,
+            keep,
+            screenLangCode,
+        ),
+        held,
+    );
+}
+
+function toCleanAnswerText(
+    text: string,
+    language: ReturnType<typeof getAssistantLanguage>,
+    translateLabel: (label: string) => string,
+    keep: AnswerKeepType | undefined,
+    screenLangCode: string,
+): string {
     const screenLanguage = getAssistantLanguage(screenLangCode);
     // The screen's own letters are no third script: a Thai answer in a window
     // of another script names its buttons as that window draws them.
@@ -950,7 +1089,7 @@ export function toAnswerShownInLanguage(
     // in the middle of the answer).
     return restoreEnglishNames(
         translateEnglishLabels(
-            shown,
+            repairHalfTranslatedLabels(shown, translateLabel),
             translateLabel,
             language.menuWords,
             language.buttonWords,

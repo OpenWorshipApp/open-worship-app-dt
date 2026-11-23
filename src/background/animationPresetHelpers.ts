@@ -18,3 +18,17 @@ export function toSavedAnimationPreset(
     const src = toCanonicalAnimationSrc(item.src);
     return src === null ? null : { ...base, src };
 }
+
+/**
+ * Where a picker keeps the category it shows (2026-11-19): beside the
+ * saved list it shows -- a Background session's own, removed with it
+ * (`genPaintSessionSettingNames`) -- and Animation Show's apart.
+ */
+export function toAnimationCategorySettingName(
+    presetSettingName: string,
+    place: 'background' | 'foreground',
+) {
+    return place === 'background'
+        ? `${presetSettingName}-category`
+        : `${presetSettingName}-category-${place}`;
+}

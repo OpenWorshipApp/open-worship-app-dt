@@ -196,6 +196,15 @@ describe('BibleItem', () => {
             },
         });
 
+        // The main Bible is never one of its extras, nor is an extra listed
+        // twice (F-5): a split "to" the extra Bible had drawn it twice.
+        const extraKeys = bibleItem.extraBibleKeys;
+        expect(bibleItem.extraBibleKeys).toBe(extraKeys);
+        bibleItem.extraBibleKeys = ['AMP', 'WEB', 'AMP', 'KJV'];
+        expect(bibleItem.extraBibleKeys).toEqual(['AMP', 'KJV']);
+        expect(bibleItem.toJson().extraBibleKeys).toEqual(['AMP', 'KJV']);
+        bibleItem.extraBibleKeys = ['AMP'];
+
         const clone = bibleItem.clone();
         expect(clone.id).toBe(-1);
         expect(bibleItem.clone(true).id).toBe(7);
@@ -473,7 +482,8 @@ describe('BibleItem', () => {
                 ...createBibleItemJson(4, 'WEB'),
                 filePath: '/bibles/web.bible',
             })?.toJson(),
-        ).toEqual(createBibleItemJson(4, 'WEB'));
+            // Its main Bible is WEB, so WEB is not also an extra one (F-5).
+        ).toEqual({ ...createBibleItemJson(4, 'WEB'), extraBibleKeys: [] });
 
         expect(BibleItem.dragDeserialize({ broken: true })).toBeNull();
         expect(mocks.handleErrorMock).toHaveBeenCalled();

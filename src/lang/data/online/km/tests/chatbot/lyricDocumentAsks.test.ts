@@ -16,9 +16,10 @@ import { readLyricDocumentAsk } from '../../../../../../chatbot/lyricDocumentCha
 
 describe('a song made from a document, asked in Khmer', () => {
     test('make a song from a PowerPoint, a file, slides', () => {
-        expect(readLyricDocumentAsk('បង្កើតចម្រៀងពី PowerPoint')).toMatchObject(
-            { step: 'list', kinds: ['pptx'] },
-        );
+        expect(readLyricDocumentAsk('បង្កើតចម្រៀងពី PowerPoint')).toMatchObject({
+            step: 'list',
+            kinds: ['pptx'],
+        });
         expect(
             readLyricDocumentAsk('សូមធ្វើទំនុកតម្កើងចេញពីឯកសារ PDF របស់ខ្ញុំ'),
         ).toMatchObject({ step: 'list', kinds: ['pdf'] });

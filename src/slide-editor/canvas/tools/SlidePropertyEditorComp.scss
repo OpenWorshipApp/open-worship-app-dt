@@ -47,8 +47,30 @@
       opacity: 0.75;
     }
 
+    // Width / Height: label, number, unit. The number never shrinks below
+    // what shows a four-digit size with the spin buttons (F-18: at the
+    // editor's default Tools width it had shrunk to 18-29 px and read
+    // blank); the row's own "Size" wraps above it first (flex-wrap).
+    .spe-dim-grid {
+      display: grid;
+      grid-template-columns: max-content minmax(64px, 96px) max-content;
+      align-items: center;
+      gap: 4px 6px;
+      min-width: 0;
+    }
+
+    .spe-dim-label {
+      margin: 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      opacity: 0.75;
+    }
+
     .spe-dim-input {
-      max-width: 78px;
+      width: 100%;
+      min-width: 0;
+      padding-left: 4px;
+      padding-right: 4px;
     }
 
     .spe-unit {

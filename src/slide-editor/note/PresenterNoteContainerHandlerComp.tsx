@@ -22,8 +22,7 @@ export default function PresenterNoteContainerHandlerComp({
     varyAppDocumentWithNote: VaryAppDocumentWithNoteType;
     flexSizeNamePrefix?: string;
 }>) {
-    const { fullName: fileFullName, filePath } =
-        varyAppDocumentWithNote.fileSource;
+    const { filePath } = varyAppDocumentWithNote.fileSource;
     const [varySlides] = useAppStateAsync(async () => {
         const varySlides = await varyAppDocumentWithNote.getSlides();
         return varySlides as VarySlideWithNoteType[];
@@ -57,7 +56,9 @@ export default function PresenterNoteContainerHandlerComp({
                         },
                     },
                     key: 'h1',
-                    widgetName: fileFullName,
+                    // Named as its header reads, not by the file's name
+                    // (F-20 of robot run 20261120-2021).
+                    ...toWidgetLabel('Document Note'),
                     className: 'app-flex-item',
                 },
                 {

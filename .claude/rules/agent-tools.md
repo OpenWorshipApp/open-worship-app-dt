@@ -20,7 +20,12 @@ Not every tool has its notes here. Each has a paragraph in
 `owa_list_questions` and `owa_tran` are in `agent-knowledge.md`,
 `owa_read_website` and `owa_choose_app` (the stdio door's choice among
 several running apps) in `agent-access.md`, `owa_screenshot` and
-`owa_highlight_selector` in `chatbot-window.md`. `owa_type` finds its box the
+`owa_highlight_selector` in `chatbot-window.md`. `owa_inspect` (2026-11-19,
+`AD-40`, `inspect.mjs`) is the developer's read by selector -- count, box,
+shown / hidden / gone, classes, aria states, the dev stamps, the computed
+styles named -- for what a snapshot does not say; it runs no expression of the
+caller's, reads no field's value and is withheld from the model, so a session
+no longer reaches for raw CDP `Runtime.evaluate`. `owa_type` finds its box the
 way `owa_click` finds a control, `owa_guide_step` moves on the card
 `owa_guide_start` put up, and `owa_hide_screens` takes content off a
 projector, so it is offered and never done unasked. **So is a screen turned
@@ -62,7 +67,13 @@ turned the projector on, unasked) -- `checkIsScreenToggleFind`, the label
   Every `owa_click` and every **Do it** now sends a bubbling, composed `click` at
   the control's centre, as `pressElementLikeButton` does; a disabled control
   still gets `click()`, and the press is kept out of the memoised
-  `__owaDomMatch` runtime. Presses that plainly worked used to answer
+  `__owaDomMatch` runtime. **A left press is a mouse's whole press**
+  (2026-11-21, robot run 20261120-2021 F-3): `pointerdown`, `mousedown`,
+  `pointerup`, `mouseup`, `click` -- a click alone missed the Bible Lookup's
+  verse strip, which picks a verse on `mousedown` and applies it on the
+  body's `mouseup`, and answered `didChange: false` while a real click picked
+  it; each verse number now carries `aria-pressed` for being in the passage,
+  so the press reads `isOnNow`. Presses that plainly worked used to answer
   `unverified` (the Foreground menu, the Bible Lookup popup, the Settings
   window): the result now carries `opened` -- `dialog` / `panel` / `menu` for
   a layer shown after the press that was not shown before it (identity +
@@ -73,7 +84,14 @@ turned the projector on, unasked) -- `checkIsScreenToggleFind`, the label
   press, and those presses read `unverified`), its `page` the file's name.
   Any of them means `didChange: true` and no
   `unverified`. A projector change still needs `owa_list_screens`. +2 tokens a
-  round.
+  round. **A press that takes its own window away is a press, not an error**
+  (2026-11-20, `MC-67`, `pressOrWindowGone` in `owaTools.mjs`): **Apply
+  Settings** or a language install reloads every window, and the read-back
+  died with CDP's _Inspected target navigated or closed_, handed back as the
+  tool's error -- so an agent pressed again. `owa_click`, `owa_type`,
+  `owa_press_key` and `owa_menu` now answer `isWindowGone` with an
+  `unverified` sentence that says to check `owa_app_state` and not press it
+  again; any other failure is still an error. No schema changed.
 - **A press also says what it made the app ASK, and what it switched beside
   it** (2026-10-16, the robot run's T3/T5, `domMatch.mjs`
   `QUESTION_WATCH_SOURCE` / `EFFECT_WAIT_SOURCE`). Save, Undo and Redo read
@@ -100,7 +118,13 @@ List` whose header reads _Documents_, and `Documents > …` found nothing;
   the card's `aria-labelledby` header (or a container's `aria-label`, ≤80
   characters, never a control's) counts now, and `withTranslations`
   translates each half of `Panel > Control`. `inPanel` stays the stamped
-  English name. **A label is never a style sheet** (`shownTextOf`): a pane
+  English name. **It also keeps the panel's English name beside the
+  translated control** (2026-11-21, robot run 20261120-2021 F-42,
+  `tranControlOnly`; `owa_find_ui`'s miss retries both forms): a FLOATING
+  panel's shown title is no name a scope reads, so in a Khmer window
+  `Countdown > Reset Date and Time to Now` -- both halves translated, the
+  panel's name with a translation of its own -- found nothing, while the
+  same panel answered to `Countdown > <the control in Khmer>`. **A label is never a style sheet** (`shownTextOf`): a pane
   that mounts its own `<style>` was named by its CSS. No schema changed.
 - **A press says what VALUE it moved, and an open menu wins a tie**
   (2026-10-16, the whole-Presenter robot run's T1/T2, `domMatch.mjs`
@@ -443,7 +467,12 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   160 characters with the chords taken OUT of the words -- open-lyric renders
   them mid-word, so the chord boxes are removed from the parsed markup before
   the text is read, never regexed out of it), the passage (reference +
-  version), the foreground widgets by name, `isBlank` -- plus `controls`, the
+  version), the foreground widgets by name, `isBlank` -- the slide numbered
+  `n` with its card's `find` only while that card still HOLDS what the screen
+  holds (2026-11-21, F-40, `checkIsSlideStillHeld`: a locked screen keeps its
+  verse while Atom Mode re-cuts the song under it, and the card with its id
+  put up half of it; a song's held stage is compared with that stage's
+  slide) -- plus `controls`, the
   exact words on that screen's show/hide toggle and five Clear buttons as the
   app is DISPLAYING them (each Clear saying `hasSomething`), so a "yes" is one
   `owa_click` with no search round; and `previewCard`, where the Mini Screen
@@ -507,6 +536,9 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   `owa_app_state` also dropped the forty dev-only component names and the
   instance's `userDataPath` (a path with the account name in it, to the model
   on every call). **Off the Presenter the field is a `note`, never absent.**
+  **Between two pages it answers `isLoading: true`** with a sentence to ask
+  again (2026-11-21, F-17, `APP_STATE_EXPRESSION`): read while the window
+  had no document element, the state had been an error.
   The same asks showed the second half: **every Claude Sonnet 5 round carries a
   `thinking` block** whether or not the request asks for one, and the loop's
   `MAX_TOKENS` was 2 000 -- the last round of that question stopped on
@@ -894,7 +926,14 @@ overflow: auto }`): a whole-paragraph step had pushed its title and
   NAMED with one — `Document List`, `Presenting Flow List` — was never an
   exact match and `owa_click` REFUSED its own collapsed strip** (`tierOf` now
   tries the words as asked, against the joined label and each part, before
-  the trimmed ones); and `dropStepsAlreadyDone` read a whole step for the
+  the trimmed ones). **A SCOPE keeps the noun it lost** (2026-11-21,
+  `parseNeedle`'s `scopeNoun`, `checkIsNounKept`): trimmed,
+  `Presenting Flow List > …` was a scope of _presenting flow_ and matched
+  inside the `Presenting Flow Preview` panel -- named so for F-33 -- so a
+  run sheet's preview line answered to the list it is not in. A name the
+  trimmed scope is found in must go on with that noun or end there;
+  `Background panel > Videos` still lands, as no panel name says _panel_.
+  And `dropStepsAlreadyDone` read a whole step for the
   window it goes to, so W-31's _Open View…_ step, whose example list says
   _presenter_ two sentences on, was dropped and the card opened on _Click a
   ticked one_ — it reads the first sentence only now. **And a step that names
@@ -1021,6 +1060,10 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   **A song's `create` takes `fontFamily`** (2026-11-10, `EC-488`, at most
   64 characters, checked again at the disk): the song's own face on every
   stage (`agent-songs.md`), written as `stageSetting` beside `content`.
+  **And only `create`** (2026-11-21, F-41, `FONT_FAMILY_CREATE_ONLY_REASON`):
+  sent with any other action it had been dropped while the answer read as
+  done; it is refused now, nothing changed, naming the song's Stage Style
+  panel's Song Font box, where a person changes an existing song's face.
 - **The data tools change what the user KEEPS, so every change is backed up
   first and a delete is a move to the trash** (2026-09-14, `MC-24`; asked for
   by the user — _add all possible tools: bible-item crud, bible-note crud,
@@ -1099,7 +1142,11 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   the control's centre, the event every list row's menu opens on; the result's
   `opened: "menu"` says so) and **double-click** (`clicks: 2` — click, click,
   `dblclick`, the order a mouse sends them, because a row that opens on the
-  second still selects on the first); a **keystroke** (`owa_press_key`, the
+  second still selects on the first) -- and, on the stdio door ONLY, **keys
+  held through a press** (`modifiers`: `shift` / `ctrl` / `alt` / `meta`,
+  2026-11-21, F-9: a screen card's version menu adds a second Bible on
+  Shift+click alone, `screenBibleHelpers.tsx`; the chatbot's door registers
+  no such field, so its model pays nothing); a **keystroke** (`owa_press_key`, the
   walkthrough card's own keydown/keyup with `key` AND `code`, JUDGED where the
   raw `press_key` is not — `MC-13`: refused when the control whose title names
   the key cannot be undone, when the app is asking a question, and for Enter
@@ -1113,8 +1160,15 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   `handleDragStart` wrote is what the target reads; `place` `before` / `after`
   aim at the row's reorder bands with Ctrl held, which `toPresentingFlowRowDropKind`
   reads as "put it here" rather than "attach it" — at the ROW'S position
-  whichever edge is hit, so `after` lands on the NEXT row's top band and only
-  the last row's bottom band is its own; the drop lands on what
+  whichever edge is hit, so `after` lands on the NEXT row's top band; a run
+  sheet's LINE is its row AND what it holds (a document line holds its
+  slides, each row a sibling-less child of its own wrapper), so there the
+  next row is the next LINE's, found by `data-presenting-flow-line`
+  (2026-11-21, F-35: `after` had landed BEFORE the row), and `after` the
+  LAST line is refused in words -- drop on the closed sheet's name to add
+  at the end, or Move to Bottom (F-37; until then the rule here said the
+  last row's bottom band was its own, and it is not); `onto` is read after
+  any scroll (F-37: it had been a 0×0 box); the drop lands on what
   `elementFromPoint` paints there; proven live — a Documents row onto a run
   sheet's row added the line through the sheet's own drop handler); and the
   **native menu bar** (`owa_menu`, `electron/appMenuAgentHelpers.ts` over two
@@ -1125,7 +1179,10 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   renderer, the reach `evaluate_script` was denied for), `quit` / `close` /
   the macOS hide roles and the `Relaunch` label (every window goes, and a
   native dialog nothing here can answer), and a submenu or a greyed-out item
-  in a sentence). Plus the one editable document that had no tool and no undo
+  in a sentence; each refused role says what IT does -- Speech reads aloud
+  into the room, Bring All to Front and Window rearrange the desktop, Hide,
+  Show All and Services act outside the app -- where one sentence had told
+  an agent they "close or hide the app", 2026-11-21, F-1). Plus the one editable document that had no tool and no undo
   of its own: **`owa_presenting_flow`** (`src/helper/agentPresentingFlowHelpers.ts`
   over the `owa-agent-data` relay, domain `presenting-flow`). A run sheet has
   an editing history and NO Save button — `PresentingFlow.setItems` is
@@ -1160,6 +1217,14 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   panel named, else `findListRegion`'s nearest list), sets `scrollTop` (the
   browser's own `scroll` event renders the windowed rows; a synthetic one
   rendered them twice), and answers `inView`, the labels pressable afterwards.
+  **A box NAMED is the list even when small** (2026-11-21, F-7): a row in it
+  or its panel picks the nearest box that scrolls up and down by itself
+  (`overflow-y` auto or scroll, 60×40 and up, where a guess keeps 200×100),
+  looked for above the row, then inside each box out to its own panel -- the
+  Reader split five ways had left every Bible View under the floor, and a
+  verse row answered "nothing here scrolls"; a name several panes share
+  answers `twins` and a `note` saying to name one by something only it
+  shows, as `Bible View > <its title>`.
   Withheld from the model: the file tools find a file by name whether or not
   its row is on screen. And **the Background tabs' files** (`owa_media_file`,
   `src/helper/agentMediaFileHelpers.ts`, domain `media`; `MC-52` / `MC-53` /
@@ -1186,7 +1251,25 @@ KJV`. 6 of the 53 recipes name one window (2026-10-11); the rest keep the
   `pictures: true`, those pages as image blocks (`toResourceFileResult`).
   It runs under a 180 s timeout of its own, not the 15 s a page expression
   gets: a deck converts to HTML on its first read (154 s measured on a cold
-  dev server, 1.6 s warm). And **`revert`** on
+  dev server, 1.6 s warm). **`convert` makes a PowerPoint a slide
+  document** (2026-11-20, `EC-763`, the user: _ask chatbot to help convert
+  the pptx file to app-document file_, _95% alike_;
+  `pptxSlideDocumentHelpers.ts`, lazily imported, the rules pure in
+  `pptxSlideDocumentRules.ts`): the converter's pages read one at a time
+  into a temp `.pptx-htmls` folder (removed in `finally`), every shape a
+  box, a build step a disabled slide of its own, the notes kept, pictures
+  encoded once at their drawn size, the PowerPoint untouched, the new
+  document at the deck's name or `newName`'s next free one behind a backup
+  whose undo trashes it. The current slide is the LAST `.slide > svg`
+  layer (a transition page draws the one before under it), a hidden
+  shape or part is left out, a motion path's CSS transform places the
+  shape, and a drawn background goes on white as PowerPoint paints it --
+  each found by measuring. `likeness` (`sample` eight slides, `all`,
+  `none`) draws each slide twice in the document capture window above and
+  answers SSIM in percent (`slideLikenessRules.ts`); the reference is the
+  app's own preview of the deck, its animations ended, not PowerPoint.
+  300 slides at most, a 300 s timeout. The window's ask is in
+  `chatbot-files-report.md`. And **`revert`** on
   `owa_lyric_file` / `owa_slide_file` is the editor's Discard made
   revertible: the saved content goes back into the editing history as a new
   entry (the `*` clears) behind a backup of the head it replaces, where the
@@ -1774,7 +1857,7 @@ import/<12-char id>.xml` plus a small `.json`, three drafts for two hours
   `agentStudyOwnQuoteRules.ts` pure): a model quoting a verse from
   memory writes it its own way -- `> "…" (John 3:16)`, `— John 3:16`
   after the words or on a line of its own, `**John 3:16:**` or `John
-  3:16 (KJV)` before them, a lead such as `**Key Verse:**` in front --
+3:16 (KJV)` before them, a lead such as `**Key Verse:**` in front --
   in the words of the translation it remembers, seldom the one the
   study quotes, and no pass read such a quote. Now new words for a
   part, words appended and a whole new text have each one (a
@@ -1974,7 +2057,7 @@ false` and searches only a dataset a lookup panel already holds
   **`kind: "books"` lists every book name the installed Bibles write**
   (2026-11-11, `EC-497`; `prefix` `""`): `bookKeys`, the `english` names
   and, per group of Bibles naming every book alike, `{keys, locale,
-  books}` -- 66 names each, `''` where a Bible lacks the book, at most 40
+books}` -- 66 names each, `''` where a Bible lacks the book, at most 40
   Bibles read (`getBibleInfo`, the small `_info` file each, no verse).
   It is how the help window finds the references a study file cites, in
   whatever language and script its parts are written (the study verse
@@ -2027,7 +2110,17 @@ false` and searches only a dataset a lookup panel already holds
   joined (`FG Clear Foreground [F10]` — text `FG`, a title and an
   aria-label, none of them that whole) and a long label as cut, 58+
   characters from its start (80 in a match, 60 in `nearMisses`) — a refusal
-  had named both and refused the retry by them.
+  had named both and refused the retry by them. **That cut falls at a word
+  and ends in `…`** (2026-11-21, robot run 20261120-2021 F-4,
+  `cutHandedOut`): cut mid-word, a Khmer verse title's "verse 10" had come
+  out "verse 1"; the press bar and `parseNeedle` drop the `…`. **And a
+  control is found by ONE of its names when another is a passage**: a
+  Bibles row's title fills with its passage on the first mouseover
+  (`improveBibleItemTitleOnHover`), the joined label outgrew every tier, and
+  the row matched nothing once hovered -- `tierOf` tries each part when the
+  joined label is long, and a list names such a control by its names that
+  fit (`listedLabelOf`), a control whose OWN words are a paragraph still
+  left off.
   **`owa_drop_files`** (`{paths, to}`) drops real files or folders from the
   disk: `genDropAimExpression` finds the control and arms a capture-phase
   watch that reads the dragover's `defaultPrevented` after every handler,
@@ -2225,7 +2318,7 @@ false` and searches only a dataset a lookup panel already holds
   **Bulk Font** sets one size on all) or sets one size, and writes it as
   ONE `update-slides` with **Undo this change** and **Show it in the list**
   under its own sentence (`genSlideSizeDoneText`, the sizes said as `70 → 88,
-  90 → 113`). A document read in parts, or a refusal, goes on to the model.
+90 → 113`). A document read in parts, or a refusal, goes on to the model.
   Measured live: right-click the row, **Open in Chatbot**, **Make the words
   larger** -- three presses from the Presenter, the change written before
   the next read (28 ms later it was there), no assistant asked (Auto still
@@ -2273,22 +2366,350 @@ false` and searches only a dataset a lookup panel already holds
     under the firewall's 25 a minute, centred six in 130 s before its
     clicks went astray (these slides are named _Slide 2: Proverbs 17:22_,
     and a box clicked by its words hit the slide's thumbnail first).
-  Every row fewer actions and less time through the chatbot, the closest
-  being one box (4 against 6) and the background on two slides (4 against
-  4-5), which grows by a drag a slide by hand. **A typed translation now
-  says where its lines go** (`readSlidePlacement`, the same night): _Add the
-  English under the Khmer line on slide 3_ had been put ABOVE the Khmer
-  once; with `SLIDE_PLACEMENT_HINT_MAP`'s sentence beside a typed ask that
-  names a language and under/below or above (never beside a card button,
-  which has its own), it went under 4 times of 4. **And the editor lost typed values twice**: a
-  size or a position commits a moment after it is typed, and moving to
-  another slide in that moment, or typing a size right after the words,
-  dropped it with nothing said (`EN-53`). Every change the chatbot makes
-  is one press of **Undo this change** away.
+    Every row fewer actions and less time through the chatbot, the closest
+    being one box (4 against 6) and the background on two slides (4 against
+    4-5), which grows by a drag a slide by hand. **A typed translation now
+    says where its lines go** (`readSlidePlacement`, the same night): _Add the
+    English under the Khmer line on slide 3_ had been put ABOVE the Khmer
+    once; with `SLIDE_PLACEMENT_HINT_MAP`'s sentence beside a typed ask that
+    names a language and under/below or above (never beside a card button,
+    which has its own), it went under 4 times of 4. **And the editor lost typed values twice**: a
+    size or a position commits a moment after it is typed, and moving to
+    another slide in that moment, or typing a size right after the words,
+    dropped it with nothing said (`EN-53`). Every change the chatbot makes
+    is one press of **Undo this change** away.
+
+- **A PowerPoint or Word file changed by the assistant is
+  `owa_office_edit`** (2026-11-20, `EC-761`; the user: _open pptx or docx
+  in chatbot then interact to edit the powerpoint_, _able to undo_, the
+  goal _chatbot smart enough to help editor the pptx and docx file_;
+  `tools/owa-devtools-mcp/agentOfficeEdit.mjs` → the `office-edit` relay in
+  `domHelpers.ts` → `src/helper/agentOfficeEditHelpers.ts`, the Office
+  rules imported lazily from `src/ms-office/`). `read` lists the file as
+  lines with ids -- `2.3` is slide 2's third line, a Word line its number
+  -- with a slide line's box (its placeholder type, else the shape's name),
+  a Word line's style, a table cell marked, a slide hidden in the show and
+  its speaker notes; a long file a page at a time (`start`). `edit` makes
+  many changes in ONE call and ONE backup: `replace` (`{from, to}`, words
+  everywhere, written exactly as the file writes them -- a case or spacing
+  that differs is refused saying so), and `changes` -- a line rewritten,
+  removed, or added `after` / `before` another, a slide's `notes` (a notes
+  page and the notes master made when the deck has none), a slide moved
+  (`to`), copied (`duplicate`) or taken out (`removeSlide`). Every change
+  is worked out on what was read and a refusal anywhere refuses the lot
+  BEFORE a byte is written or a backup taken. **Formatting stays**: a
+  line's new words go into the runs that held its old ones, a word at a
+  time where they match (`officeXmlEditHelpers.ts`), so a bold word, a
+  colour, a field and a picture in the line keep their place; parts no
+  change touched -- pictures above all -- are copied into the new package
+  as the stored bytes they were (`addStoredEntry`), never inflated and
+  deflated again. **There is no Save**: the file is the user's own, so the
+  whole file is copied beside the backup first (a `blob` restore,
+  `runWithAgentBackup`), the new package is streamed into a hidden file
+  beside it (`.<name>.<time>.owa-edit`, `officeFileSinkHelpers.ts`) and
+  moved over the original only once it is whole -- a failure deletes it and
+  says _The file is as it was._; a file open in PowerPoint or Word
+  (`EBUSY` / `EPERM` / `EACCES`) is named so. `owa_undo` with the answer's
+  `undoId` puts the file back byte for byte. A file past the backup's blob
+  limit is refused before it is read. The file is held for the one call.
+  `file` is a whole path or a Documents name with its extension; a `..`,
+  a relative path, a `.ppt` / `.doc` and a missing file are refused in a
+  sentence. Firewall: `read` is quiet (`READING_ACTION_MAP`), `edit`
+  acts, and an edit holding `remove` / `removeSlide` is a removal
+  (`checkIsOfficeRemoval`, `agentOfficeRemoval.mjs`, a leaf); the banner
+  says _changed a PowerPoint or Word file_ with the file's name. Offered to the chatbot's model in an `office` ask
+  alone (`MODEL_ON_ASK_TOOL_MAP`, ~497 tokens a round there since `EC-765`, `owa_find_verse` beside it; the ordinary
+  list did not move, ~8 464 of 8 480). Seen live 2026-11-20 on a scratch
+  instance through its HTTP door, on copies of the user's own deck and
+  Word file: a 5-slide deck read in 32 ms, one edit of six changes (a
+  replace in 1 place, a line rewritten, a line added, speaker notes, a
+  slide copied, a slide moved) in 31 ms, the ZIP and every XML part valid,
+  read back right, and the undo leaving the file's MD5 as before; the same
+  on a 127-line Word file; a slide taken out and put back; a `..` path,
+  a `.ppt`, a bad line id and the Word section break each refused in a
+  sentence (the rest are held by `agentOfficeEditHelpers.test.ts`).
+  **Measured on a real model the same day** (`EC-765`, gemma4:cloud at
+  temperature 0 under the window's own prompt and tool list, 18 asks on
+  a scratch instance, each change undone to the same MD5): 12 of 16 right
+  at first, then three fixes. A line break a model WRITES OUT as `\n` in
+  `text`, a replace's `to` or a note is the line break it meant
+  (`toWrittenText`, never a replace's `from`) -- _Add Spanish under each
+  line_ had put the backslash and the n on the slide; a copy takes `to`,
+  its place, in the same change (`{slide, duplicate: true, to}`); and an
+  edit that copied a slide answers with the copy's lines by their new ids
+  (`copies`, read from the package in memory as written -- the file is
+  not read again -- only when a slide part is new),
+  while a line named on a copy the same call makes is refused saying to
+  make the copy alone. After: **18 of 18**, the copy-then-retitle ask 5
+  calls and 15 369 tokens → 2 and 6 851; `owa_find_verse` rides an office
+  ask (`MODEL_ASK_SHARED_TOOL_MAP.office`) and _Add John 3:16 under the
+  title_ is the installed Bible's words.
+  **A deck's sections follow its slides** (`toOrderedSectionsXml`, the
+  same day): after a move, or a copy put at a place of its own, each
+  section's list (`p14:sectionLst`) is written again in the slides' order
+  -- the longest run still in section order keeps its sections, a slide
+  out of it joins the section of the slide before it, as a slide dragged
+  there in PowerPoint does, an emptied section stays. A move had left the
+  section list in the old order, a file PowerPoint would have to repair
+  (read from the code; no PowerPoint here to open one). Seen live on a
+  three-section copy of a fixture deck: the last slide moved first and the
+  first copied to the end in one call (52 ms) -- the moved slide in the
+  first section, the copy in the second, the third left empty, the ZIP and
+  every XML part valid, `copies` in the answer -- and undone to the same
+  MD5.
+  **The LOOK changes too, and a picture can come off** (2026-11-20,
+  `EC-768`; the user's picture of _change color to green_ answered _I
+  cannot change the color of text or backgrounds, as that must be done
+  directly in PowerPoint or Word_, then the goal _chatbot can change do
+  everything on a given pptx_). A change may carry `color`, `highlight`
+  (`"none"` off), `size` (points), `bold`, `italic`, `underline`, `font`
+  and `align` -- on one line `{id}`, on every line of a slide `{slide}`,
+  or on every line of the file with neither; the line's wins over the
+  slide's, the slide's over the file's, and a new line takes its anchor's
+  look plus its own (`officeXmlLookHelpers.ts`, pure, the same tag
+  scanner): every run's `a:rPr` / `w:rPr` and the paragraph mark patched in
+  place in the schema's child order, an attribute replaced where it
+  stands, a Word highlight written as `w:shd`. A colour is `#RRGGBB` or an
+  English name (`../others/color-list.json`), refused in a sentence
+  otherwise. On a slide, `{slide, background}` writes its `p:bg` (`"none"`:
+  its layout's again; no slide: every slide) and `{slide, hidden}` its
+  `show="0"`; a Word file has neither, refused saying its words' look can
+  be changed. **`read` names each slide's pictures** (`pictures`, `fills`
+  when it covers the slide; `officeSlideBoxHelpers.ts`, the deck's own
+  `p:sldSz`): the user's own hymn deck is seven slides each covered by a
+  curtain picture, so a background coloured under one changed nothing
+  anyone could see, and an answer would have said it had. A background
+  set behind a picture that fills the slide -- on the slide, its layout or
+  its master (`showMasterSp` read) -- is still set, and the answer says _It
+  does NOT show_ with the pictures by name and slides
+  (`genCoveredBackgroundWords`). `{slide, removeBox: name}` takes a box
+  off by the name `read` gives (a picture, a text box, a group whole; any
+  case; no slide: off every slide that has it), the image part and its
+  relationship left in the package for the undo; a name no box has is
+  refused with the boxes there are, and it counts as a removal in the
+  firewall (`checkIsOfficeRemoval`). The office prompt makes _change the
+  colour to green_ one `{color}` change with the background an OPTION,
+  and a covered background offered off in a SENTENCE, never a button:
+  `checkIsRemovalReply` drops a chip that removes (seen live: the model's
+  _Remove the pictures_ chip was dropped and only _Keep the pictures_
+  drawn). ~733 tokens a round to an office ask (from ~497); the ordinary
+  list did not move (~8 464 of 8 480). Seen live 2026-11-20 on a scratch
+  instance: through a fresh stdio server, five looks in one edit (39 ms),
+  every slide navy and both curtains off, each undone to the file's MD5;
+  in the help window on Auto (gemma4:cloud), _change color to green_ one
+  read and one change, _Make the background dark blue_ said to be hidden
+  behind the pictures with the offer in words, _yes, take the pictures
+  off_ one change of both names, the preview then dark blue behind green
+  words (with **[en:tran:Omit Background]** unticked -- ticked, the
+  Presenter draws no slide background at all).
+  **Boxes, words, sizes and the show change too** (2026-11-20, `EC-770`,
+  the same goal; ten asks on the hymn deck had gone 2 right, 1 partly, 4
+  wrong, 3 refused). `read` gives each slide's `boxes` in place of
+  `pictures` -- `{name, kind (left out for text), at: [x, y, width,
+height] in % of the slide, fills, lines: "2.2-2.5"}` -- a placeholder
+  with no place of its own read from its layout (same `idx`, or the
+  master when the layout has none of that index) or master (same type,
+  `ctrTitle` → `title`), and `transition` (`{kind, advance}`).
+  `{slide, box, at}` moves or sizes a box, a `null` keeping that number
+  (`officeSlideBoxHelpers.ts`: `a:off` / `a:ext` rewritten, or an
+  `a:xfrm` made first in `p:spPr` for an inherited place; `{id, at}` is
+  the line's box; no slide: that box on every slide); the answer says
+  _Part of it is off the slide now: say so, and offer to fit it on the
+  slide_ only when the move took it FURTHER off (the hymn deck's body box
+  already sits 0.8 % off; worded as what to tell them, because the plain
+  fact was dropped by the model, and the office prompt says to pass on
+  what the tool says is off the slide, hidden or over words). `{slide,
+textBox, at}` adds a text box in front (`txBox="1"`, `spAutoFit`), its
+  words in the slide's first run's look minus the spell-check marks, plus
+  any look given. `size` is also a CHANGE -- `"+20%"`, `"-10%"`,
+  `"+4"` points, `"bigger"` -- worked out from each run's own `sz`, or
+  what it inherits (`readInheritedSize`: the box's `lstStyle` by level,
+  its layout's and master's placeholder, the master's `txStyles`; Word:
+  the style chain, `w:rPrDefault`, 11 pt): _make the words bigger_ had
+  flattened a 58 pt verse and a 24 pt number to one size. `words` gives
+  the look to those words alone (`applyWordsLook`: a run cut at them,
+  both halves keeping its `rPr`, a field never cut; exact first, then any
+  case), with `{id}`, `{slide}`, `{box}` or none, and is refused when not
+  found. `{slide, transition}` (fade, push, wipe, cover, uncover → `p:pull`,
+  split, dissolve, zoom, wheel, random, cut, none) and `{slide, advance}`
+  seconds (`officeSlideShowHelpers.ts`: after `p:clrMapOvr`, before
+  `p:timing`; Office's `mc:AlternateContent` pair replaced whole, its
+  time rewritten in both copies); no slide: every slide. `{slideSize:
+"4:3" | "16:9" | "16:10"}` writes `p:sldSz` (put after the slide list
+  when a deck says none) and scales every slide's, layout's and master's
+  top-level boxes, a picture that does not fill the slide keeping its
+  shape. A Word file refuses boxes, transitions and the slide size, saying
+  it has no slides or boxes. The office prompt reads each box line
+  (`  box "Title 1" at [5, 2.5, 90, 15] holds 1.1`) and says: move the
+  BOX, never its words into another; _bigger_ is `"+20%"`, never one size
+  for words of different sizes. **And pictures** (the same day,
+  `officeSlidePictureHelpers.ts`, pure): `{slide, picture, at}` puts a
+  picture on a slide (no slide: every slide) and `{box, picture}` in
+  another picture's place, `picture` being an absolute path to a PNG,
+  JPEG, GIF or BMP the relay reads (`readChangePictures`: 25 MB, 10 a
+  call, read before the file is opened). The kind and size come off the
+  header alone; the bytes go in ONCE as a stored `ppt/media/` part, with
+  a `<Default>` content type and an image relationship on each slide.
+  `at` [0, 0, 100, 100] goes BEHIND the words (the first box), cropped to
+  fill (`<a:srcRect>`, the middle kept); a width and a height mark an
+  area the picture is FITTED inside, its shape kept, nothing cut off (a
+  tall area had cut a quarter off each side of a photo); one of them, or
+  none, keeps its shape (three fifths of the slide, centred). A box's
+  place keeps its size, the new picture cropped to it. A behind picture
+  under one already filling the slide is refused with the `{box}` call
+  that replaces it. A picture put in front of words says so with the
+  call that moves it (`listCoveredWordBoxes`), and a replaced picture
+  still drawn by a box of another name -- the hymn deck's curtain is
+  `Picture 2` on slide 1, `Picture 3` on the rest -- is named for the
+  next call (`readBoxPictureRelId`). A Word file refuses a picture. The
+  chatbot's model names a picture by its attached NAME and the window
+  puts its path in (`chatbot-files-report.md`).
+  **And the rest of a deck** (2026-11-21, `EC-771`..`EC-773`, `EC-769`
+  closed), each a pure module under `src/ms-office/` with its own tests:
+  a NEW slide from a layout (`{newSlide: true, layout, title, lines,
+to}`, `officeSlideLayoutHelpers.ts`; `read` lists the `layouts`; beside
+  slides that draw their own picture, no layout named is refused with the
+  copy that fits); a table's rows and columns (`addRow`, `removeRow`,
+  `addColumn`, `removeColumn`, `cells`; rows from 1) and colours (`fill`,
+  `borders`, `header`, `banded`); a chart's data (`chartTitle`,
+  `categories`, `series` -- the chart part AND its embedded workbook) and
+  kind (`chartKind`); an entrance animation (`animation`, `byLine`,
+  `when`, `seconds`, `officeSlideAnimationHelpers.ts`); a video or a sound
+  attached (`media`, `play`); a box's OWN look
+  (`officeSlideBoxLookHelpers.ts`: `fill`, `outline`, `transparency`,
+  `brightness`, `rotate`, `flip`, `valign`, `order`) on `{slide?, box}` or
+  IN the change that adds a text box, shape or picture -- a look sent apart
+  for a box not yet made is refused with that call; a text's `strike`,
+  `link` (a web address, `mailto:`, _slide 3_, _none_; a token the package
+  pass turns into a relationship; Word refuses it), `shadow`,
+  `lineSpacing` and `bullets`; a new `shape` (`SHAPE_LIST`: arrows, star,
+  heart, cloud, speech bubble, a line, …, words in it by `textBox`); slide
+  numbers and a footer (`slideNumbers`, `footer`,
+  `officeSlideFooterHelpers.ts`: a placeholder of the layout's own kind,
+  every slide but a title slide when none is named); a GRADIENT, a
+  `background` or a box `fill` written as two to four colours joined by
+  "to" with a direction at the end (`toOfficeGradient`,
+  `genOfficeFillXml`); and in Word the page's colour (`pageColor`) and a
+  picture. **And the last refusals** (2026-11-21, `EC-774`..`EC-776`): a
+  change's `slide` may be the WORDS the person named it by
+  (`officeSlideNameHelpers.ts`; none or several saying them is refused
+  with the slides listed, for the model to ASK which -- never a slide
+  guessed); a PATTERN wherever a colour or gradient goes
+  (`pattern:<prst>:<FG>:<BG>` read from _navy stripes on white_, written
+  as `a:pattFill`); the deck's THEME (`{theme: {colors, headingFont,
+bodyFont}}`, no `slide`, `officeThemeHelpers.ts`: a colour slot and the
+  heading and body fonts of the theme part each slide master uses); and
+  SmartArt read as a box of kind `smartart` with its `words`, changed by
+  `replace` in its data part and the drawing beside it. A `replace` the
+  model writes inside a change is lifted to the call's by the window
+  (`liftOfficeNestedReplaces`). **And a picture, video or sound at a LINK
+  the person typed** (2026-11-21, `EC-777`): the model gives the link as
+  the change's `picture` or `media`, and the window downloads it before
+  the call (`fetchOfficeLinkMedia`, `officeLinkMediaDownload.ts`, loaded
+  only then) -- only a link typed in this ask or the tab's earlier turns
+  (`readTypedLinks`), only from a public http(s) address, every redirect
+  and the address the connection really reached checked
+  (`checkIsPublicAddress`), 20 MB for a picture and 100 MB for a video or
+  sound, its kind read off its first bytes (WebP, AVIF, HEIC and SVG
+  named as kinds a deck does not take), into a temporary folder of its
+  own deleted when the ask ends. **And the slide master's and layouts'
+  own shapes** (2026-11-21, `EC-778`): read under `masters` -- each master
+  and each layout a slide uses, where it shows, its OWN boxes (never a
+  placeholder) and their lines, ids from 10001 and 10101 that no deck
+  reaches -- and named as a slide, `slide: "master"` or `"layout: <name>"`
+  (`findSharedSlide`), taking what a slide's box takes; a slide's own key
+  is refused by name, the words said back never show 10001
+  (`toSharedSlideWords`), `replace` and a look on every line reach their
+  boxes, and a `footer` repeating a master box's words is refused with
+  that box's id (the model had made a second "Grace Church" as a
+  footer). **And a SmartArt's colours and shapes** (`EC-779`): `{slide,
+box, toShapes: true}` is PowerPoint's Convert to Shapes
+  (`officeSmartArtShapeHelpers.ts`: its drawing's shapes become the
+  slide's own boxes in its place, named by their words), asked first --
+  a look on a SmartArt is refused with _Say so and ask_, an answer that
+  then ASKS is not marked as an unmade change (`officeAskFirstCount`) --
+  and on the yes one change turns it and gives its boxes with words the
+  fill asked for; `{slide, box, shape}` gives a box of words, a shape or
+  a picture another shape (`setBoxShapeXml`). `toShapes` with `arrange:
+"cycle" | "row" | "column"` lays its boxes out so as it turns them
+  (`EC-780`, `layOutShapes`): its arrow between each two, turned to point
+  on, in its own place -- a cycle in a flat strip grown round its middle
+  to half-size boxes (`toCycleRoom`) -- or in `at`. **Kept a SmartArt**
+  (`EC-784`, `officeSmartArtLayoutHelpers.ts`, pure): `{slide, box,
+  smartArtLayout: "cycle" | "process" | "pyramid" | "venn" |
+  "hierarchy", at?}` gives it PowerPoint's Basic Cycle, Basic Process,
+  Basic Pyramid, Basic Venn (circles over each other, each fill half
+  see-through) or Hierarchy (`EC-785`: a tree read from the diagram's
+  `parOf` links, any depth, each box over its boxes, joined by elbow
+  lines) with no question (its words and box colours stay): the layout part becomes that
+  layout's own definition, the data part's presentation points are made
+  again under its node names (LibreOffice's engine draws nothing without
+  them), the colour and style parts gain the arrows' `sibTrans2D1` label,
+  the drawing PowerPoint keeps is drawn again with each box's own look,
+  and a cycle or pyramid in a flat strip grows round its middle
+  (`toSmartArtLayoutRoom`). Boxes with boxes under them given a flat
+  layout are refused with _Say so and ask_, the Hierarchy offered; a box
+  under two others, an assistant box, another layout's name, a key beside
+  it and `toShapes` on the same box in one call are refused. Checked by
+  Microsoft's Open XML validator (0 errors in its parts) and by
+  LibreOffice laying each out itself with the drawing taken away; never
+  opened in PowerPoint here. A layout is offered only once LibreOffice
+  lays it out from the definition: a Basic Block List ran off the slide
+  there and was left out. **In ANY layout** (`EC-787`,
+  `officeSmartArtModelHelpers.ts`, pure): the diagram is drawn from the
+  definition the SmartArt carries -- every `layoutNode`, `forEach`,
+  `choose`/`if` and `presOf` -- which gave back 54 of 55 of PowerPoint's
+  own SmartArts as it wrote them (LibreOffice's test decks, 34 layouts);
+  the file's own diagram is drawn again and compared before anything is
+  written, and one that differs is refused (_a layout this app does not
+  read rightly yet_). So `{slide, box, smartArtAdd | smartArtRemove |
+  smartArtMove: words, afterBox | beforeBox | underBox?: words}` adds a
+  box in the look of the one it goes by, takes one out with the words
+  drawn inside it (a list's bullet lines) while a box with a shape of its
+  own under it moves up, or moves one; a box the layout would not draw
+  there (a gear's fourth, a second centre) is refused, named; one added
+  with no place to a tree with one top box goes under it. And
+  `smartArtLayout` also takes the `layout` read on another SmartArt of
+  the deck (`chevron1`): its definition copied, the labels it draws with
+  copied into the colour and style parts. Each drops the drawing
+  PowerPoint keeps (part, link, content type), so PowerPoint and this app
+  lay it out from the definition; a file holding no shapes at all has
+  them drawn fresh. Read gives each SmartArt its `layout` and, for a box
+  under a box, `under`, its words in the boxes' order. A layout no
+  SmartArt of the deck carries is still PowerPoint's: its definition is
+  not in the file. **A document open in an office program**
+  (`EC-781`, `officeOwnerFileHelpers.ts`): on a Mac or Linux nothing
+  refuses the write and the program's next save puts its copy back, so
+  the lock file it keeps beside the document (`~$<name>`, Word's with one
+  or two letters dropped, LibreOffice's `.~lock.<name>#`) refuses the
+  change before any backup -- not on Windows, where the file refuses
+  itself (`toChangeFailure`'s _Close it in PowerPoint or Word_) and a
+  lock left by a crash is common and hidden. **Words both a master's
+  own box and a slide say** (`EC-782`, `findSharedAndSlideWords`): a
+  look on them with no slide, box or line is refused with _Say so and
+  ask_ -- since `EC-786`, _send it again now_ by whether their question
+  WROTE the words: written, `{words, everywhere: true, …}` (every place,
+  the master's box and the slides' lines; refused beside a `slide` or
+  `box`); named by where or what it is, the master's box alone. The model
+  did not hold that test (2 of 3 sent everywhere for _the church name at
+  the bottom of each slide_), so the window checks it against
+  `askedText`: a change sent `everywhere` whose words the person's line
+  does not write goes back ONCE (`findOfficeUnwrittenEverywhere`), and
+  through when sent again unchanged (they may have chosen every place
+  when asked). The same once-back for a SmartArt box's place
+  (`EC-787`, `findOfficeMisplacedBox`): a box sent `underBox` while
+  their line says _before_ (or any place key whose English words the
+  line does not say while it says another's) goes back once, naming the
+  key to send; _move Go before Plan_ had gone under Plan and the answer
+  said "before". Left to
+  PowerPoint, and said so: media neither attached nor at a link they
+  typed (a video site's page is no file), a SmartArt layout no SmartArt
+  of the deck carries (beyond the five the app writes), and in Word a
+  table, list, link, page numbers or the page layout.
 
 - **A presenting flow changed by the assistant is `owa_presenting_flow_edit`**
   (2026-11-07, the user, with a presenting flow's row menu open: _add `Open
-  in Chatbot` … follow what working for appdocument. goal: chatbot can help
+in Chatbot` … follow what working for appdocument. goal: chatbot can help
   the presenting flow modification_; asked what it may change, _Lines,
   Timing & marks, CC elements, Foreground presets_;
   `tools/owa-devtools-mcp/agentPresentingFlowEdit.mjs`, the app side
@@ -2362,19 +2783,19 @@ false` and searches only a dataset a lookup panel already holds
   - `"countdown"` alone;
   - the widget's own fields written BESIDE `foreground` (a field inside
     wins). Only the fields that widget has are read (`WIDGET_FIELD_KEY_MAP`).
-  On the MCP side, `add` is a `z.looseObject`: the strict object had dropped
-  a message's `text` on the way in. A countdown without its time is refused
-  with the shape to write. An `after` naming a line the same call adds is
-  refused with the rule it needs: adds with the same `after` go in the
-  order given, and an empty sheet takes none. A countdown asked for had cost
-  33.4k tokens and added nothing; afterwards it took 5.9k and one change.
-  The ask also reads a CC as _its element is line N, run with this line --
-  not a jump to line N_ (`toCcText`, `EC-474`). **Check my running order**
-  had called a CC's element a jump to skip, then redundant.
+    On the MCP side, `add` is a `z.looseObject`: the strict object had dropped
+    a message's `text` on the way in. A countdown without its time is refused
+    with the shape to write. An `after` naming a line the same call adds is
+    refused with the rule it needs: adds with the same `after` go in the
+    order given, and an empty sheet takes none. A countdown asked for had cost
+    33.4k tokens and added nothing; afterwards it took 5.9k and one change.
+    The ask also reads a CC as _its element is line N, run with this line --
+    not a jump to line N_ (`toCcText`, `EC-474`). **Check my running order**
+    had called a CC's element a jump to skip, then redundant.
 
 - **ONE Bible note changed by the assistant is `owa_note_edit`**
   (2026-11-07, the user, with a note row's menu open: _add `Open in
-  Chatbot` for bible-note … goal: chatbot can help modify and answer
+Chatbot` for bible-note … goal: chatbot can help modify and answer
   everything on bible-note_; `tools/owa-devtools-mcp/agentNoteEdit.mjs` →
   the `owa-agent-data` relay, domain `note-edit` →
   `src/helper/agentNoteEditHelpers.ts`, the rules pure in
@@ -2436,7 +2857,7 @@ false` and searches only a dataset a lookup panel already holds
   `undo` / `redo` step the file's kept history, taken back and refused
   when the step changed another note of the file and not this one. The
   answer's `summary` says what each change DID (`block 5 "fas": color
-  red`), and the prompt says to report only that. Parity is measured by
+red`), and the prompt says to report only that. Parity is measured by
   `owa-enhance-bible-note-chatbot`: 60 of 60, none excluded, since the
   four once left to the person became fields too -- `kind: "drawing"`
   (boxes and arrows laid out from lines, an inline `excalidraw` node IN
@@ -2447,7 +2868,7 @@ false` and searches only a dataset a lookup panel already holds
   which is how large the board draws it; `background` fills its boxes and
   `color` its lines, white words on a dark fill; new lines in `text` draw
   it again keeping its colours, layout and scale; a first line `layout:
-  across` / `circle` / `center` lays it out left to right, round a ring or
+across` / `circle` / `center` lays it out left to right, round a ring or
   round its first box, kept as `layout` in the scene; it reads back as the
   lines that draw it; anything drawn by hand in it (a pen stroke, a shape
   of its own) makes it colourable and sizeable, never drawn again; font,
@@ -2582,7 +3003,7 @@ false` and searches only a dataset a lookup panel already holds
   point's example). A whole lesson nested in `changes[].text` is the call
   the shared gemma4:cloud server drops (7 of 8 replays, no text and no call
   back), so the chatbot writes an empty note's lesson as `owa_bible_note
-  add` and the window turns it into this edit (`chatbot-llm.md`). **And
+add` and the window turns it into this edit (`chatbot-llm.md`). **And
   what a model writes finishing one** (2026-11-10, BN-67, four partial
   sermons asked live): a heading's own `## ` in its words is read as the
   heading (`readHeadingMarks`), and so is the `h2:` label the note is read
@@ -2605,3 +3026,127 @@ false` and searches only a dataset a lookup panel already holds
   is refused with the two passages to add -- the resolver had read it as
   one span, the very passage already there, and answered "nothing was
   changed".
+
+- **An animation in Customize is `owa_animation_edit`** (2026-11-19, the
+  user, the shader's **[en:tran:Edit Code]** panel open: _add chatbot icon
+  to open in chatbot and let chatbot control editor_, the goal _chatbot can
+  help handle css and glsl code editing_). `agentAnimationEdit.mjs` → the
+  `owa-agent-animation` relay in `domHelpers.ts` →
+  `src/helper/agentAnimationHelpers.ts`, imported lazily, the rules pure in
+  `src/background/animationAgentRules.ts`. It works through the editors
+  open NOW, never a file: each Customize (the Background panel's Animations
+  tab, `background:<screen>`, and Animation Show, `foreground:<screen>`)
+  registers itself in `animationAgentEditorRegistry.ts`, a leaf, with its
+  draft and, while open, its Edit Code panel -- **[en:tran:Shader Code]**
+  or **[en:tran:CSS Code]**, the registered handle saying which (`engine`).
+  `read` names every open editor (engine, effect, colours, speed, density
+  or quality, opacity, blend) and the target's code with whether it passes;
+  `set` changes what the controls change (`planAnimationChange`: an effect
+  by the words a model writes, moving to the engine that has it; colours
+  as hex or names through `resolveCssColor`; one wrong field refuses the
+  call whole) and the draft goes up the way a Customize press does; `code`
+  is the WHOLE code, typed INTO the animation's Edit Code panel (opened
+  first when shut) as ONE Monaco edit between two undo stops, so Ctrl+Z
+  takes it back like typing, and applied once it passes -- code that does
+  not pass stays in the panel, applied nowhere, its `codeError` in the
+  answer; `apply: false` only tries it -- code of the other kind too,
+  which is checked and changes nothing (it had switched the kind
+  regardless). CSS that passes but styles `.dot` and never reads
+  `var(--x)` is applied with a `note` saying every dot sits at the left
+  edge and how to place them (`findCssCodeHint`; a model cannot see the
+  preview, and seen live that is what it wrote). The code says its kind
+  (`checkIsGlslCodeText`: a `mainImage(`): GLSL goes into Shader Code,
+  checked by `checkGlslCodeProblem` and the graphics card
+  (`checkGlslCodeCompiles`); CSS into CSS Code, checked by
+  `checkCssCodeProblem`. Code of the OTHER kind makes the animation that
+  kind keeping its colours, speed, opacity and blend (`toCustomShader`,
+  `toCustomCssAnimation`: density and quality traded level for level) --
+  only once the code passes, else nothing changes and the refusal carries
+  the `codeError`. **A CSS animation's own code** (2026-11-19, the goal's
+  CSS half, which the first cut had declined -- _a CSS animation has no
+  code_ -- and the goal's check refused): `css?code=<base64url>` beside
+  `css?name=`, its effect `custom` (**[en:tran:Custom CSS]**), parsed only
+  when the code passes. Nothing on a screen reads a value's CSS without
+  that check, and the check is narrow on purpose (`cssCodeCheckHelpers.ts`,
+  a leaf): nothing that LOADS (`url(`, `@import`, `@font-face`,
+  `image(`/`image-set(`, `src(`, `element(`, `@namespace`, the old
+  `expression(` / `behavior` / `-moz-binding`), no backslash (an escape
+  spells any of them), no `<` (no `</style>`), nothing reaching out of its
+  box (`:host`, `::slotted`, `::part`), ASCII only,
+  12 000 characters; and `@keyframes` may animate ONLY transform, opacity,
+  translate, rotate, scale, offset-distance and the timing function --
+  compositor work: a keyframe that repaints (`background`, `color`,
+  `box-shadow`, a custom property) every frame is what held the Presenter
+  at 60 frames a second (CLAUDE.md, EN-10/EN-19), so it is refused by
+  name. The code is drawn in a SHADOW ROOT (`cssCodeAnimationElementHelpers.ts`)
+  inside a `contain: strict` host, so its rules reach nothing of the page,
+  and it styles boxes the app makes (`cssCodeAnimationHelpers.ts`):
+  `.scene` (`--color-1..4`, `--accent-1..6`, `--density` 0 / 1 / 2,
+  `container-type: size`, ground `var(--color-1)`), six `.layer` (`--i`)
+  and in each 6 / 12 / 20 `.dot` by density (`--i`, `--x`/`--y` 0..100,
+  `--r` 0..1, seeded so a screen and its preview agree) -- a box is made
+  only when the code NAMES its class. Each layer and dot reads
+  `var(--accent)`, the colours after the ground in turn by its place
+  among its siblings (`:where()` rules, weightless, so any rule of the
+  code wins), as the built-ins go round them (`genAccents`: three colours
+  go a, b, a, b). Speed is `playbackRate` set on `animationstart`
+  (`getAnimations({subtree: true})`), so durations are written as at
+  normal speed; a preview that is not moving is held by
+  `animation-play-state: paused !important`, and a moving non-screen one
+  by reduced motion. **A code panel opens on the animation picked and
+  follows it** (2026-11-19, the user, Glory picked and CSS Code on
+  drifting lights: _css code editor not starting from current selected_).
+  CSS Code holds a Custom CSS animation's own code, else the built-in
+  effect WRITTEN AS CSS (`cssEffectCodeHelpers.ts`, `CSS_EFFECT_CODE_MAP`:
+  each effect's rules under one header naming the boxes; applied as it
+  stands it looks as the effect did, but Light Rays with one accent, one
+  sheet of rays in the built-in and two here); `CSS_CODE_STARTER`
+  (drifting lights) only for a Custom CSS with no code. A tile clicked or
+  another **[en:tran:Effect]** picked while a panel is open brings that
+  one's code in as ONE edit Ctrl+Z takes back (`replaceEditorCode`:
+  `executeEdits` between two `pushUndoStop`s), checked at once rather than
+  after the typing pause; a colour, the speed or the density changes
+  nothing in it, its own Apply brings nothing in (the code it applied is
+  what it holds), and **[en:tran:Reset]** puts back the code of the
+  animation picked now. Shader Code follows a shader the same way.
+  Every road draws it: a screen's background (`genHtmlBackground`) and
+  Animation Show (`genHtmlForegroundAnimation`) put the element in, moving
+  only in the screen's window; a tile and Customize mount it in an effect
+  (`CssCodeAnimationPreviewComp`); a static markup, a print and a run
+  sheet row draw its still gradient; Copy Code writes it as a page with
+  its boxes (`genCssCodeAnimationHtml`). Every change is held per editor, ten at
+  most (`MAX_UNDO_COUNT`), and answers an `undoId`; `undo` takes that
+  change back with every later one (`alsoUndone`), the code the panel held
+  included. The in-memory list is the whole undo: an animation's draft is
+  no file. With no `action` a call is read as meant (`toAnimationEditArgs`
+  in `agentAnimationArgs.mjs`, a leaf with no imports, because electron
+  main imports `firewall.mjs` for `redactSecrets` and must not load zod):
+  `code` or `apply` a `code`, a field a `set`, an `id` an `undo`, else a
+  `read`; the tool, the firewall's `checkIsActingCall` and the banner read
+  it alike, so a `read` is quiet and every other call acts, announced
+  _changed an animation_. Off the Presenter page it answers `needsPage:
+"presenter"`. Offered to the chatbot's model only in an `animation` ask
+  (`MODEL_ON_ASK_TOOL_MAP`, with `owa_goto_page` and `owa_help_search`
+  shared to it): ~402 tokens a round there, the ordinary list unchanged (26
+  tools, ~8 464 of 8 480, `--stdio --ratchet`; the CSS half rewrote the
+  description at the same length). The 🤖 on the Customize row and in
+  either code panel's title bar (`AnimationChatbotButtonComp`, AI
+  switch read once at mount) puts its editor first in the registry and
+  opens the help window on it (`openChatbotWithAnimation`,
+  `chatbotHandoffStoreHelpers.ts`); the window's side is in
+  `chatbot-llm.md`. **An undo puts back the code from before the FIRST
+  code change it takes** (`takeAnimationAgentUndo`): seen live the same
+  day, a colour change undone with two code changes after it put the
+  colours back and left the second, broken, code in the panel, because
+  only the named change's `code` was read. Seen live on the dev app
+  through the in-app door: `read`, a `set` of colours and speed, code that
+  compiles (applied) and code that does not (kept in the panel, its
+  `codeError` answered), and one `undo` taking all three back, the panel
+  on its own code again. **The code panel and a hot reload**: the
+  panel names its Monaco model `shader-code-<n>.glsl` (or
+  `css-code-<n>.css`) off a module counter,
+  and a hot reload of it starts that counter again while Monaco still
+  holds the model -- `getModel` in `monacoEditorHelpers.ts` takes Monaco's
+  own model for an address before it makes one (it had thrown _Cannot add
+  model because it already exists_ and blanked the Presenter), and never
+  hands out one its owner disposed (_Model is disposed!_).

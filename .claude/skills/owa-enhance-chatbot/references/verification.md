@@ -59,9 +59,10 @@ Not running? `env -u ELECTRON_RUN_AS_NODE npm run dev` (the harness exports
 
 `mcp__owa-devtools__take_screenshot` with the chatbot target's `pageId` (the
 number `list_pages` prints before it) is the quickest look at the chatbot
-window: chrome-devtools-mcp 1.12, like 1.8 before it, requires `pageId` on every page-scoped tool
-(`pageIdRouting` defaults on, and `server.mjs` leaves it on), so `select_page`
-alone does not aim it. Screenshot before and after any UI change.
+window. chrome-devtools-mcp 1.12, like 1.8 before it, requires `pageId` on every page-scoped tool
+(`pageIdRouting` defaults on); since 2026-11-19 (`AD-39`) `server.mjs`'s
+`makePageIdOptional` makes it optional again, so a tool with none runs on the
+page `select_page` chose, and a `pageId` aims it without selecting. Screenshot before and after any UI change.
 
 ## Driving the chatbot window over raw CDP
 

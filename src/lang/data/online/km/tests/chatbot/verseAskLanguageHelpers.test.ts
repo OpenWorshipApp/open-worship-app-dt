@@ -19,9 +19,10 @@ describe('readTypedVerseFindAsk', () => {
             bibleKey: null,
             remembered: null,
         });
-        expect(
-            readTypedVerseFindAsk('ជួយខ្ញុំស្វែងរកខគម្ពីរមួយក្នុង «ពគប»'),
-        ).toEqual({ bibleKey: 'ពគប', remembered: null });
+        expect(readTypedVerseFindAsk('ជួយខ្ញុំស្វែងរកខគម្ពីរមួយក្នុង «ពគប»')).toEqual({
+            bibleKey: 'ពគប',
+            remembered: null,
+        });
         expect(
             readTypedVerseFindAsk(
                 'ជួយខ្ញុំស្វែងរកខគម្ពីរមួយក្នុង «KJV»: ទុកចិត្តដល់ព្រះយេហូវ៉ា',
@@ -46,15 +47,11 @@ describe('readTypedVerseFindAsk', () => {
 
     test('a how-do-I is left to the assistant', () => {
         expect(readTypedVerseFindAsk('ជួយរកខគម្ពីរយ៉ាងម៉េច')).toBeNull();
-        expect(
-            readTypedVerseFindAsk('តើខ្ញុំរកខគម្ពីរយ៉ាងដូចម្ដេច?'),
-        ).toBeNull();
+        expect(readTypedVerseFindAsk('តើខ្ញុំរកខគម្ពីរយ៉ាងដូចម្ដេច?')).toBeNull();
     });
 
     test('a verse to put on the screen is the app’s work', () => {
-        expect(
-            readTypedVerseFindAsk('ជួយរកខគម្ពីរ ហើយដាក់វាលើអេក្រង់'),
-        ).toBeNull();
+        expect(readTypedVerseFindAsk('ជួយរកខគម្ពីរ ហើយដាក់វាលើអេក្រង់')).toBeNull();
     });
 });
 
@@ -64,10 +61,7 @@ describe('readTypedVerseContentAsk', () => {
             'ខគម្ពីរដែលនិយាយថា all things work together for good នោះនៅឯណា?',
             'all things work together for good',
         ],
-        [
-            'តើព្រះគម្ពីរនិយាយពីការអត់ទោសចិតសិបដងប្រាំពីរនៅឯណា?',
-            'ការអត់ទោសចិតសិបដងប្រាំពីរ',
-        ],
+        ['តើព្រះគម្ពីរនិយាយពីការអត់ទោសចិតសិបដងប្រាំពីរនៅឯណា?', 'ការអត់ទោសចិតសិបដងប្រាំពីរ'],
         [
             'ព្រះយេហូវ៉ាជាអ្នកគង្វាលខ្ញុំខ្ញុំនឹងមិនខ្វះអ្វីឡើយនៅខណា',
             'ព្រះយេហូវ៉ាជាអ្នកគង្វាលខ្ញុំខ្ញុំនឹងមិនខ្វះអ្វីឡើយ',
@@ -231,8 +225,6 @@ describe('checkIsClosingLine', () => {
 describe('checkIsAppWorkAsk', () => {
     test('a Khmer line about the screen ends a verse search', () => {
         expect(checkIsAppWorkAsk('ដាក់វាលើអេក្រង់ផង')).toBe(true);
-        expect(
-            checkIsAppWorkAsk('អត់មែនទេ ខ្ញុំគិតថានៅក្នុងគម្ពីរលូកាវិញ'),
-        ).toBe(false);
+        expect(checkIsAppWorkAsk('អត់មែនទេ ខ្ញុំគិតថានៅក្នុងគម្ពីរលូកាវិញ')).toBe(false);
     });
 });

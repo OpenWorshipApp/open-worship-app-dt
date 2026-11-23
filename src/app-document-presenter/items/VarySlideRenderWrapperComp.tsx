@@ -18,6 +18,7 @@ import type { VarySlideType } from '../../app-document-list/appDocumentTypeHelpe
 import { type AllControlType as KeyboardControlType } from '../../event/KeyboardEventListener';
 import type { OptionalPromise } from '../../helper/typeHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
+import { toSlideViewIndex } from '../../app-document-list/slideViewIndexHelpers';
 
 function selectVarySlide(
     {
@@ -41,7 +42,7 @@ function selectVarySlide(
     setTimeout(() => {
         handleVarySlideSelecting(
             event,
-            index + 1,
+            toSlideViewIndex(index),
             varySlide,
             (selectedVarySlide) => {
                 if (selectedVarySlide instanceof Slide === false) {

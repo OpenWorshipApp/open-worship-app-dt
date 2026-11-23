@@ -85,4 +85,46 @@ describe('toAnswerShownInLanguage in French', () => {
             ),
         ).toBe('Le mot "show" veut dire afficher.');
     });
+    // 2026-11-21: a deck's words quoted in a French answer came out with the
+    // dictionary's word for the label "Son" -- «his only fils».
+    test('words quoted from the attached file are written as the file has them', () => {
+        const sonLabel = (label: string) => {
+            return (
+                (
+                    { Son: 'Fils', 'Mini Screen': 'Petit écran' } as Record<
+                        string,
+                        string
+                    >
+                )[label] ?? label
+            );
+        };
+        const keep = {
+            fileText: 'For God so loved the world\nthat he gave his only Son',
+        };
+        expect(
+            toAnswerShownInLanguage(
+                'J’ai barré « his only Son » sur la diapositive 4, ' +
+                    'voir Mini Screen.',
+                'fr',
+                sonLabel,
+                keep,
+            ),
+        ).toBe(
+            'J’ai barré « his only Son » sur la diapositive 4, ' +
+                'voir Petit écran.',
+        );
+        // words the file does not hold are the window's as before
+        expect(
+            toAnswerShownInLanguage(
+                'Appuyez sur « Mini Screen ».',
+                'fr',
+                sonLabel,
+                keep,
+            ),
+        ).toBe('Appuyez sur « Petit écran ».');
+        // with no file, nothing is held
+        expect(
+            toAnswerShownInLanguage('« his only Son »', 'fr', sonLabel),
+        ).toBe('« his only Fils »');
+    });
 });

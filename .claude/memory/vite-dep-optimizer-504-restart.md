@@ -1,7 +1,7 @@
 ---
 name: vite-dep-optimizer-504-restart
 description: A 504 on a /node_modules/.vite/deps/* chunk means a stale dep-optimizer cache; touch vite.config.ts to restart the dev server without killing the Electron app
-metadata: 
+metadata:
   node_type: memory
   type: feedback
   originSessionId: f04bc2fc-3469-4a09-8e3a-7de58f3cfc35
@@ -58,3 +58,16 @@ the preload), and the song plugin is declared in the Khmer folder's own
 `package.json`, not the app's — so the `exclude` list was removed from
 `vite.config.ts`. `include: ['open-lyric/internal']` stays: the app imports it
 too, and one pre-bundled copy is the one registry a language plugin binds to.
+
+**Fourth shape (2026-11-21) — SILENT, no error at all:** a dependency upgraded
+while `vite:dev` keeps running is not re-bundled. Vite reads the lockfile only
+when it starts, so every window goes on running the OLD
+`.vite/deps/<dep>.js` with no 504, no console line and no reload prompt. Seen
+with open-lyric 0.1.90, installed at 14:26 under a server started the day
+before: Khmer song cards kept printing _Attachments:_ / _Key:_ in English,
+because the old pre-bundle had no label-language code. Real-plugin tests passed
+and the installed language plugin was correct. Check before debugging a
+feature after an upgrade: `grep -c <new symbol>
+node_modules/.vite/deps/<dep>.js` against `node_modules/<dep>/dist`, and the
+`vite` process's start time against the dep's mtime. The fix is the same
+`vite.config.ts` touch, then a reload of the windows.

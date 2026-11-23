@@ -13,12 +13,18 @@ import {
     parseAnimation,
     toAnimationBlendFromSrc,
     toAnimationSrc,
+    toAnimationReadColor,
+    toAnimationReadFillSrc,
     toAnimationStillFill,
-    toAnimationStillFillSrc,
     toCanonicalAnimationSrc,
     type AnimationType,
 } from './animationValueHelpers';
-import { parseFill } from './fillValueHelpers';
+import {
+    checkIsFillDark,
+    parseFill,
+    toFillAverageColor,
+} from './fillValueHelpers';
+import { checkIsColorDark } from '../others/color/colorValueHelpers';
 
 const CSS_SRC =
     'css?name=aurora&colors=1E3A8A-581C87-0EA5E9&speed=normal&density=normal';
@@ -36,6 +42,7 @@ describe('parseAnimation', () => {
         expect(animation).toEqual({
             engine: 'css',
             name: 'aurora',
+            code: null,
             colors: ['#1E3A8A', '#581C87', '#0EA5E9'],
             speed: 'normal',
             density: 'normal',
@@ -43,6 +50,45 @@ describe('parseAnimation', () => {
             blend: 'normal',
         });
         expect(toAnimationSrc(animation!)).toBe(CSS_SRC);
+    });
+
+    it('reads a person’s own CSS and writes it back the one way', () => {
+        const code = '.scene { background: var(--color-2); }';
+        const src = toAnimationSrc({
+            ...parseAnimation(CSS_SRC)!,
+            name: 'custom',
+            code,
+        } as any);
+        expect(src.startsWith('css?code=')).toBe(true);
+        expect(src).not.toContain('name=');
+        expect(parseAnimation(src)).toMatchObject({
+            engine: 'css',
+            name: 'custom',
+            code,
+            density: 'normal',
+        });
+        expect(toAnimationSrc(parseAnimation(src)!)).toBe(src);
+    });
+
+    it('refuses CSS that fails its check, and CSS with both name and code', () => {
+        const encode = (code: string) => {
+            return btoa(code)
+                .replaceAll('+', '-')
+                .replaceAll('/', '_')
+                .replace(/=+$/, '');
+        };
+        const tail = '&colors=000000-FFFFFF&speed=normal&density=normal';
+        expect(
+            parseAnimation(
+                `css?code=${encode('.scene { background: url(x.png); }')}${tail}`,
+            ),
+        ).toBeNull();
+        expect(
+            parseAnimation(
+                `css?name=aurora&code=${encode('.scene { opacity: 1; }')}${tail}`,
+            ),
+        ).toBeNull();
+        expect(parseAnimation(`css?colors=000000-FFFFFF`)).toBeNull();
     });
 
     it('reads a built-in shader, its look included', () => {
@@ -88,7 +134,7 @@ describe('parseAnimation', () => {
         );
         for (const src of [
             'css?colors=000000-FFFFFF',
-            'css?name=fireworks&colors=000000-FFFFFF',
+            'css?name=lasers&colors=000000-FFFFFF',
             'css?name=snow&colors=000000',
             'css?name=snow&colors=000000-111111-222222-333333-444444',
             'css?name=snow&colors=000000-GGGGGG',
@@ -164,9 +210,6 @@ describe('what an animation stands for where it does not move', () => {
             colors: ['#1E3A8A', '#581C87', '#0EA5E9'],
             motion: 'none',
         });
-        expect(parseFill(toAnimationStillFillSrc(animation))).toMatchObject({
-            kind: 'gradient',
-        });
     });
 
     it('is see-through with a faint colour or less than full opacity', () => {
@@ -197,6 +240,53 @@ describe('what an animation stands for where it does not move', () => {
         );
         expect(genAnimationCodeLabel(animation)).toBe(
             'CSS #1E3A8A → #581C87 → #0EA5E9',
+        );
+    });
+});
+
+describe('the one colour an animation reads as, for the words on it', () => {
+    // A dark night with a few bright bursts: as one even gradient of its
+    // colours it read as LIGHT, and the contrast check turned white Bible
+    // words black on it (2026-11-19, Thanksgiving - Fireworks).
+    const fireworks = parseAnimation(
+        'css?name=fireworks&colors=1C0F05-EA580C-F59E0B-FDE68A&speed=normal&density=normal',
+    ) as AnimationType;
+
+    it('is mostly the ground for an effect of a few bright sparks', () => {
+        expect(checkIsFillDark(toAnimationStillFill(fireworks))).toBe(false);
+        expect(checkIsColorDark(toAnimationReadColor(fireworks))).toBe(true);
+        expect(parseFill(toAnimationReadFillSrc(fireworks))).toEqual({
+            kind: 'solid',
+            color: toAnimationReadColor(fireworks),
+        });
+    });
+
+    it('is mostly the colours for an effect that fills the frame', () => {
+        // The same pale colours: a big glow over most of the frame is light
+        // to the eye, a few flakes on the ground are not.
+        const colors = '1E293B-FFFFFF-FEF3C7-FDE68A';
+        const breathe = parseAnimation(
+            `css?name=breathe&colors=${colors}`,
+        ) as AnimationType;
+        const snow = parseAnimation(
+            `css?name=snow&colors=${colors}`,
+        ) as AnimationType;
+        expect(checkIsColorDark(toAnimationReadColor(breathe))).toBe(false);
+        expect(checkIsColorDark(toAnimationReadColor(snow))).toBe(true);
+    });
+
+    it('is the even gradient for a shader that mixes them all, or code', () => {
+        const plasma = parseAnimation(GLSL_SRC) as AnimationType;
+        expect(toAnimationReadColor(plasma)).toBe(
+            toFillAverageColor(toAnimationStillFill(plasma)),
+        );
+        const code = {
+            ...fireworks,
+            name: 'custom',
+            code: '.scene {}',
+        } as AnimationType;
+        expect(toAnimationReadColor(code)).toBe(
+            toFillAverageColor(toAnimationStillFill(code)),
         );
     });
 });

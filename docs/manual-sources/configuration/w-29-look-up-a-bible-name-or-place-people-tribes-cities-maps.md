@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [RD-53, RD-54, RD-55, RD-56, RD-57, RD-58, RD-59, RD-60, RD-61, RD-62, RD-63, RD-64, RD-80, RD-91, PM-126, CB-149, CB-154, CB-162]
 screenshots: 8
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-29 — Look up a Bible name or place (people, tribes, cities, maps)
 
@@ -29,6 +29,9 @@ your Bible reading.
    in — one installed from Settings → **[en:tran:Languages]** (W-55), such as `km - Khmer
 (ភាសាខ្មែរ)` — and the lookup list and the
    "in your reading" panel switch to it at once, with nothing to reload.
+   A language that is not in the menu yet is one to install: the menu's last row,
+   **[en:tran:Add Language Plugin]**, opens Settings → **[en:tran:Languages]** (W-55)
+   straight away, and the language joins the menu once it is installed.
    Person and location windows already open keep their own language. The choice is
    remembered for next time, and it is **separate** from the app's own language
    (**W-16**): an English menu with Khmer names is a perfectly normal combination. The
@@ -217,5 +220,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `RD-53` · `RD-54` · `RD-55` · `RD-56` · `RD-57` · `RD-58` · `RD-59` · `RD-60` · `RD-61` · `RD-62` · `RD-63` · `RD-64` · `RD-80` · `RD-91` · `PM-126` · `CB-149` · `CB-154` · `CB-162`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

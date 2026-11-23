@@ -26,12 +26,8 @@ describe('a request to install a language, in Khmer', () => {
             step: 'check',
             language: 'ថៃ',
         });
-        expect(readLangInstallAsk('ខ្ញុំចង់ដំឡើងភាសាចិន')?.language).toBe(
-            'ចិន',
-        );
-        expect(readLangInstallAsk('សូមបន្ថែមភាសាជប៉ុនឲ្យខ្ញុំ')?.language).toBe(
-            'ជប៉ុន',
-        );
+        expect(readLangInstallAsk('ខ្ញុំចង់ដំឡើងភាសាចិន')?.language).toBe('ចិន');
+        expect(readLangInstallAsk('សូមបន្ថែមភាសាជប៉ុនឲ្យខ្ញុំ')?.language).toBe('ជប៉ុន');
         expect(readLangInstallAsk('ទាញយកភាសាកូរ៉េមក')?.language).toBe('កូរ៉េ');
     });
 

@@ -69,7 +69,7 @@ export default function DownloadedBibleItemComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     return (
-        <li className="list-group-item">
+        <li className="list-group-item app-selectable-text">
             <div>
                 <span>
                     ({key}) {title}

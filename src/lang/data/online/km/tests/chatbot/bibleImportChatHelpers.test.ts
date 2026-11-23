@@ -154,7 +154,8 @@ describe('a step by step import, pressed through', () => {
         expect(notice.actions?.[0].label).toBe('I agree');
         const first = await agreeTo(notice);
         expect(first.text).toContain('Step 1 of 4');
-        // The options are the names KHMER knows a Bible by, not the file's.
+        // The options are the names KHMER knows a Bible by, not the file's;
+        // the first suggested because its name carries the title's 1954.
         expect(first.actions?.map((one) => one.label)).toEqual([
             'ពគប (suggested)',
             'គខប',
@@ -539,7 +540,9 @@ describe('a Bible asked for by the name the app is looking for', () => {
                 { step: 'check', url: LINK, wantedKey: 'KJV' },
             ),
         );
-        expect(taken.actions?.[0].label).toBe('NKJV (suggested)');
+        // The KJV taken, nothing names the NKJV: first, and not suggested
+        // (F-29 of robot run 20261120-2021).
+        expect(taken.actions?.[0].label).toBe('NKJV');
         expect(taken.text).not.toContain('The app is looking for');
 
         const unusable = await agreeTo(

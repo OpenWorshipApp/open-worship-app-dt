@@ -459,18 +459,38 @@ describe('bibleNote.tsx', () => {
 });
 
 describe('entries that render into their own React root', () => {
-    test('about draws at once, without waiting for the language', async () => {
+    test('about draws only once init has loaded the language', async () => {
         h.init.mockImplementation(() => {
             h.events.push('init');
             return new Promise(() => {});
         });
         await import('./about');
+        await flush();
 
-        expect(h.init).toHaveBeenCalledExactlyOnceWith();
+        expect(h.events).toEqual(['init']);
+        expect(h.rootRender).not.toHaveBeenCalled();
+    });
+
+    test("about draws as init's callback", async () => {
+        await import('./about');
+        await flush();
+
+        expect(h.init).toHaveBeenCalledExactlyOnceWith(expect.any(Function));
         expect(h.events).toEqual(['init', 'root:default', 'render']);
         const tree = h.rootRender.mock.calls[0][0];
         expect(tree.type).toBe(StrictMode);
         expect(typesOf(tree)).toEqual([C.AboutComp]);
+        expect(h.handleError).not.toHaveBeenCalled();
+    });
+
+    test('about still draws, after reporting, when init fails', async () => {
+        const error = new Error('language failed to load');
+        h.init.mockRejectedValue(error);
+        await import('./about');
+        await flush();
+
+        expect(h.handleError).toHaveBeenCalledExactlyOnceWith(error);
+        expect(h.rootRender).toHaveBeenCalledOnce();
     });
 
     test('lwShare draws the share app and the window tools after init', async () => {

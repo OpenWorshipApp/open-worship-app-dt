@@ -193,6 +193,11 @@ export default abstract class LyricAppDocumentStageAbstract extends LyricAppDocu
             height: canvasItemBounds.height,
             isShowingAttachments: false,
             isShowingStrummingPatterns: false,
+            // Said, never left to the library: open-lyric 0.1.108 began drawing
+            // a song's `// comment` lines when the flag is absent, which put a
+            // director's note on stage 0's audience slide. Stage 1 turns it on
+            // in its own options, which are spread over these.
+            isShowingCommentText: false,
             css: `
                 .ol-song-view__info-card .ol-song-view__title {
                     font-size: 1.6em !important;

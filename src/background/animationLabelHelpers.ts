@@ -1,10 +1,11 @@
+import type { ColorModeType } from '../others/color/colorContrastHelpers';
 import { tran } from '../lang/langHelpers';
 import {
-    findAnimationSampleTheme,
-    type AnimationThemeType,
+    findAnimationSample,
+    type AnimationCategoryGroupType,
+    type AnimationCategoryType,
 } from './animationBuiltInHelpers';
 import {
-    toAnimationSrc,
     type AnimationLevelType,
     type AnimationSpeedType,
     type AnimationType,
@@ -13,8 +14,10 @@ import {
 } from './animationValueHelpers';
 
 // Each name a literal call, so `tranKeyCoverage.test.ts` sees every key.
-export function tranCssAnimationName(name: CssAnimationNameType) {
+export function tranCssAnimationName(name: CssAnimationNameType | 'custom') {
     switch (name) {
+        case 'custom':
+            return tran('Custom CSS');
         case 'aurora':
             return tran('Aurora');
         case 'bokeh':
@@ -35,6 +38,18 @@ export function tranCssAnimationName(name: CssAnimationNameType) {
             return tran('Cross');
         case 'embers':
             return tran('Embers');
+        case 'leaves':
+            return tran('Falling Leaves');
+        case 'fireworks':
+            return tran('Fireworks');
+        case 'petals':
+            return tran('Petals');
+        case 'candles':
+            return tran('Candlelight');
+        case 'confetti':
+            return tran('Confetti');
+        case 'hearts':
+            return tran('Hearts');
     }
 }
 
@@ -68,6 +83,18 @@ export function tranGlslAnimationName(name: GlslAnimationNameType | 'custom') {
             return tran('Sunrise');
         case 'stars':
             return tran('Starry Night');
+        case 'leaves':
+            return tran('Falling Leaves');
+        case 'fireworks':
+            return tran('Fireworks');
+        case 'petals':
+            return tran('Petals');
+        case 'candles':
+            return tran('Candlelight');
+        case 'confetti':
+            return tran('Confetti');
+        case 'hearts':
+            return tran('Hearts');
         case 'custom':
             return tran('Custom Shader');
     }
@@ -95,8 +122,98 @@ export function tranAnimationLevel(level: AnimationLevelType) {
     }
 }
 
-export function tranAnimationTheme(theme: AnimationThemeType) {
-    switch (theme) {
+export function tranAnimationCategory(category: AnimationCategoryType) {
+    switch (category) {
+        case 'sunday-worship':
+            return tran('Sunday Worship');
+        case 'worship-night':
+            return tran('Worship Night');
+        case 'prayer-meeting':
+            return tran('Prayer Meeting');
+        case 'bible-study':
+            return tran('Bible Study');
+        case 'youth-service':
+            return tran('Youth Service');
+        case 'children-service':
+            return tran("Children's Service");
+        case 'revival':
+            return tran('Revival');
+        case 'evangelism':
+            return tran('Evangelism');
+        case 'missions':
+            return tran('Missions');
+        case 'advent':
+            return tran('Advent');
+        case 'christmas':
+            return tran('Christmas');
+        case 'epiphany':
+            return tran('Epiphany');
+        case 'ash-wednesday':
+            return tran('Ash Wednesday');
+        case 'lent':
+            return tran('Lent');
+        case 'palm-sunday':
+            return tran('Palm Sunday');
+        case 'maundy-thursday':
+            return tran('Maundy Thursday');
+        case 'good-friday':
+            return tran('Good Friday');
+        case 'resurrection-day':
+            return tran('Resurrection Day');
+        case 'ascension-day':
+            return tran('Ascension Day');
+        case 'pentecost':
+            return tran('Pentecost');
+        case 'trinity-sunday':
+            return tran('Trinity Sunday');
+        case 'transfiguration':
+            return tran('Transfiguration');
+        case 'reformation-day':
+            return tran('Reformation Day');
+        case 'all-saints-day':
+            return tran("All Saints' Day");
+        case 'christ-the-king':
+            return tran('Christ the King');
+        case 'baptism':
+            return tran('Baptism');
+        case 'communion':
+            return tran('Communion');
+        case 'wedding':
+            return tran('Wedding');
+        case 'funeral':
+            return tran('Funeral');
+        case 'baby-dedication':
+            return tran('Baby Dedication');
+        case 'confirmation':
+            return tran('Confirmation');
+        case 'ordination':
+            return tran('Ordination');
+        case 'church-anniversary':
+            return tran('Church Anniversary');
+        case 'graduation':
+            return tran('Graduation');
+        case 'healing-service':
+            return tran('Healing Service');
+        case 'new-year':
+            return tran('New Year');
+        case 'thanksgiving':
+            return tran('Thanksgiving');
+        case 'harvest':
+            return tran('Harvest');
+        case 'mothers-day':
+            return tran("Mother's Day");
+        case 'fathers-day':
+            return tran("Father's Day");
+        case 'national-day':
+            return tran('National Day');
+        case 'springtime':
+            return tran('Springtime');
+        case 'summer':
+            return tran('Summer');
+        case 'autumn':
+            return tran('Autumn');
+        case 'winter':
+            return tran('Winter');
         case 'glory':
             return tran('Glory');
         case 'heaven':
@@ -105,18 +222,6 @@ export function tranAnimationTheme(theme: AnimationThemeType) {
             return tran('Holy Spirit');
         case 'living-water':
             return tran('Living Water');
-        case 'silent-night':
-            return tran('Silent Night');
-        case 'christmas':
-            return tran('Christmas');
-        case 'advent':
-            return tran('Advent');
-        case 'lent':
-            return tran('Lent');
-        case 'easter':
-            return tran('Easter');
-        case 'calvary':
-            return tran('Calvary');
         case 'grace':
             return tran('Grace');
         case 'peace':
@@ -125,26 +230,31 @@ export function tranAnimationTheme(theme: AnimationThemeType) {
             return tran('Joy');
         case 'majesty':
             return tran('Majesty');
-        case 'worship':
-            return tran('Worship');
-        case 'pentecost':
-            return tran('Pentecost');
         case 'hope':
             return tran('Hope');
         case 'praise':
             return tran('Praise');
-        case 'baptism':
-            return tran('Baptism');
         case 'light-of-the-world':
             return tran('Light of the World');
         case 'morning-light':
             return tran('Morning Light');
-        case 'resurrection':
-            return tran('Resurrection');
-        case 'communion':
-            return tran('Communion');
-        case 'revival':
-            return tran('Revival');
+    }
+}
+
+export function tranAnimationCategoryGroup(group: AnimationCategoryGroupType) {
+    switch (group) {
+        case 'services':
+            return tran('Services');
+        case 'church-year':
+            return tran('Church Year');
+        case 'special-services':
+            return tran('Special Services');
+        case 'holidays':
+            return tran('Holidays');
+        case 'seasons':
+            return tran('Seasons');
+        case 'themes':
+            return tran('Themes');
     }
 }
 
@@ -155,13 +265,46 @@ export function tranAnimationEffectName(animation: AnimationType) {
 }
 
 /**
- * An animation's name for a person, in the app's language: a sample's theme
- * with its effect (`Christmas - Snowfall`), else the effect alone.
+ * A sample's effect for its tile, numbered from its second look on
+ * (`Snowfall`, `Snowfall 2`): the Category list already says the occasion.
+ */
+export function genAnimationSampleCaption(
+    animation: AnimationType,
+    number = 1,
+) {
+    const name = tranAnimationEffectName(animation);
+    return number > 1 ? `${name} ${number}` : name;
+}
+
+/**
+ * A sample's name for a person: its category with its effect, and a Light
+ * one says so (`Christmas - Snowfall (Light)`) -- the Dark side keeps the
+ * names it always had, which saved presets and run sheets show.
+ */
+export function genAnimationCategoryLabel(
+    category: AnimationCategoryType,
+    animation: AnimationType,
+    number = 1,
+    tone: ColorModeType = 'dark',
+) {
+    const label = `${tranAnimationCategory(category)} - ${genAnimationSampleCaption(animation, number)}`;
+    return tone === 'light' ? `${label} (${tran('Light')})` : label;
+}
+
+/**
+ * An animation's name for a person, in the app's language: a sample's
+ * category with its effect (`Christmas - Snowfall`, its further looks
+ * numbered, `Christmas - Snowfall 2`, a Light one marked), else the effect
+ * alone.
  */
 export function genAnimationLabel(animation: AnimationType) {
-    const effectName = tranAnimationEffectName(animation);
-    const theme = findAnimationSampleTheme(toAnimationSrc(animation));
-    return theme === null
-        ? effectName
-        : `${tranAnimationTheme(theme)} - ${effectName}`;
+    const sample = findAnimationSample(animation);
+    return sample === null
+        ? tranAnimationEffectName(animation)
+        : genAnimationCategoryLabel(
+              sample.category,
+              animation,
+              sample.number,
+              sample.tone,
+          );
 }

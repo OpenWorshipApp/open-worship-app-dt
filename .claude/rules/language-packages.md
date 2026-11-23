@@ -508,9 +508,36 @@ version, description}` plus `direction: "rtl"` and `editorLink` where
   holds both. To move a song plugin to a new tag, change it in the
   language's `package.json`, `npm install --allow-git=all` in that folder,
   and raise the language's version. The song plugin's
-  `openLyricPlugin.ts` re-exports that dependency and nothing else; the
+  `openLyricPlugin.ts` re-exports that dependency and nothing else -- the
+  editor's plugin as its default, and, where the plugin has them,
+  `LyricPreviewPlugin` and `LyricMarkdownPlugin` (2026-11-21, robot run
+  20261120-2021 F-10: with open-lyric-plugin-km-kh 0.1.24 carrying the
+  words, a Khmer song's card still read _Attachments:_ and _Key:_ in a
+  Khmer app, because the factory attached the song plugin to the EDITOR
+  alone). The factory attaches only their LABELS
+  (`contributes.language.labels`) to a song preview and the Config card,
+  as a plain plugin under the locale, read once per language
+  (`addSongLabels`). WHICH language a song's labels are printed in is the
+  APP's, never the song's: `applyOpenLyricLabelLocale`
+  (`src/lyric-list/lyricHelpers.ts`, called for the presenter's preview and
+  the Lyric Editor's preview and Config card) sets `labelLocale` to the
+  app's locale (the user, the same day, after a Khmer song with no
+  `Locales` -- most of theirs -- still read _Attachments:_ under open-lyric's
+  `auto`: _it should not depend on lyric locale_). A Khmer app prints every
+  song's labels in Khmer; an English app, or a language whose package has
+  no song plugin, prints English. Since only the app's own language matters,
+  the window's fonts-only path for the others (`langFacts.json`) needs no
+  labels. The class itself is never attached: its `install()` keeps every
+  preview in a page-wide set for its label-language field, and a preview is
+  made for every song selected; the
   factory imports only TYPES from the app, never an app VALUE: the plugin
-  build refuses a stray module. `--release` packs a language with the
+  build refuses a stray module. A dependency of the song plugin that names
+  `__dirname` or `__filename` (typo-js, under open-lyric 0.1.89,
+  2026-11-21: the km pack and `lint:build` failed _must not reach Node
+  directly_) is built with both defined as `undefined` -- a window has
+  neither, and the envelope check refuses Node's globals -- and Vite's empty
+  stand-in for a Node built-in (`__vite-browser-external`) is not counted as
+  another package's module by `moduleContainmentPlugin`. `--release` packs a language with the
   others for `npm run release:lang`. A new key goes into every
   `dictionary.json` together, each language's `meta.json` version raised
   and all of them packed again (`npm run lang:pack`).

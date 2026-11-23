@@ -105,6 +105,21 @@ describe('Bible import mapping choices', () => {
       toCompleteBibleBookList([...books, { key: 'GEN', name: 'different' }]),
     ).toBeNull();
   });
+  test("drops a page's own slips from a name: markup ends, a space before a mark (F-24)", () => {
+    const books = BIBLE_BOOK_KEYS.map((key) => ({ key, name: `name ${key}` }));
+    books[18] = { key: 'PSA', name: ' >Psalms' };
+    // A combining acute (Inherited script) stands for the vowel sign.
+    books[42] = { key: 'JHN', name: 'Jo \u0301hn<' };
+    books[0] = { key: 'GEN', name: 'Gen  esis' };
+    const list = toCompleteBibleBookList(books);
+    expect(list[18]).toBe('Psalms');
+    expect(list[42]).toBe('Jo\u0301hn');
+    expect(list[0]).toBe('Gen esis');
+    // The same book twice, once with a slip, is still ONE name.
+    expect(
+      toCompleteBibleBookList([...books, { key: 'PSA', name: 'Psalms' }]),
+    ).toHaveLength(66);
+  });
   test('returns array choices and matching provenance, keeping built-ins on network failure', async () => {
     const books = BIBLE_BOOK_KEYS.map((key) => `local ${key}`);
     const readPage = vi.fn().mockRejectedValue(new Error('offline'));

@@ -3,7 +3,7 @@ id: W-48
 title: "Donner sa propre transition à une diapositive, un chant, un arrière-plan ou une superposition"
 section: "Raccourcis clavier (annexe du tutoriel)"
 lang: fr
-translatedFrom: 52354340be164ebf
+translatedFrom: 47b0187f444d1ac0
 ---
 # W-48 — Donner sa propre transition à une diapositive, un chant, un arrière-plan ou une superposition
 
@@ -34,6 +34,12 @@ sa diapositive, puis son document, puis l'écran quand son propre choix est déc
    ⋮ en haut à droite de l'aperçu. Son infobulle nomme l'effet. Appuyez dessus pour modifier
    ou décocher le choix du document. Il disparaît quand le document suit de nouveau
    l'écran. 📸
+   Un fichier PowerPoint commence avec cette icône déjà là, sur
+   **[en:tran:No Transition]** : une présentation joue ses propres animations, et seule une
+   coupe franche les laisse telles qu'elles ont été faites — un fondu, un glissement ou un zoom passe par-dessus.
+   Choisissez un autre effet si vous en voulez un, ou décochez
+   **[en:tran:Own transition]** pour suivre l'écran ; le fichier garde l'un ou l'autre
+   choix.
 2. **Une seule diapositive.** Appuyez sur le ⋮ de la carte de cette diapositive (ou faites un clic droit dessus) et
    choisissez **[en:tran:Transition]** — la ligne indique _Zoom (Aperçu des diapositives)_, parce que
    la diapositive suit son document. Cochez **[en:tran:Own transition]**, choisissez
@@ -66,7 +72,9 @@ sa diapositive, puis son document, puis l'écran quand son propre choix est déc
 8. Une bande de texte défilant qui n'a pas de transition propre continue d'arriver en glissant depuis son
    bord ; **[en:tran:Slide In]** est ce même glissement.
 9. Pour revenir à la transition de l'écran, ouvrez la même boîte et décochez
-   **[en:tran:Own transition]**. Rien n'est conservé une fois que tous les niveaux sont décochés.
+   **[en:tran:Own transition]**. Rien n'est conservé une fois que tous les niveaux sont décochés
+   — sauf le choix propre d'un fichier PowerPoint, qui est conservé comme décoché ; choisir de nouveau
+   **[en:tran:No Transition]** pour lui ne conserve plus rien.
 10. Les choix voyagent avec le document : le renommer, le mettre à la corbeille
     et le partager sous forme d'archive emportent ses transitions.
 11. **Un seul élément du canevas.** Ouvrez le document dans l'**[en:tran:Slide Editor]**,

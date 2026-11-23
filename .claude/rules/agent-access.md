@@ -361,7 +361,15 @@ file-writing tools (`filePath` on `take_snapshot`, `take_screenshot`,
 `screencast_start`) confined to the OS temp folder, and every HTTP session
 says so in the log. The model is offered none of them, and the firewall
 reads a snapshot file back on the server's side, so nothing the chatbot does
-changes; the stdio door is not confined.
+changes. The stdio door is confined too: to the roots its client
+negotiates (Claude Code's working directories) plus that same temp folder,
+so a `filePath` in a session's scratchpad under `/private/tmp` is refused
+("not within any of the configured workspace roots", 7 of 40 sessions by
+2026-11-19) -- write it under the repo's gitignored `test-results/`. Since
+2026-11-19 (`AD-39`) the refusal says so itself: `explainRootsRefusal` in
+`firewall.mjs` adds `ROOTS_REFUSAL_HINT` to it. And `pageId`, which 1.12 made
+required on every page tool, is optional again (`makePageIdOptional` in
+`server.mjs`): left out, the page `select_page` chose.
 
 **Nor do its tools ever see a DevTools window** (2026-11-02,
 `devToolsTargets.mjs`, applied in `createOwaMcpServer` to the puppeteer

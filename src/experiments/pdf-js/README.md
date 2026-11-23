@@ -20,6 +20,9 @@ type PdfTextClickType = {
   reference: string | null;
   pageNumber: number;
   fileName: string;
+  action?: 'click' | 'contextmenu';
+  start?: number;
+  end?: number;
 };
 ```
 

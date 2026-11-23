@@ -171,6 +171,9 @@ export const OPEN_LYRIC_CONFIG_FIELD_LIST = [
     'Structure',
     'Genre',
     'Style',
+    'Keywords',
+    'Year',
+    'Melody',
     'Attachments',
     'Strumming Patterns',
 ];
@@ -254,6 +257,8 @@ export const OPEN_LYRIC_STRUM_STEP_LIST = [
 
 const CHORD_PATTERN = new RegExp(`^${OPEN_LYRIC_CHORD_SOURCE}$`);
 const TEMPO_PATTERN = /^[1-9]\d*bpm$/;
+/** open-lyric 0.1.89: the year a song was written, four ASCII digits. */
+const YEAR_PATTERN = /^[1-9]\d{3}$/;
 /** `(2x)` in a progression body -- the reverse of Structure's `x2`. */
 export const OPEN_LYRIC_REPEAT_SUFFIX_SOURCE = '\\([1-9]\\d*x\\)';
 const REPEAT_SUFFIX_PATTERN = new RegExp(
@@ -708,6 +713,13 @@ function checkConfigValues(fields, report, configEntry) {
             at('Tempo'),
             'Tempo must match [1-9]\\d*bpm.',
             'Digits then "bpm" with no space, e.g. 68bpm.',
+        );
+    }
+    if (fields.Year !== undefined && !YEAR_PATTERN.test(fields.Year.value)) {
+        report(
+            at('Year'),
+            'Year must be a four-digit year, such as 2024.',
+            'Four digits 0-9, e.g. 1779.',
         );
     }
     if (fields.Locales !== undefined && fields.Locales.value !== '') {

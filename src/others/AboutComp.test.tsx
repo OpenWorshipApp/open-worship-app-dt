@@ -23,7 +23,6 @@ vi.mock('../server/appProvider', () => ({
                 'https://github.com/OpenWorshipApp/open-worship-app-dt',
             titleFull: 'Open Worship App',
             version: '2026.10.1',
-            description: 'Free worship presentation software',
             homepage: 'https://openworship.app',
         },
         browserUtils: { openExternalURL: state.openExternalURL },
@@ -104,14 +103,17 @@ describe('AboutComp', () => {
         // A short commit id, as git shows it.
         expect(links[1].textContent).toBe('abcdef1');
         expect(links[2].getAttribute('href')).toBe('https://openworship.app');
+        // Said in the app's language, not read off package.json.
         expect(host.textContent).toContain(
-            'Free worship presentation software',
+            'Fully Open-Source and completely free forever for worship service.',
         );
         expect(getModuleVersions()).toEqual([
             'Electron (38.0.0)',
             'Pptx to Html Converter (0.9.1)',
             'Docx to Html Converter (1.2.0)',
             'Bible Note (3.1.4)',
+            // The MCP server is named, not versioned.
+            'Open Worship App MCP',
         ]);
     });
 
@@ -147,13 +149,14 @@ describe('AboutComp', () => {
             'Docx to Html Converter (1.2.0)',
             // undefined from the module reads as still loading.
             'Bible Note (Loading...)',
+            'Open Worship App MCP',
         ]);
     });
 
     test('the fork button opens the repository outside the app', async () => {
         await act(async () => root.render(<AboutComp />));
         await flush();
-        const button = host.querySelector('button')!;
+        const button = host.querySelector<HTMLButtonElement>('.btn-success')!;
         expect(button.title).toBe(
             'https://github.com/OpenWorshipApp/open-worship-app-dt',
         );
@@ -161,6 +164,28 @@ describe('AboutComp', () => {
         await act(async () => button.click());
         expect(state.openExternalURL).toHaveBeenCalledExactlyOnceWith(
             'https://github.com/OpenWorshipApp/open-worship-app-dt',
+        );
+    });
+
+    test('each module button opens its npm page outside the app', async () => {
+        await act(async () => root.render(<AboutComp />));
+        await flush();
+        const buttons = Array.from(
+            host.querySelectorAll<HTMLButtonElement>('button.module-version'),
+        );
+        const npmUrls = [
+            'https://www.npmjs.com/package/electron',
+            'https://www.npmjs.com/package/pptx-to-html-conv',
+            'https://www.npmjs.com/package/docx-to-html-conv',
+            'https://www.npmjs.com/package/bible-note',
+            'https://www.npmjs.com/package/open-worship-app-mcp',
+        ];
+        expect(buttons.map((button) => button.title)).toEqual(npmUrls);
+        for (const button of buttons) {
+            await act(async () => button.click());
+        }
+        expect(state.openExternalURL.mock.calls).toEqual(
+            npmUrls.map((url) => [url]),
         );
     });
 });

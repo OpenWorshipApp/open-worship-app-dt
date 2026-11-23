@@ -19,7 +19,10 @@ import {
     findNextPaintShowSrc,
     type PaintShowKindType,
 } from './paintShowOrderHelpers';
-import { readPaintSavedSrcList } from './paintShowSavedHelpers';
+import {
+    readPaintPinnedSrcList,
+    readPaintSavedSrcList,
+} from './paintShowSavedHelpers';
 
 /**
  * The slide show of the Background panel's Fills or Animations tab
@@ -71,6 +74,7 @@ export function tickBackgroundPaint(
         return false;
     }
     const savedSrcList = readPaintSavedSrcList(kind, sessionSuffix);
+    const pinnedSrcList = readPaintPinnedSrcList(kind);
     const options = readSlideAutoPlayOptions(
         toBackgroundPaintAutoPlayPrefix(kind, sessionSuffix),
     );
@@ -85,6 +89,7 @@ export function tickBackgroundPaint(
                     step: options.step,
                     repeatKind: options.repeatKind,
                 },
+                pinnedSrcList,
             );
             if (src === null) {
                 return null;

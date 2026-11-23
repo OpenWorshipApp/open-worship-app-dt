@@ -1,4 +1,5 @@
 import { readSavedPresets } from '../others/savedPresetHelpers';
+import { readAnimationPinSrcList } from './animationPinHelpers';
 import { toSavedAnimationPreset } from './animationPresetHelpers';
 import { toSavedFillPreset } from './fillPresetHelpers';
 import {
@@ -23,4 +24,12 @@ export function readPaintSavedSrcList(
     return presetList.map((preset) => {
         return preset.src;
     });
+}
+
+/**
+ * The pinned animations a slide show walks after the saved ones
+ * (`findPaintShowRow`); a fill has none.
+ */
+export function readPaintPinnedSrcList(kind: PaintShowKindType) {
+    return kind === 'animation' ? readAnimationPinSrcList() : [];
 }

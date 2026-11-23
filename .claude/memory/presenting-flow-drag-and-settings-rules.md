@@ -16,8 +16,9 @@ Two presenting flow rules that produce "it did nothing" reports:
   element-row drag, so it is neither reordered nor attached.
 - **Dropping onto a ROW no longer adds an element.** It attaches a CC to that row, and it
   MUST `stopPropagation()` — the drop otherwise also reaches `PresentingFlowFileComp` through
-  the `<li>` and the payload lands twice. Adding an element is the presenting flow NAME row (or
-  the empty-state row) only.
+  the `<li>` and the payload lands twice. Adding an element at the END is the presenting flow NAME row (or
+  the empty-state row); Ctrl (⌘) held over a row inserts it as a line at that row instead
+  (`toPresentingFlowRowDropKind`; Alt forces the attach).
 - **Presenting Flow rows reach a screen through `dragStore.onDropped`, not `dataTransfer`.** A
   stored slide is a reference and must be re-read from its document, and `dragstart` cannot
   await — so every kind takes the async route to keep one code path. A slide CHILD row

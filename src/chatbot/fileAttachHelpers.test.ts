@@ -425,6 +425,38 @@ describe('genAttachmentFromPath', () => {
     });
 });
 
+// 2026-11-21: a clip for a slide is named and measured, never read.
+describe('a video or a sound from disk', () => {
+    test('is a media chip with its path and size; nothing is read', async () => {
+        diskState.sizeMap.set('C:/media/Intro.MP4', 30_000_000);
+        const video = expectAttachment(
+            await genAttachmentFromPath('C:/media/Intro.MP4'),
+        );
+        expect(video).toMatchObject({
+            kind: 'media',
+            name: 'Intro.MP4',
+            mimeType: 'video/*',
+            byteSize: 30_000_000,
+            filePath: 'C:/media/Intro.MP4',
+        });
+        expect(video.summary).toContain('You cannot watch or hear it');
+        diskState.sizeMap.set('C:/media/bell.wav', 900_000);
+        expect(
+            expectAttachment(await genAttachmentFromPath('C:/media/bell.wav')),
+        ).toMatchObject({ kind: 'media', mimeType: 'audio/*' });
+        expect(diskState.readCountMap.get('C:/media/Intro.MP4')).toBe(
+            undefined,
+        );
+        expect(diskState.readCountMap.get('C:/media/bell.wav')).toBe(undefined);
+    });
+
+    test('one gone is said, as any other file', async () => {
+        expect(
+            expectFailure(await genAttachmentFromPath('C:/media/gone.mp3')),
+        ).toBe('gone.mp3 is not there any more.');
+    });
+});
+
 describe('reloadFileAttachment', () => {
     test('a PDF whose pages were let go is drawn again; one that has them is not', async () => {
         const attachment = genFileAttachment('LUK.6.pdf', 10, 'C:/LUK.6.pdf');

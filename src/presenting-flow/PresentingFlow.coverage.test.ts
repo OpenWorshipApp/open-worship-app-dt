@@ -23,6 +23,9 @@ vi.mock('../helper/AppEditableDocumentSourceAbs', () => ({
         constructor(filePath: string) {
             this.filePath = filePath;
         }
+        get fileSource() {
+            return { name: this.filePath.split('/').pop() };
+        }
         async getJsonData() {
             if (state.throwReadPaths.has(this.filePath)) {
                 throw new Error('read failed');
@@ -182,6 +185,12 @@ describe('PresentingFlow mutations', () => {
             JSON.stringify({ type: 'bad' }),
         );
         expect(mocks.showSimpleToast).toHaveBeenCalledOnce();
+        // The toast names the sheet (F-36): "Invalid item" alone read as if
+        // whatever was just pressed were the invalid thing.
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Instantiating Presenting Flow Item',
+            'Invalid item: flow.owapf',
+        );
         // Read again -- after a write, or by the run player -- it says nothing
         // more: the error row is still there to see.
         await flow.getItems();
@@ -441,6 +450,24 @@ describe('PresentingFlow mutations', () => {
 });
 
 describe('PresentingFlow edge and failure paths', () => {
+    test('a quiet read says nothing and leaves the notice for the person (F-36)', async () => {
+        state.documents.set('/quiet.owapf', {
+            metadata: {},
+            items: [{ type: 'bad' }],
+        });
+        const flow = new PresentingFlow('/quiet.owapf');
+        const items = await flow.getItems({ isQuiet: true });
+        expect(items?.[0].isError).toBe(true);
+        expect(mocks.showSimpleToast).not.toHaveBeenCalled();
+        expect(mocks.appError).not.toHaveBeenCalled();
+        // Opened by the person afterwards, the sheet is still announced.
+        await flow.getItems();
+        expect(mocks.showSimpleToast).toHaveBeenCalledWith(
+            'Instantiating Presenting Flow Item',
+            'Invalid item: quiet.owapf',
+        );
+    });
+
     test('announces a damaged entry again once its minute is over, as text even when unserialisable', async () => {
         vi.useFakeTimers();
         try {

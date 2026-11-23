@@ -420,9 +420,9 @@ describe('slide models', () => {
 
         const subSlides = pptxSlide.subSlides;
         expect(subSlides).toHaveLength(2);
-        expect(subSlides[0].id).toBe(1003);
+        expect(subSlides[0].id).toBe(50000);
         expect(subSlides[0].html).toBe('<section>First</section>');
-        expect(subSlides[1].id).toBe(1004);
+        expect(subSlides[1].id).toBe(50001);
 
         pptxSlide.id = 8;
         expect(pptxSlide.id).toBe(8);
@@ -461,6 +461,36 @@ describe('slide models', () => {
                 type: 'pptx-slide',
             },
         });
+    });
+
+    test('gives every PptxSlide sub-slide an id no other slide has', () => {
+        // Slide 46's 4th step, 48's 2nd and 49's 1st were all 1047 under the
+        // old `id + 999 + index`, and every grouped screen raced between them.
+        const genPptxSlide = (id: number, subCount: number) => {
+            return new PptxSlide('/docs/deck.pptx', {
+                id,
+                htmlFilePath: `/deck/slide-${id}.html`,
+                subHtmlFilePaths: Array.from({ length: subCount }, (_, i) => {
+                    return `/deck/sub-${id}-${i}.html`;
+                }),
+                isDisabled: false,
+                note: null,
+                metadata: { width: 1280, height: 720 },
+                images: [],
+                videos: [],
+                audios: [],
+                type: 'pptx-slide',
+            });
+        };
+        const slides = Array.from({ length: 80 }, (_, id) => {
+            return genPptxSlide(id, id === 0 ? 0 : 6);
+        });
+        const ids = slides.flatMap((slide) => {
+            return [slide.id, ...slide.subSlides.map((sub) => sub.id)];
+        });
+        expect(new Set(ids).size).toBe(ids.length);
+        expect(slides[45].subSlides[3].id).not.toBe(slides[47].subSlides[1].id);
+        expect(slides[47].subSlides[1].id).not.toBe(slides[48].subSlides[0].id);
     });
 
     test('covers DocxSlide drag serialization', async () => {

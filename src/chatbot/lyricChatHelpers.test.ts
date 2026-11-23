@@ -303,10 +303,24 @@ describe('after a change', () => {
             mergeEditedDocument(merged, { name: 'Talk', undoId: 'u3' })
                 .undoIdList,
         ).toEqual(['u1', 'u2', 'u3']);
-        // Another document starts over; a change with no id keeps the last.
-        expect(
-            mergeEditedDocument(merged, { name: 'Other', undoId: 'u9' }),
-        ).toEqual({ name: 'Other', undoId: 'u9' });
+        // Another document of the same answer is put back by the same
+        // press, and named (EC-787); a change with no id keeps the last.
+        const both = mergeEditedDocument(merged, {
+            name: 'Other',
+            undoId: 'u9',
+        });
+        expect(both).toEqual({
+            name: 'Other',
+            undoId: 'u9',
+            undoIdList: ['u1', 'u2', 'u9'],
+            undoNames: ['Talk', 'Other'],
+        });
+        expect(genLyricUndoAction(both)?.args).toEqual({
+            id: 'u9',
+            name: 'Other',
+            ids: ['u1', 'u2', 'u9'],
+            names: ['Talk', 'Other'],
+        });
         expect(
             mergeEditedDocument(slides, { name: 'Talk', undoId: null }),
         ).toEqual({ name: 'Talk', undoId: 'u1' });

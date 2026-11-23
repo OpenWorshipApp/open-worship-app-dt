@@ -85,9 +85,10 @@ const URL_LOADER_MAP: LoaderMapType = import.meta.glob(
     ],
     { query: '?url', import: 'default' },
 );
+// The whole module: its default is the editor's plugin, and it may name the
+// preview's and the Config card's too (`onlineLangPackage.ts`).
 const OPEN_LYRIC_PLUGIN_LOADER_MAP: LoaderMapType = import.meta.glob(
     './data/online/*/openLyricPlugin.ts',
-    { import: 'default' },
 );
 
 function toLangCode(filePath: string) {
@@ -161,6 +162,10 @@ export async function loadSourceLangData(langCode: string) {
         return loadOptional(JSON_LOADER_MAP, `${dir}/${fileName}`);
     };
     const fonts = await loadJson('fonts.json');
+    const openLyricPluginModule = await loadOptional(
+        OPEN_LYRIC_PLUGIN_LOADER_MAP,
+        `${dir}/openLyricPlugin.ts`,
+    );
     const fontUrls: Record<string, string> = {};
     if (fonts !== undefined) {
         const fileList: string[] = [
@@ -207,10 +212,8 @@ export async function loadSourceLangData(langCode: string) {
                 : undefined,
         fonts,
         fontUrls,
-        OpenLyricPlugin: await loadOptional(
-            OPEN_LYRIC_PLUGIN_LOADER_MAP,
-            `${dir}/openLyricPlugin.ts`,
-        ),
+        OpenLyricPlugin: openLyricPluginModule?.default,
+        openLyricPluginModule,
     });
 }
 

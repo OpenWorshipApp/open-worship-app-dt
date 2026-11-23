@@ -288,6 +288,95 @@ describe('numberScreenSlidesForAgent', () => {
         });
     });
 
+    test('a card that no longer holds what a screen holds is not offered (F-40)', async () => {
+        // Atom Mode re-cut the song under a LOCKED screen: the held verse's
+        // id now belongs to a card holding half of it.
+        h.documents[DECK] = genDocument(DECK, [
+            genSlide(0, 'Welcome', { text: 'Grace and peace' }),
+        ]);
+        h.managers = [
+            genScreen(0, {
+                filePath: DECK,
+                itemJson: {
+                    id: 0,
+                    canvasItems: [
+                        { type: 'text', text: 'Grace and peace to you all' },
+                    ],
+                },
+            }),
+        ];
+        const result = {
+            isAuthoritative: true,
+            screens: [
+                genScreenSummary(0, {
+                    document: 'Deck',
+                    kind: 'slide',
+                    name: 'Welcome',
+                    text: 'Grace and peace to you all',
+                }),
+            ],
+        } as AgentScreensResultType;
+        await numberScreenSlidesForAgent(result);
+        expect(result.screens[0].slide).toEqual({
+            document: 'Deck',
+            kind: 'slide',
+            name: 'Welcome',
+            text: 'Grace and peace to you all',
+        });
+    });
+
+    test('a song held on stage 2 is checked against its stage-2 slide', async () => {
+        // Stage 2 draws the next slide under each one, so the held words are
+        // more than the card's: still the same slide.
+        const held = {
+            id: 6,
+            stage: 2,
+            canvasItems: [{ type: 'text', text: 'How sweet / Amazing' }],
+        };
+        h.documents[HYMN] = genDocument(HYMN, []);
+        h.stageDocuments[HYMN] = {
+            ...genDocument(HYMN, [
+                genSlide(5, 'Verse 1', { filePath: HYMN }),
+                genSlide(6, 'Chorus', { filePath: HYMN, text: 'How sweet' }),
+            ]),
+            getSlideById: vi.fn(async (id: number) => {
+                return id === 6 ? { toJson: () => held } : null;
+            }),
+        };
+        h.managers = [genScreen(0, { filePath: HYMN, itemJson: held })];
+        const summary = () => {
+            return {
+                isAuthoritative: true,
+                screens: [
+                    genScreenSummary(0, {
+                        document: 'Hymn',
+                        kind: 'song',
+                        name: 'Chorus',
+                        text: 'How sweet / Amazing',
+                    }),
+                ],
+            } as AgentScreensResultType;
+        };
+        const result = summary();
+        await numberScreenSlidesForAgent(result);
+        expect(result.screens[0].slide).toMatchObject({
+            n: 2,
+            find: 'Slide 2: Chorus',
+        });
+        expect(h.stageByStage).toHaveBeenCalledWith(HYMN, 2);
+
+        // Re-cut under it: the stage-2 slide of that id holds other words.
+        h.stageDocuments[HYMN].getSlideById.mockResolvedValue({
+            toJson: () => ({
+                ...held,
+                canvasItems: [{ type: 'text', text: 'How' }],
+            }),
+        });
+        const recut = summary();
+        await numberScreenSlidesForAgent(recut);
+        expect(recut.screens[0].slide?.find).toBeUndefined();
+    });
+
     test('a screen with nothing, an unknown screen, a document that will not load, or a slide gone keeps what it had', async () => {
         h.documents['C:\\docs\\Gone.ows'] = {
             filePath: 'C:\\docs\\Gone.ows',

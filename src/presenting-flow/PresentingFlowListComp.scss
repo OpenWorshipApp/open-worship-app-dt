@@ -108,6 +108,12 @@ $row-press-wash: rgba(127, 127, 127, 0.45);
     padding-right: 18px;
   }
 
+  // A flex child only lets its ellipsis name shrink below the text's width
+  // with a zero minimum; without it a long name pushed the Preview icon out.
+  .app-presenting-flow-toggle {
+    min-width: 0;
+  }
+
   .app-presenting-flow-preview-showing {
     color: var(--app-accent);
   }

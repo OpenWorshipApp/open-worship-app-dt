@@ -83,7 +83,8 @@ export const AGENT_PRESENTING_FLOW_ACTIONS = [
 /**
  * `owa_media_file` (2026-10-10, MC-52 / MC-53 / MC-55): the Background
  * tabs' files. `create` and `update` are for a web page (text); `import`
- * copies a file from the disk into the kind's folder.
+ * copies a file from the disk into the kind's folder; `convert` (2026-11-20,
+ * `EC-763`) makes a slide document of a PowerPoint in Documents.
  */
 export const AGENT_MEDIA_FILE_ACTIONS = [
     'list',
@@ -93,7 +94,11 @@ export const AGENT_MEDIA_FILE_ACTIONS = [
     'rename',
     'delete',
     'import',
+    'convert',
 ];
+
+/** How many slides `convert` draws both ways to say how alike they are. */
+export const AGENT_PPTX_LIKENESS_MODES = ['sample', 'all', 'none'];
 
 export const AGENT_MEDIA_KINDS = ['image', 'video', 'audio', 'web', 'document'];
 

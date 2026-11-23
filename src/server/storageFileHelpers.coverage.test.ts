@@ -120,8 +120,8 @@ describe('pathResolve', () => {
 describe('listVolumeRootsSync on macOS and Linux', () => {
     test('lists the mounted volumes under each mount base, hidden names left out', async () => {
         h.dirs.set('/Volumes', ['Macintosh HD', 'STICK', '.Trashes']);
-        h.dirs.set('/media', ['racky', '.hidden']);
-        h.dirs.set('/media/racky', ['USB1']);
+        h.dirs.set('/media', ['username', '.hidden']);
+        h.dirs.set('/media/username', ['USB1']);
         h.dirs.set('/media/.hidden', ['SECRET']);
         // `/run/media` is not there at all on this computer.
         h.dirs.set('/mnt', ['c']);
@@ -130,7 +130,7 @@ describe('listVolumeRootsSync on macOS and Linux', () => {
         expect(listVolumeRootsSync()).toEqual([
             '/Volumes/Macintosh HD',
             '/Volumes/STICK',
-            '/media/racky/USB1',
+            '/media/username/USB1',
             '/mnt/c',
         ]);
     });

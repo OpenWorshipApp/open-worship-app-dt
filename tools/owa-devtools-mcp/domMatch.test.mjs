@@ -208,6 +208,37 @@ describe('the shared DOM matcher', () => {
     expect(dm.findBest(['Bibles > More Options'])?.element?.id).toBe('bibles');
   });
 
+  it('keeps a scope that lost its kind noun to the panel it named', () => {
+    // "Presenting Flow List" is read as "presenting flow", and the run
+    // sheet's floating preview is "Presenting Flow Preview": with the sheet
+    // closed in the tree, a scoped line reached the preview's copy of it.
+    document.body.innerHTML = [
+      '<div data-widget-name="Presenting Flow List">',
+      '<button id="sort" title="Sort"></button></div>',
+      '<div data-widget-name="Presenting Flow Preview">',
+      '<button id="preview-line">(KJV) John 3:16</button>',
+      '<button id="preview-sort" title="Sort"></button></div>',
+      '<div data-widget-name="Background">',
+      '<button id="videos">Videos</button></div>',
+    ].join('');
+    const dm = install();
+    expect(dm.findBest(['Presenting Flow List > (KJV) John 3:16'])).toBe(null);
+    expect(dm.findBest(['Presenting Flow List > Sort'])?.element?.id).toBe(
+      'sort',
+    );
+    expect(
+      dm.findBest(['Presenting Flow Preview > (KJV) John 3:16'])?.element?.id,
+    ).toBe('preview-line');
+    // A scope with no noun of its own still fits both, as before.
+    expect(
+      dm.findBest(['Presenting Flow > (KJV) John 3:16'])?.element?.id,
+    ).toBe('preview-line');
+    // A panel named without the noun is still the one meant.
+    expect(dm.findBest(['Background panel > Videos'])?.element?.id).toBe(
+      'videos',
+    );
+  });
+
   it('refuses a scope that is not on screen rather than guessing', () => {
     document.body.innerHTML = [
       '<div data-widget-name="Bible">',
@@ -357,9 +388,7 @@ describe('the shared DOM matcher', () => {
     expect(dm.labelPartsOf(document.getElementById('behind'))).toEqual([
       'Behind Slide',
     ]);
-    expect(dm.labelPartsOf(document.getElementById('pick'))).toEqual([
-      'Fade',
-    ]);
+    expect(dm.labelPartsOf(document.getElementById('pick'))).toEqual(['Fade']);
     expect(dm.labelPartsOf(document.getElementById('ref'))).toEqual([
       'Reference',
       'John 3:16',
@@ -883,12 +912,18 @@ describe('a needle carrying the shortcut a title carries', () => {
       'Philemon 1:10I beseech thee for my son Onesimus, whom I have begotten' +
       ' in my bonds:';
     document.body.innerHTML =
-      '<div draggable="true" title="Click to open">' + verse + '</div>' +
+      '<div draggable="true" title="Click to open">' +
+      verse +
+      '</div>' +
       '<div draggable="true">Philemon 1:11Which in time past was to thee' +
       ' unprofitable, but now profitable to thee and to me:</div>';
     const dm = install();
     const shown = dm.describe(dm.findBest(['Philemon 1:10']).element).label;
-    expect(shown.length).toBe(80);
+    // Cut at a word, and said to be cut (F-4).
+    expect(shown).toBe(
+      'Philemon 1:10I beseech thee for my son Onesimus, whom I have begotten' +
+        ' in my\u2026',
+    );
     const found = dm.findBest([shown]);
     expect(found.element.textContent).toBe(verse);
     expect(found.isPressSafe).toBe(true);
@@ -896,6 +931,54 @@ describe('a needle carrying the shortcut a title carries', () => {
     // A short start of it is still a guess.
     const start = dm.findBest(['Philemon 1:10I beseech thee']);
     expect(start === null || start.isPressSafe !== true).toBe(true);
+  });
+
+  it('never hands a number out cut in two (F-4)', () => {
+    // Cut at 80 characters, "verse 10" came out "verse 1": another verse.
+    const title =
+      'Click on verse to highlight, double click or Alt + click on verse to' +
+      ' select verse 10';
+    document.body.innerHTML = '<span title="' + title + '">10</span>';
+    const dm = install();
+    const shown = dm.describe(dm.findBest(['10']).element).label;
+    expect(shown).toBe(
+      '10 Click on verse to highlight, double click or Alt + click on verse to' +
+        ' select\u2026',
+    );
+    expect(dm.findBest([shown]).isPressSafe).toBe(true);
+  });
+
+  it('finds a control by its own words when another of its names is a passage (F-4)', () => {
+    // Under the mouse a Bible View heading's title carries the passage, and
+    // the joined label had outgrown every tier: "nothing on screen".
+    const passage = 'And when he had said this, he went out again '.repeat(6);
+    document.body.innerHTML =
+      '<button title="' + passage + '">John 18:39-19:16</button>';
+    const dm = install();
+    const found = dm.findBest(['John 18:39-19:16']);
+    expect(found?.element.textContent).toBe('John 18:39-19:16');
+    expect(found.isPressSafe).toBe(true);
+  });
+
+  it('lists a control whose title is a passage by its own words (F-4)', () => {
+    const passage = 'And when he had said this, he went out again '.repeat(6);
+    document.body.innerHTML =
+      '<button title="' +
+      passage +
+      '">John 18:39-19:16</button>' +
+      '<div role="button">' +
+      passage +
+      '</div>';
+    const dm = install();
+    // The passage alone is a paragraph, not a control: still left off.
+    expect(dm.listControls('', 10).map((row) => row.label)).toEqual([
+      'John 18:39-19:16',
+    ]);
+    expect(dm.nearMisses(['John 18'])).toEqual(['John 18:39-19:16']);
+    // And a paragraph is never listed by its title alone.
+    document.body.innerHTML =
+      '<div role="button" title="Click to open">' + passage + '</div>';
+    expect(install().listControls('', 10)).toEqual([]);
   });
 
   it('never lets bare decoration stand for the words', () => {

@@ -5,7 +5,7 @@ section: "Presenting content"
 verify: [PM-163, PM-164, PM-165, PM-166, PM-167]
 screenshots: 1
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-53 — Show a song in several languages for everyone to sing (Long Text Show)
 
@@ -69,8 +69,8 @@ menu.
    then slowing into place, so a room reading along is not lost — a Bible
    passage's selected verse moves the same way.
 
-   **Every line on a row of its own.** Press **[en:tran:Atom Mode]**, beside
-   the book and gear at the top of the panel, and each LINE of a part
+   **Every line on a row of its own.** Press **[en:tran:Atom Mode]**, the first of
+   the three buttons before the book and gear at the top of the panel, and each LINE of a part
    becomes a card, a button and a screen row of its own, numbered on
    through the whole song: a verse of four lines is `1 Verse 1` to
    `4 Verse 1`, and the chorus after it starts at `5 Chorus`. A blank line
@@ -103,6 +103,7 @@ menu.
    presenter remote. It stops at the last part, and at the first: it never
    goes round to the beginning. A part that is not lit keeps its own keys —
    **Space** presses that one.
+
 8. **Give a language its own font and size.** The whole text is drawn in
    **[en:tran:Bible/LongText Properties]**, the book and gear at the right
    end of the row at the top of the panel (W-07): its colour, boldness, alignment, shadow
@@ -125,5 +126,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `PM-163` · `PM-164` · `PM-165` · `PM-166` · `PM-167`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

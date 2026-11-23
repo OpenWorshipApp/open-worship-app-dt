@@ -7,12 +7,13 @@ import type Slide from '../../app-document-list/Slide';
 import type AppDocument from '../../app-document-list/AppDocument';
 import AppDocumentNoteEditorComp from './AppDocumentNoteEditorComp';
 import VarySlideNoteEditorComp from './VarySlideNoteEditorComp';
+import { toWidgetLabel } from '../../others/labelIconHelpers';
 
 export default function CanvasNoteContainerHandlerComp({
     appDocument,
     slide,
 }: Readonly<{ appDocument: AppDocument; slide: Slide }>) {
-    const { fullName: fileFullName, filePath } = appDocument.fileSource;
+    const { filePath } = appDocument.fileSource;
     return (
         <ResizeActorComp
             flexSizeName={toAppDocumentFlexSizeName(
@@ -36,7 +37,10 @@ export default function CanvasNoteContainerHandlerComp({
                         },
                     },
                     key: 'h1',
-                    widgetName: fileFullName,
+                    // Named as its header reads: the file name and the slide
+                    // id had made the divider "Divider between x.ows and 0"
+                    // (F-20 of robot run 20261120-2021).
+                    ...toWidgetLabel('Document Note'),
                     className: 'app-flex-item',
                 },
                 {
@@ -51,7 +55,7 @@ export default function CanvasNoteContainerHandlerComp({
                         },
                     },
                     key: 'h2',
-                    widgetName: slide.name || slide.id.toString(),
+                    ...toWidgetLabel('Slide Note'),
                     className: 'app-flex-item',
                 },
             ]}

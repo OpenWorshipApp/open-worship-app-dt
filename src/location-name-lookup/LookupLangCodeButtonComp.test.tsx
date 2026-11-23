@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 const h = vi.hoisted(() => ({
     menu: vi.fn(),
     setSetting: vi.fn(),
+    openLanguagesSetting: vi.fn(),
     languages: vi.fn(async () => [
         { langCode: 'en', getLookupData: () => null },
         { langCode: 'xx', getLookupData: () => null },
@@ -13,6 +14,9 @@ const h = vi.hoisted(() => ({
 }));
 vi.mock('../context-menu/appContextMenuHelpers', () => ({
     showAppContextMenu: h.menu,
+}));
+vi.mock('../setting/settingHelpers', () => ({
+    openLanguagesSetting: h.openLanguagesSetting,
 }));
 vi.mock('../helper/appHooks', () => ({ useAppStateAsync: vi.fn() }));
 vi.mock('../helper/settingHelpers', () => ({
@@ -67,9 +71,11 @@ describe('lookup language menu', () => {
             host.querySelector('button')!.click();
         });
         const items = h.menu.mock.calls[0][1];
-        expect(items.map((item: { id: string }) => item.id)).toEqual([
+        expect(items.map((item: { id?: string }) => item.id)).toEqual([
             'en',
             'xx',
+            undefined,
+            undefined,
         ]);
         expect(items[0].childBefore).toBeUndefined();
         expect(items[1].childBefore).toBeDefined();
@@ -90,6 +96,23 @@ describe('lookup language menu', () => {
             'location-name-lookup-lang-code',
             'xx',
         );
+    });
+
+    test('the menu ends with Add Language Plugin, which opens Settings > Languages', async () => {
+        await act(async () => root.render(<LookupLangCodeButtonComp />));
+        await act(async () => host.querySelector('button')!.click());
+        const items = h.menu.mock.calls[0][1];
+        const addItem = items.at(-1);
+        const probe = document.createElement('div');
+        const probeRoot = createRoot(probe);
+        await act(async () => probeRoot.render(addItem.menuElement));
+        expect(probe.textContent).toBe('Add Language Plugin');
+        await act(async () => probeRoot.unmount());
+        expect(h.openLanguagesSetting).not.toHaveBeenCalled();
+        addItem.onSelect();
+        expect(h.openLanguagesSetting).toHaveBeenCalledTimes(1);
+        expect(h.setSetting).not.toHaveBeenCalled();
+        expect(getSelectedLookupLangCode()).toBe('en');
     });
 
     test('red while the bible is in another language, green when it matches', async () => {

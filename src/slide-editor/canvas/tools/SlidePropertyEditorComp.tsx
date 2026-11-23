@@ -80,9 +80,13 @@ function RenderDimElementComp({
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+    // Three cells of the `.spe-dim-grid` around them: the labels line up and
+    // the number keeps the room it needs to be read (F-18 of robot run
+    // 20261120-2021: at the editor's default Tools width the box had shrunk
+    // to 18-29 px and 1920 / 1080 read blank).
     return (
-        <div className="d-flex align-items-center gap-1">
-            <label className="spe-label">{tran(name)}</label>
+        <>
+            <label className="spe-dim-label">{tran(name)}</label>
             <input
                 className="form-control form-control-sm spe-dim-input"
                 type="number"
@@ -93,7 +97,7 @@ function RenderDimElementComp({
                 onChange={handleChange}
             />
             <span className="spe-unit">px</span>
-        </div>
+        </>
     );
 }
 
@@ -140,7 +144,13 @@ function RenderDimEditComp() {
             bounds.height !== slideRef.current.metadata.height
         ) {
             applyDimRef.current(bounds.width, bounds.height);
+            return;
         }
+        // The slide is the display's size already and only the TYPED size
+        // differs: Reset puts the boxes back, or it did nothing and Apply
+        // stayed offered (F-19 of robot run 20261120-2021).
+        setWidth(bounds.width);
+        setHeight(bounds.height);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleApplyAll = useCallback(async () => {
@@ -160,9 +170,9 @@ function RenderDimEditComp() {
     }, []);
     return (
         <div className="spe-field d-flex flex-column">
-            <div className="d-flex align-items-start gap-2">
+            <div className="d-flex flex-wrap align-items-start gap-2">
                 <label className="spe-label">{tran('Size')}</label>
-                <div className="d-flex flex-column gap-1">
+                <div className="spe-dim-grid">
                     <RenderDimElementComp
                         name="Width"
                         value={width}

@@ -427,7 +427,9 @@ function RenderAddressRowComp({
                     ) : null}
                     {toAddressGroupLabel(groupKind)}
                 </span>
-                <span className="app-data text-break flex-grow-1">{url}</span>
+                <span className="app-data text-break flex-grow-1 app-selectable-text">
+                    {url}
+                </span>
                 <button
                     type="button"
                     className="btn btn-sm btn-outline-secondary"
@@ -787,7 +789,7 @@ function RenderBlockedComp({
                             <span className="badge text-bg-secondary">
                                 {entry.kind === 'web' ? tran('Browser') : 'MP4'}
                             </span>
-                            <span className="app-data app-ellipsis flex-fill text-muted">
+                            <span className="app-data app-ellipsis flex-fill text-muted app-selectable-text">
                                 {entry.address}
                             </span>
                             <button

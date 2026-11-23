@@ -50,6 +50,10 @@ import type {
 } from '../screenTypeHelpers';
 import type { LongTextColumnStyleType } from '../screenLongTextTypeHelpers';
 import {
+    DEFAULT_SCREEN_TEXT_SCALE,
+    readScreenTextScale,
+} from '../screenTextScaleHelpers';
+import {
     checkIsLongTextData,
     getBibleItemData,
     toLongTextSectionKey,
@@ -197,6 +201,55 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
         }
         setSetting(this.lineSyncKey, `${isLineSync}`);
         this.screenViewData = cloneJson(this.screenViewData);
+    }
+
+    private get textScaleKey() {
+        return `${SCREEN_BIBLE_SETTING_PREFIX}-text-scale-${this.screenId}`;
+    }
+
+    /**
+     * This screen's own scale of the shared Bible / Long Text size, 1 unless
+     * set (`screenTextScaleHelpers`). A presentation setting, so a screen page
+     * reads it from its own copy and is sent each change.
+     */
+    get textScale() {
+        return readScreenTextScale(getSetting(this.textScaleKey));
+    }
+
+    /**
+     * No lock check, as for the shared look (`applyTextStyle`): it is how the
+     * words are drawn, not what is shown.
+     */
+    set textScale(scale: number) {
+        const newScale = readScreenTextScale(scale);
+        if (newScale === this.textScale) {
+            return;
+        }
+        if (newScale === DEFAULT_SCREEN_TEXT_SCALE) {
+            removeSetting(this.textScaleKey);
+        } else {
+            setSetting(this.textScaleKey, `${newScale}`);
+        }
+        // This screen's renderer and preview, then the panel that lists them.
+        this.addPropEvent('text-scale');
+        ScreenLongTextManager.addPropEvent('text-scale');
+        // The write above went to the showing screen as a `screen-setting`
+        // message, which updates its copy without a redraw; the look sent
+        // after it on the same channel redraws with the new scale.
+        this.sendSyncTextStyle();
+    }
+
+    sendSyncTextStyle() {
+        this.screenManagerBase.sendScreenMessage(
+            {
+                screenId: this.screenId,
+                type: 'bible-screen-view-text-style',
+                data: {
+                    textStyle: ScreenLongTextManager.textStyle,
+                },
+            },
+            true,
+        );
     }
 
     get div() {
@@ -1040,6 +1093,9 @@ class ScreenLongTextManager extends ScreenEventHandler<ScreenLongTextManagerEven
         // toast, leaving its data behind. The persisted entry is dropped
         // centrally by deleteScreenPersistedData.
         removeSetting(this.lineSyncKey);
+        // A screen id is reused: left behind, the next screen given this id
+        // would come up at this one's scale.
+        removeSetting(this.textScaleKey);
         this._screenViewData = null;
         this._div = null;
         this.applyBibleViewData = () => {};

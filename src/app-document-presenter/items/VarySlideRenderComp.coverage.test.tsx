@@ -3,6 +3,7 @@
 import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { VARY_SLIDE_FILE_PATH_ATTR } from './varySlideDomAttrs';
 
 const {
     useVarySlideOnScreenListMock,
@@ -437,6 +438,11 @@ describe('VarySlideRenderComp', () => {
         expect(item?.className).toContain('presenter');
         expect(item?.className).toContain('holding');
         expect(item?.getAttribute('data-vary-app-document-item-id')).toBe('5');
+        // Its document too, under the one name the run sheet looks it up by:
+        // ids restart at 0 in every document (F-21).
+        expect(item?.getAttribute(VARY_SLIDE_FILE_PATH_ATTR)).toBe(
+            '/docs/main.ows',
+        );
         expect(item?.getAttribute('data-scroll-container-selector')).toBe(
             '.slide-items-container',
         );

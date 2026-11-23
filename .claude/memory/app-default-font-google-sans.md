@@ -5,7 +5,7 @@ metadata:
   node_type: memory
   type: project
   originSessionId: d05747ff-28dd-4113-baf9-5fc0cb8f18ec
-  modified: 2026-11-06T13:50:12.466Z
+  modified: 2026-11-20T13:46:22.409Z
 ---
 
 2026-11-06, the user: _use en's font-family as default app. add selected
@@ -36,6 +36,22 @@ var(--bs-body-font-family, …)`. `main.tsx` no longer sets the body font.
   `getFontFamilyFiles`. Those make the Word Bible export offer to copy the
   font files, which an English Bible never needed.
 - `--chat-lang-font` and the ✨ guest's language face skip English.
+- **PPTX slides get it from the converter** (2026-11-20, the user: _check why
+  googleSans font (english default) not effect in pptx slides_). Each run in
+  converted HTML carries its own inline list, closed by a generic family
+  (`'Khmer OS Freehand',sans-serif`). A face the computer lacks therefore fell
+  to Arial and never reached the inherited default.
+  `pptx-to-html-conv` 1.2.0 `exportPptx(…, defaultFontFamily)` and
+  `--default-font-family` put the given face in front of that generic family.
+  `electron/msHelpers.ts` passes `PPTX_DEFAULT_FONT_FAMILY`, the literal face
+  (`enFonts.uiFamily`, read from English's `fonts.json` since 974ecbbea),
+  because the screen window has no `--app-font-family`.
+  It goes into every list, serif and monospace included.
+  `docx-to-html-conv` 1.1.0 takes the same option for its heading and body
+  lists and after each run's face, but it was unpublished on 2026-11-20 and the
+  app's DOCX call does not pass it yet.
+  An app-side rewrite of the slides' styles was tried first and reverted
+  ([[office-converter-fixes-go-upstream]]).
 
 - **A second Google Sans ships, and it is not this one.** The `open-lyric`
   dependency bundles 8 faces of its own (`node_modules/open-lyric/dist/assets`,

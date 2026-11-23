@@ -657,6 +657,89 @@ describe('varyAppDocumentHelpers', () => {
         });
     });
 
+    // Measured 2026-11-19 on a two-screen presenter: Space pressed five times
+    // 40-60ms apart moved the screens three slides, and mid-burst the two
+    // screens showed different slides. Each step was handed to the screens a
+    // timer later (100ms more per screen), and a press arriving before that
+    // stepped again from the slide that was leaving.
+    test('Space pressed five times quickly steps five slides on every screen alike', async () => {
+        const { handleSlideMoving, SLIDE_ITEMS_CONTAINER_CLASS_NAME } =
+            await import('./varyAppDocumentHelpers');
+        const slides = [1, 2, 3, 4, 5, 6, 7].map((id) => {
+            return createVarySlide(id);
+        });
+        // Two screens on slide 1. Like the real manager, a screen presents
+        // the slide it was last handed from that moment on, though drawing
+        // it is still awaited (`getPresentingDataList`).
+        const screens = new Map(
+            [10, 11].map((screenId) => {
+                const screenVaryAppDocumentManager = {
+                    presentingId: 1,
+                    toSlideData: (filePath: string, json: any) => {
+                        return { filePath, itemJson: json };
+                    },
+                    set varySlideData(data: any) {
+                        this.presentingId = data.itemJson.id;
+                    },
+                };
+                return [screenId, { screenVaryAppDocumentManager }] as const;
+            }),
+        );
+        getScreenManagerByScreenIdMock.mockImplementation(
+            (screenId: number) => {
+                return screens.get(screenId) ?? null;
+            },
+        );
+        getDataListMock.mockImplementation(
+            (_filePath?: string, id?: number) => {
+                return [...screens]
+                    .filter(([, screen]) => {
+                        return (
+                            screen.screenVaryAppDocumentManager.presentingId ===
+                            id
+                        );
+                    })
+                    .map(([screenId]) => {
+                        return [`${screenId}`, { id }];
+                    });
+            },
+        );
+        const container = document.createElement('div');
+        container.className = SLIDE_ITEMS_CONTAINER_CLASS_NAME;
+        container.tabIndex = 0;
+        document.body.appendChild(container);
+        Object.defineProperty(document, 'activeElement', {
+            configurable: true,
+            get: () => container,
+        });
+
+        for (let i = 0; i < 5; i++) {
+            const event = {
+                key: ' ',
+                shiftKey: false,
+                preventDefault: vi.fn(),
+            };
+            handleSlideMoving(event as any, slides);
+            expect(event.preventDefault).toHaveBeenCalledTimes(1);
+        }
+        // No timer has run between the presses, as none does when they come
+        // faster than a step lands.
+        const presentingIds = () => {
+            return [...screens.values()].map((screen) => {
+                return screen.screenVaryAppDocumentManager.presentingId;
+            });
+        };
+        expect(presentingIds()).toEqual([6, 6]);
+        vi.runAllTimers();
+        expect(presentingIds()).toEqual([6, 6]);
+        expect(slideItemSelectedMock).toHaveBeenLastCalledWith(6, slides[5]);
+
+        Object.defineProperty(document, 'activeElement', {
+            configurable: true,
+            get: () => document.body,
+        });
+    });
+
     test('a key with no slides container anywhere is left alone', async () => {
         const { handleSlideMoving: handleArrowing } =
             await import('./varyAppDocumentHelpers');

@@ -10049,8 +10049,7 @@ smarter. **Rung:** 2.
 
 _Where does the New Testament speak of this?_ under Genesis 8:1-22 names
 Hebrews 11:7, 1 Peter 3:20 and 2 Peter 2:5 from the data, and not Matthew
-24:37-39 or Luke 17:26-27: the bundle cites them from Genesis 6-7, never from
-8. The prompt lets the model add what it knows, read by ref; it did not.
+24:37-39 or Luke 17:26-27: the bundle cites them from Genesis 6-7, never from 8. The prompt lets the model add what it knows, read by ref; it did not.
 **Fix:** the record also reads the chapters AROUND the passage -- the one
 before, the rest of its own, the one after, 120 verses at most, ~50 bundle
 reads -- for the other Testament alone (`otherTestamentAround`,
@@ -10512,16 +10511,17 @@ word its Bibles use (≥5 verses) counts in a how-do-I only
 (`ENGLISH_SHARED_APP_WORK_PATTERN`, `bibleReaderWords.excludeInHowTo`), the
 rest anywhere (`exclude`); and a how-do-I is what the PERSON does —
 French `comment` + a lower-case infinitive or `je`/`on`, Khmer `ខ្ញុំ`/`យើង`
-+ a how-word or a leading `របៀប` (`bibleReaderWords.howToAsks`, patterns
-read case as written), never any "how" (`Comment Jésus a-t-il sauvé Pierre
+
+- a how-word or a leading `របៀប` (`bibleReaderWords.howToAsks`, patterns
+  read case as written), never any "how" (`Comment Jésus a-t-il sauvé Pierre
 dans Matthieu 14:30 ?` is a Bible question now, as its English is). The
-verse readers that START a search use the same `checkIsAppWork`, so
-_ខគម្ពីរណាដែលនិយាយថាច្រៀងចម្រៀងថ្មី_ (sing a new song) is searched; the exit
-from one keeps `verseAskExcludeWords`, matched as whole words. After: 0 of
-64 apart; `chatLanguageParity.test.ts` holds 63 of those rows in all three
-languages (191 cases with EC-443..EC-445; putting `taille` back fails three). Seen live in the user's own Noé tab on gemma4:cloud: the
-same French line answered from the record, Genesis 6:15. **Scores**
-smarter in every language; rung 2.
+  verse readers that START a search use the same `checkIsAppWork`, so
+  _ខគម្ពីរណាដែលនិយាយថាច្រៀងចម្រៀងថ្មី_ (sing a new song) is searched; the exit
+  from one keeps `verseAskExcludeWords`, matched as whole words. After: 0 of
+  64 apart; `chatLanguageParity.test.ts` holds 63 of those rows in all three
+  languages (191 cases with EC-443..EC-445; putting `taille` back fails three). Seen live in the user's own Noé tab on gemma4:cloud: the
+  same French line answered from the record, Genesis 6:15. **Scores**
+  smarter in every language; rung 2.
 
 ### EC-441 — a verse asked for in French reaches the verse finder (DONE 2026-10-29)
 
@@ -10914,6 +10914,7 @@ with different suffix_. Before, no tool could write into Resources:
 Now `owa_resource_file` also takes `draft`, `save` and `preview`
 (`agentStudyFileHelpers.ts`; the rules are pure in `agentStudyFileRules.ts`).
 `draft` writes nothing. It builds:
+
 - the name from the parsed reference: `MAT.3.3-7 <title>.md`,
   `JHN.3.16 <title>.md`, or `MAT.3.<title>.md` for a whole chapter;
 - the next free name in `<data folder>/resources/Default`, such as `… (1).md`;
@@ -10926,6 +10927,7 @@ Now `owa_resource_file` also takes `draft`, `save` and `preview`
 
 `save` and `preview` are the person's presses, and the model is refused both
 (`STUDY_SAVE_MODEL_REFUSAL`). The help window:
+
 - draws the draft as a card (`RenderStudyDraftComp`) with **Create "…"**,
   **Preview** and **Change the name**;
 - holds the study itself (three at most, `studyFileChatHelpers.ts`) and shows
@@ -10945,6 +10947,7 @@ and French from `studyFileAsks` in `assistant.json`). It is asked under
 lookup ask. The banner reads _made a study file_ or _changed a study file_.
 
 Seen live 2026-11-09 against the dev app, through a fresh stdio server:
+
 - `draft` of Matthew 3:3-7 gave `MAT.3.3-7 The Voice in the Wilderness.md`
   with the KJV passage and the Isaiah 40:3 token quoted, and 2 diagrams;
 - `preview` opened the Markdown Preview window with the flowchart and the
@@ -11159,6 +11162,7 @@ same route took a typed _make a new running order … with a 5 minute
 countdown_.
 
 Now (`ChatbotAppComp.tsx`, the `isForegroundAsk` test):
+
 - a widget named in a line is a foreground ask only when that line is not a
   known question;
 - with a foreground session open in the tab, only a press, an empty line or
@@ -11186,6 +11190,7 @@ can build the order. An ordinary tab cannot, and nothing sends the person
 there.
 
 Three ways out:
+
 1. **(a)** Give a registry server the full list. This costs that server
    ~4k tokens a round more.
 2. **(b)** Add `owa_presenting_flow` and `owa_undo` to the lean list. That
@@ -11211,6 +11216,7 @@ strict `add` object removed a `text` written beside `foreground`
 (`agentPresentingFlowEdit.mjs`).
 
 Now:
+
 - `readAgentForegroundSpec` (`agentFlowForegroundRules.ts`) reads every
   shape a model writes:
   - `{widget, …}`;
@@ -11225,6 +11231,7 @@ Now:
 
 Tests: `agentFlowEditRules.ut100.test.ts`, `agentFlowForegroundRules.test.ts`
 and `agentPresentingFlowEdit.test.mjs`. Seen live:
+
 - the countdown ask went from 33.4k tokens and nothing added to 5.9k tokens,
   with the countdown added;
 - through a fresh stdio server, a message line kept its words.
@@ -11266,6 +11273,7 @@ person's call. The hint could name songs and slides only, or ask which.
 Seen 2026-11-10 pressing the flow card's **Check my running order**. The
 model read _CC: Next: Timeout (6) follows line 9_ as "skip to line 9", and
 called that line redundant. Now:
+
 - a CC is said as _its element is line N, run with this line -- not a jump
   to line N_ (`toCcText`);
 - the check's hint names a lone Next: Timeout that no CC names, and says a
@@ -11422,6 +11430,7 @@ shared server writes 2 000 tokens.
 Now `owa_resource_file` has a `translate` action. The model names only
 `file`, `language` and `place` (`append`, `replace` or `new`), and the help
 window does the rest (`runStudyTranslate`, `studyTranslateHelpers.ts`):
+
 - the app splits the file into parts (`translate` in
   `agentStudyFileHelpers.ts`) and quotes each passage again from a Bible
   in that language. The Lookup's own Bible is used when it is in that
@@ -11460,9 +11469,10 @@ caution was put away on that profile). The study was a scratch one,
 `JHN.3.16-17 zz Robot Love Translated.md`: 2 930 bytes, nine sections, one
 diagram, the Amplified passage. It was made in the 🤖 window and created
 with its card.
+
 - Its Resources row's 🤖 opened the file's Markdown Preview and a new tab.
   The tab had the file attached, and **Working in** read `Markdown Preview -
-  JHN.3.16-17 zz Robot Love Translated.md · own window` (EC-483).
+JHN.3.16-17 zz Robot Love Translated.md · own window` (EC-483).
 - In that tab, the user's own words: _translate all to khmer and then append
   the translated content to new pages_.
 - One ask, about 30 s, gemma4:cloud, no cost, 11k tokens. The card read
@@ -11485,18 +11495,20 @@ A READ was asked the same night through the Resources 🤖 on the user's own
 `JHN.3.The New Birth and God's Love.md`: 44 KB, English with its Khmer
 pages. The tab's own **Sum up the main points** gave four points in one
 round, 8.7k tokens, free:
+
 - the new birth and the wind;
 - God's love and the bronze serpent;
 - light and darkness;
 - John's humility as the groomsman: _He must increase_.
-Each point is in the file (verses 8, 14-15, 20 and 29-30, and its Verse by
-Verse). Nothing was written.
+  Each point is in the file (verses 8, 14-15, 20 and 29-30, and its Verse by
+  Verse). Nothing was written.
 
 ### EC-479 — a change to a study file had to be the whole file again — `done`
 
 A model asked to fix one part of a study had to send the whole file back.
 On a 2 000-token round that cut long studies off. Now `draft` with `file`
 also takes:
+
 - `section` (a heading as it reads) and `content`: that part's new words;
 - `append`: words added at the end of the file (before its footer), or at
   the end of `section`.
@@ -11518,6 +11530,7 @@ draft each took 27-72 ms and wrote nothing. Tests:
 **The whole write cycle, seen live 2026-11-10** on the dev app through a
 fresh stdio server, on a scratch study `JHN.3.16-17 zz Robot God So
 Loved.md`:
+
 - `list` for John 3 named its four files.
 - `draft` quoted John 3:16-17 and named the file.
 - `save` with that `name` made it in `resources/Default`, with an undo id,
@@ -11653,6 +11666,7 @@ the model W-44 as the answer. _Can I open another window of this resource?_
 went the same way on `another window`. `resources-open` now carries
 `file twice`, `pdf twice`, `file in two windows` and `file in another
 window`:
+
 - _open the same pdf twice_ and _Can I open the same file twice?_ route to
   W-37.
 - The two-window questions now match two pages, so no hint rides and the
@@ -11672,6 +11686,7 @@ a fresh stdio server, never in the 🤖 window with a model. Asked live
 2026-11-10 on the dev app, on Auto (it picked OWA Shared · gemma4:cloud,
 no cost). The AI caution had been put away for 30 days on that profile, so
 it was not asked.
+
 - The 🤖 on the `JHN.3.The New Birth and God's Love.md` row, with that
   file's window already open, opened the chat with the file attached and
   NO second window: the open one kept its id (RD-127, EC-484).
@@ -11693,6 +11708,7 @@ attached (`summary`), and those ride every later question
 (`findOpenFileAttachments`). The file attached at **Create** went out as
 it was created, so the model rewrote the whole file from it. The tool
 itself was right: a `section` or `append` draft reads the file fresh.
+
 - `refreshTextAttachment` (`fileAttachHelpers.ts`) reads a plain text
   file still open again from disk for each question. It returns a new
   object and the message keeps what was attached. It returns the same one
@@ -11726,6 +11742,7 @@ A study translated through the window was seen the same night (EC-478).
 Seen 2026-11-10 in EC-478's live run. Every part of the study came back in
 Khmer, and the window checks only that it did (`checkIsStudyTextTranslated`).
 Two words were wrong all the same:
+
 - the heading _Cross references_ became ខសសេចក្តីយោង, which is no word;
 - _the bronze snake Moses lifted_ became ពស់សូដ. The Bible's word is
   ពស់លង្ហិន.
@@ -11736,6 +11753,7 @@ another way in the user's own `JHN.3.The New Birth and God's Love.md`.
 Its Khmer pages were appended at 21:00 that day, and its _Cross References_
 reads ខសសាលយោង. So that heading fails again and again, not once. Ideas, none
 tried yet:
+
 - hand the translator the language's own words for the headings a study
   uses (`assistant.json`'s glossary, read the other way);
 - quote a name or a thing the passage itself names from the Bible being
@@ -11746,6 +11764,7 @@ The card already says _Check it against your Bible_.
 **Done 2026-11-11**, both ideas in part, with the headings made the window's
 own check (`studyTranslateHelpers.ts`; `translateStudyPart` in
 `llmBotHelpers.ts`):
+
 - Every language's translator is told what a word MEANS, never how it
   sounds (`STUDY_MEANING_RULE`): no English word spelt out in the
   language's letters, a name aside, and _Cross references_ are other verses
@@ -11822,6 +11841,7 @@ translator now takes those labels as church words for the one job
 (`withStudyLabelTerms`, `STUDY_TERM_LABEL_LIST`: Cross References, Cross
 Reference, Old Testament, New Testament), so EC-486's heading fix, hint and
 missing-word retry work in every installed language:
+
 - They are read from the INSTALLED plugin's `tran.json`
   (`STUDY_LABEL_FILE_NAME`), one file loaded for this job and let go
   (`loadLangFile`, nothing cached). A plugin ships its dictionary as
@@ -11900,6 +11920,7 @@ study now writes (Filipino's 1905 spelling, Hebrew's defective spelling),
 or where the word is its English (Czech and Slovak _Satan_, German
 _Prophet_). Arabic and Urdu lost their vowel points, and Romanian's old
 cedillas became commas.
+
 - `withStudyChurchWords` puts the words under the language's own
   `translationTerms` (a key in another case counts as the same key) and over
   EC-488's labels. The file is loaded beside the labels for the one job and
@@ -12276,7 +12297,7 @@ open in the tab, and no conversation of its own, reads:
   `Romans 5:8; 8:1` reads the second as Romans. A time, a ratio and
   `Part 2: 4` are no reference;
 - each verse from the Bible the part around it quotes (`owa_find_verse
-  refs`: one Bible a call, eight a call, 24 a check). A reference to a
+refs`: one Bible a call, eight a call, 24 a check). A reference to a
   verse of the passage the part quotes is counted, not read again.
 
 The ask carries each line with its references and their words, a book named
@@ -12354,6 +12375,7 @@ Tests: `chatSessionHelpers.test.ts` (+5), `noteChatHelpers.test.ts` (+1),
 `ChatbotAppComp.ut100a.test.tsx` (+6, through a reload of the window);
 `ChatbotAppComp.steps4.test.tsx`'s app stand-in gained `basename`. Each
 step was taken out in turn, and the tests caught all 11 mutations:
+
 - the box not put back at mount;
 - the save ignoring the window's box;
 - a box change alone not saved;
@@ -12681,6 +12703,7 @@ before it drafted. It is held by tests on the very words the model sent
 further down kept, the pure reader -- the two loop tests fail with the
 step taken out; `studyFileChatHelpers.test.ts` +2). Nothing was saved; the
 file is 44 021 bytes from 2026-11-10 as before.
+
 - a language line for English too when the ask carries a passage in
   another language (a Reader, lookup or Resources ask on a non-English
   Bible);
@@ -13421,7 +13444,7 @@ halves:
   `openLyricDraft.mjs`): `Verse 1:` / `Chorus:` / `Bridge:` … with a colon
   and words after it, at a line's start or after a comma, semicolon,
   sentence end or dash (capitalised there), is put on a line of its own;
-  in such a line ` / ` is a line break. A narrower list than the labels a
+  in such a line `/` is a line break. A narrower list than the labels a
   line of its own may be: `Music:` and `Note:` are credits and remarks, a
   sung "the bridge:" stays sung, and a page that was read is never split
   (a site's `Tag:`).
@@ -13452,7 +13475,7 @@ and a download runs the on-demand binaries). Closed without lifting that:
   tool) and the window SAVES it, made safe (`toSafeWebPage`: DOMPurify, no
   script / frame / form / media tag, no handler, no address, every CSS
   `url()` but `data:` and every `@import` gone), with `owa_media_file
-  create` under a free name in Webs and **Undo this change**. The first
+create` under a free name in Webs and **Undo this change**. The first
   page a model wrote animated `background-position` for ever -- a repaint
   every frame on a projector computer, against CLAUDE.md -- so the hint
   holds motion to the two properties that repaint nothing; the second page
@@ -13566,6 +13589,7 @@ time (free).
 
 **Before**: 10 right of 12 answered (H06 and H15..H17 not asked: the
 driver failed to open a tab; H14 lost to the blank window below).
+
 - H04 _Take the chords out of the chorus._ went out as `set-lines` with
   the chorus's words and no chords. EC-511's rule kept a line's chords
   when given without, nothing was written, and the answer said they were
@@ -13582,6 +13606,7 @@ driver failed to open a tab; H14 lost to the blank window below).
 **Mid** (after `remove-chords`, `rename-section`, the set-lines refusal
 and the prompt): 15 of 17. H01 one `rename-section`, H04 one
 `remove-chords`, H07 kept its full stop. Two wrong:
+
 - H14 _In the chorus, change "with my soul" to "with my heart"_ was
   `replace` with `part: "Chorus"` beside `replacements`, not inside one;
   the tool read no part and changed every verse too.
@@ -13623,6 +13648,7 @@ about two an ask (141k tokens).
 
 Fixed, all in `tools/owa-devtools-mcp/openLyricEdit.mjs` (rules
 `agent-songs.md`):
+
 - `remove-chords` (`part`, else the whole song): out of sung lines, words
   and lines under kept; an Instrumental and a chord-only line keep theirs,
   said in a warning. A removal (`AGENT_REMOVING_ACTIONS`).
@@ -13738,6 +13764,7 @@ rode -- `start` with `look.position` `bottom` -- but the model chose the
 **Message** component, which has no time, so the 15 seconds went nowhere
 and the answer said they would (`EC-538`). After EC-538: one `start` of a
 **Quick Text**, `look.position` `bottom`, `seconds` 15, 4.3 s. Right.
+
 ### EC-533 — a study translated into a language with a script of its own keeps English: a diagram's labels, and words between the script's — `done` 2026-11-12 (offline), not seen in the window
 
 Found 2026-11-12 reading the user's own John 3 study, read only: its Khmer
@@ -14276,7 +14303,7 @@ Seen live on a scratch instance of the dev app, screen 0 off (it was not
 turned on: one display):
 
 - through the tools: a 7 minute countdown started (`countdown to 1:27:52
-  AM` on screen 0); its undo left screen 0 empty and the strip on Default;
+AM` on screen 0); its undo left screen 0 empty and the strip on Default;
   the undo of that undo put `countdown to 1:27:52 AM` back; a marquee
   started beside it and undone, the countdown stayed; the Default
   countdown shown beside it and undone, only the Default one went; the
@@ -14854,7 +14881,6 @@ are the way by hand. It is skipped now for a do-ask whose tool DID it
 pass stays. Unit-tested (`llmBotHelpers.test.ts`). Asked again: the verse,
 the long text over it, the long text alone and the countdown -- 2 rounds
 each, no steps, and the three Undo presses each right.
-
 
 ### EC-552 — `owa_foreground check` says nothing is up over a Long Text Show — `done` 2026-11-13, seen live
 
@@ -16016,7 +16042,7 @@ app (Auto, the shared gemma4:cloud), and by reading the drafts:
   — try a picture of it instead_.
 - The decks' words, read out, drafted with the stanza numbers sung
   (`១- …`, a number and a dash), the hymnal's note for the musicians
-  (_*music, then sing verses 3 and 4 again_) sung as the last lines of the
+  (_\*music, then sing verses 3 and 4 again_) sung as the last lines of the
   last verse, and a chorus whose last copy ends on the closing mark instead
   of the full stop read as a new verse (2 of 8 decks played it as Verse 4).
 - Three songs off the site, drafted from the page: one came out as one
@@ -16893,7 +16919,7 @@ Now (`studyTranslationCheckHelpers.ts`; the window's loader in
   `detectTypedLanguage` over its text parts' first 2 000 characters --
   never its passages, diagrams or code; none for `other`) and loads each
   language so read once (`loadStudyCheckLanguage`: `loadLangFile(<package>,
-  'churchWords.json')`, 3.5 KB at most, not cached; the four labels of
+'churchWords.json')`, 3.5 KB at most, not cached; the four labels of
   `STUDY_TERM_LABEL_LIST` from the window's `tranLabel` when it is the
   window's language, else `getLangFile(<package>, 'tran.json')`, which
   reads only what is in memory and never loads the 726 KB file;
@@ -17346,11 +17372,11 @@ languages: three ways to put a message up and one to take it down, a
 five-minute countdown, and three everyday lines that use the same words --
 a message sent yesterday, a screen too bright, the bulletin's announcement):
 
-| | message asks (352) | countdowns (88, English window) | everyday lines read as one (264) |
-| --- | --- | --- | --- |
-| before | 4 | 3 | 0 |
-| the phrases as written, blind | 280 | 58 | 0 |
-| after the misses were mended | **334** (251 put, 83 take) | **69** (71 in its own window) | **0** |
+|                               | message asks (352)         | countdowns (88, English window) | everyday lines read as one (264) |
+| ----------------------------- | -------------------------- | ------------------------------- | -------------------------------- |
+| before                        | 4                          | 3                               | 0                                |
+| the phrases as written, blind | 280                        | 58                              | 0                                |
+| after the misses were mended  | **334** (251 put, 83 take) | **69** (71 in its own window)   | **0**                            |
 
 Each package's `message` is its word for a message or an announcement with
 its word for the screen, a projector or its canvas, both orders (`mensaje* …
@@ -17399,6 +17425,7 @@ lang:pack` and Settings → **Languages** → **Refresh** → **Update to**.
 Tests: `foregroundAsks.test.ts` (every package has a `message`; each held-out
 language at its floor in its own window and an English one; the everyday
 lines name nothing).
+
 ### EC-606 — a line typed under a new study's card could not reach it: _change its title_ held no study, in a tab offered no study tool — `done` 2026-11-13 (offline), not seen in the window
 
 The item EC-604 left open, toward the standing goal _chatbot is smart
@@ -17497,11 +17524,11 @@ everything cleared, the message "Welcome" put up, the countdown paused, the
 screen turned on), four lines that claim nothing (an offer, a promise, a
 step for the person) and two denials.
 
-| | claims read (528) | non-claims and denials read as one (528) |
-| --- | --- | --- |
-| before (note words + English) | 157 (started 0 of 88, screen on 1, paused 12) | 0 |
-| each language's own words, as written blind | 495 | 0 |
-| after the misses were mended | **520** | **0** |
+|                                             | claims read (528)                             | non-claims and denials read as one (528) |
+| ------------------------------------------- | --------------------------------------------- | ---------------------------------------- |
+| before (note words + English)               | 157 (started 0 of 88, screen on 1, paused 12) | 0                                        |
+| each language's own words, as written blind | 495                                           | 0                                        |
+| after the misses were mended                | **520**                                       | **0**                                    |
 
 Each `typed.json` entry's `changeClaims` gets `foreground`
 (`toChangeClaimWords` → `ChangeClaimWordsType.foreground`, read by
@@ -17784,10 +17811,10 @@ Built:
   `audit-mcp-tools.mjs --stdio --ratchet`); `owa_screen_edit` is ~717
   tokens a round to a screen ask alone.
 
-| | change asks done | tool calls | refused | tokens |
-| --- | --- | --- | --- | --- |
-| before, all 27 | **0** of 23 (4 already so) | 47 | 0 | 899k |
-| EC-611, all 27 | 13 of 23 | 128 | 88 | 243.1k |
+|                                                           | change asks done                    | tool calls   | refused    | tokens                      |
+| --------------------------------------------------------- | ----------------------------------- | ------------ | ---------- | --------------------------- |
+| before, all 27                                            | **0** of 23 (4 already so)          | 47           | 0          | 899k                        |
+| EC-611, all 27                                            | 13 of 23                            | 128          | 88         | 243.1k                      |
 | the first 14 (S1–S9, V1–V4, T1): before / EC-611 / EC-615 | 0 (2 already so) / 9 / **13** of 13 | 25 / 69 / 28 | 0 / 46 / 1 | 500.1k / 144.3k / **76.0k** |
 
 The 88 refusals of the first run after it are EC-615's subject. The last
@@ -17904,13 +17931,13 @@ people) -- each read ONCE (bold) before anything was fitted to it, routed
 in the language's own app and an English one with every language
 installed:
 
-| | set 1: asks / look-alikes routed (of 880 / 616) | set 2 | set 3 |
-| --- | --- | --- | --- |
-| before: English words alone | 34 / 7 | 43 / 7 | 35 / 3 |
-| the packages' first lists | **713 / 8** | — | — |
-| round 2, fitted to set 1 | 864 / 0 | **719 / 54** | — |
-| round 3, fitted to set 2, the guard widened, the passage rule | 865 / 0 | 855 / 0 | **697 / 7** |
-| set 3's seven look-alikes put right | 865 / 0 | 855 / 0 | 697 / 0 |
+|                                                               | set 1: asks / look-alikes routed (of 880 / 616) | set 2        | set 3       |
+| ------------------------------------------------------------- | ----------------------------------------------- | ------------ | ----------- |
+| before: English words alone                                   | 34 / 7                                          | 43 / 7       | 35 / 3      |
+| the packages' first lists                                     | **713 / 8**                                     | —            | —           |
+| round 2, fitted to set 1                                      | 864 / 0                                         | **719 / 54** | —           |
+| round 3, fitted to set 2, the guard widened, the passage rule | 865 / 0                                         | 855 / 0      | **697 / 7** |
+| set 3's seven look-alikes put right                           | 865 / 0                                         | 855 / 0      | 697 / 0     |
 
 The rounds moved precision, not recall. Fitting set 1 from 81% to 98%
 left a fresh set at about four in five (82%, then 79%), as the English
@@ -18069,11 +18096,11 @@ unasked", and asks for the undo in the person's own words "(never the words
 undo id)". The two Bible-verse lines of the general prompt
 (`llmBotHelpers.ts`) say "offer to turn that screen on" too.
 
-| the EC-605 asks, screen 0 off, an English window | non-English answers with _show_ or _undo id_ | answers saying "show button" | did the job |
-| --- | --- | --- | --- |
-| Free, before (11 asks) | 3 of 10 | 4 | 11 of 11 |
-| Free, after (15 asks, French and Khmer added) | **0 of 14** | 1 (English) | 14 of 14 answered (1 lost to a reload) |
-| Auto → gemma4:cloud, before / after | 0 / 0 | 0 / 0 | 11 of 11 / 15 of 15 |
+| the EC-605 asks, screen 0 off, an English window | non-English answers with _show_ or _undo id_ | answers saying "show button" | did the job                            |
+| ------------------------------------------------ | -------------------------------------------- | ---------------------------- | -------------------------------------- |
+| Free, before (11 asks)                           | 3 of 10                                      | 4                            | 11 of 11                               |
+| Free, after (15 asks, French and Khmer added)    | **0 of 14**                                  | 1 (English)                  | 14 of 14 answered (1 lost to a reload) |
+| Auto → gemma4:cloud, before / after              | 0 / 0                                        | 0 / 0                        | 11 of 11 / 15 of 15                    |
 
 Still there: the English answer said _press screen 0's show button_, from
 the tool's own OFF note (`genOffScreenNote`, shared with the Bible verse
@@ -18094,11 +18121,11 @@ turned on; French _j'ai lancé_, _je l'ai mis en pause_, _je viens
 d'effacer_; Khmer _ខ្ញុំបាន…_ and a finished _…រួចហើយ_), with their negation
 and question guards.
 
-| | claims read (6 each) | non-claims and denials read (6 each) | other lines read as a claim |
-| --- | --- | --- | --- |
-| before | fr 3, km 1 | 0 | 0 |
-| as written blind | fr 6, km 6 | 0 | fr 4 of 85 753, km 1 of 92 796 |
-| after | **fr 6, km 6** | **0** | **fr 0**, km 1 |
+|                  | claims read (6 each) | non-claims and denials read (6 each) | other lines read as a claim    |
+| ---------------- | -------------------- | ------------------------------------ | ------------------------------ |
+| before           | fr 3, km 1           | 0                                    | 0                              |
+| as written blind | fr 6, km 6           | 0                                    | fr 4 of 85 753, km 1 of 92 796 |
+| after            | **fr 6, km 6**       | **0**                                | **fr 0**, km 1                 |
 
 The four French hits were sentences a person types: _J'ai supprimé une Bible
 par erreur : comment la récupérer ?_, a file put in the bin, a tab _que
@@ -18154,14 +18181,14 @@ own words, the Reader, the app, small talk). Each set after the first was
 written after the last one's fixes, read once (bold), then the reader was
 put right against it.
 
-| | A: asks / look-alikes left alone | B | C | D | E |
-| --- | --- | --- | --- | --- | --- |
-| before | 69 / 47 | 65 / 47 | — | — | — |
-| after A | 99 / 48 | **82 / 47** | — | — | — |
-| after B | 99 / 48 | 99 / 48 | **86 / 47** | — | — |
-| after C | 99 / 48 | 99 / 48 | 100 / 48 | **79 / 41** | — |
-| after D | 99 / 48 | 99 / 48 | 100 / 48 | 100 / 48 | **80 / 45** |
-| after E | 99 / 48 | 99 / 48 | 100 / 48 | 100 / 48 | 99 / 48 |
+|         | A: asks / look-alikes left alone | B           | C           | D           | E           |
+| ------- | -------------------------------- | ----------- | ----------- | ----------- | ----------- |
+| before  | 69 / 47                          | 65 / 47     | —           | —           | —           |
+| after A | 99 / 48                          | **82 / 47** | —           | —           | —           |
+| after B | 99 / 48                          | 99 / 48     | **86 / 47** | —           | —           |
+| after C | 99 / 48                          | 99 / 48     | 100 / 48    | **79 / 41** | —           |
+| after D | 99 / 48                          | 99 / 48     | 100 / 48    | 100 / 48    | **80 / 45** |
+| after E | 99 / 48                          | 99 / 48     | 100 / 48    | 100 / 48    | 99 / 48     |
 
 (D read 74 / 41 by the reader before C's fixes.) A fresh set still reads
 about 80 of 100: a screen's controls are said in a long tail of ways, and
@@ -18210,10 +18237,10 @@ unread: `foregroundTimerAsksHeldOut.json`. It holds three countdowns, two
 stopwatches, two messages and three lines asking for none, in each
 language. Nothing was tuned on it.
 
-| | countdowns (69) | stopwatches (46) | messages (46) | lines asking for none read (69) |
-| --- | --- | --- | --- | --- |
-| before | 18 | 7 | 20 | 0 |
-| after | **41** | **16** | 21 | **0** |
+|        | countdowns (69) | stopwatches (46) | messages (46) | lines asking for none read (69) |
+| ------ | --------------- | ---------------- | ------------- | ------------------------------- |
+| before | 18              | 7                | 20            | 0                               |
+| after  | **41**          | **16**           | 21            | **0**                           |
 
 Read in the language's own app and in an English one. The lines asking for
 none are read as nothing even with every language's words at once. On the
@@ -19048,6 +19075,7 @@ _show on the screen: Amazing Grace_, _show on the projector: John 3:16_
 -- would put those words up instead.
 
 **Two things done.**
+
 1. **One sentence in the general prompt** (`llmBotHelpers.ts`, the
    foreground bullet): a notice to stay up -- a welcome, _show on the
    projector: the car park is full_, _put this announcement up: …_ -- is
@@ -19945,6 +19973,7 @@ Not done:
   They are not translated in this change.
 - A press of the caution's **Open** by a person was not seen. The handoff
   after it was shown by leaving the setting the press leaves.
+
 ### EC-706 — a study named by its file name alone reached its namesake in the other folder — `done` 2026-11-14, seen live on a scratch dev instance
 
 Reported by the user with a picture, on the packaged app: a study attached
@@ -20020,3 +20049,1342 @@ has it, refused when both do), `agentResourcesHelpers.coverage.test.ts` +1,
 reach the open Bible Notes study; it fails with the pin taken out). Two
 `llmBotHelpers.ut100.test.ts` expectations now see the open study's whole
 name where the model's file name had been passed through.
+
+### EC-761 — a PowerPoint or Word file in the chat could only be read, never changed — `done` 2026-11-20, the tool seen live on a scratch dev instance
+
+The user: _open pptx or docx in chatbot then interact to edit the
+powerpoint_, then _able to undo_, and the goal _chatbot smart enough to
+help editor the pptx and docx file_. A `.pptx` / `.docx` opened in the
+chat (a Documents row's **Open in Chatbot**, the paperclip, a drop) was
+only READ -- its words to ask about, a song made of it (`EC-590`). No tool
+the model was offered could change it.
+
+- **`owa_office_edit`** (`tools/owa-devtools-mcp/agentOfficeEdit.mjs` →
+  the `office-edit` relay → `src/helper/agentOfficeEditHelpers.ts`).
+  `read` lists the file as lines with ids (`2.3`; a Word line its number),
+  a line's box or style, a table cell, a hidden slide, speaker notes; a
+  long file a page at a time. `edit` does many changes in ONE call and ONE
+  backup: `replace` everywhere, and `changes` -- a line rewritten, removed,
+  added after / before another, a slide's notes (a notes page and notes
+  master made when there is none), a slide moved, copied or taken out. A
+  refusal anywhere refuses the lot before a byte is written.
+- **Formatting stays.** New words go into the runs that held the old ones,
+  a word at a time where they match (`officeXmlEditHelpers.ts`); parts no
+  change touched are copied as their stored bytes (`officeZipHelpers.ts`
+  `addStoredEntry`), pictures never inflated again.
+- **No Save, so the backup comes first.** The whole file is copied as a
+  `blob` backup (`runWithAgentBackup`), the new package streamed into a
+  hidden file beside it (`officeFileSinkHelpers.ts`) and moved over the
+  original only once whole; a failure deletes it and says _The file is as
+  it was._, a file open in PowerPoint or Word (`EBUSY` / `EPERM` /
+  `EACCES`) is named so. `owa_undo` with the `undoId` puts the file back
+  byte for byte. A file past the blob limit is refused before it is read.
+- **The `office` ask** (`src/chatbot/officeChatHelpers.ts`, the slide
+  document's shape): the card with no model (`genOfficeOpeningAnswer`),
+  the file read with its ids before every question, `OFFICE_SYSTEM_PROMPT`,
+  8 rounds, the tool to that ask alone, the name turned into the path by
+  the window (`resolveOfficeEditFile`), a path the model writes refused,
+  the tool refused outside; every edit of one answer ONE **Undo this
+  change**, and **Show it in the list**. **Make a song from it** stays the
+  window's own drafting.
+- **Firewall and banner.** `read` is quiet; `edit` acts; an edit holding
+  `remove` / `removeSlide` is a removal (`checkIsOfficeRemoval`, a leaf).
+
+Four strings (the two cards, _Reading “{name}”_, _Changing “{name}”_) in
+all 87 dictionaries, every `meta.json` raised, every package packed. A
+native check is worth asking for in fj, bo, rn, sm, to, so, om and my
+(the word for _paragraphs_, _replace_ or _can be undone_ was a best
+effort there).
+
+Seen live 2026-11-20 on a scratch dev instance (its own profile, never the
+user's), through its HTTP door, on COPIES of the user's own deck and Word
+file: a 5-slide deck read in 32 ms; one edit of six changes in 31 ms, the
+package a valid ZIP with every XML part well-formed, read back right; its
+undo left the MD5 as before; the Word file the same (10 replacements, a
+line rewritten, a line added, undone to the same MD5); a slide taken out
+and put back; a `..` path, a `.ppt`, a bad line id and the Word section
+break each refused in a sentence. Tokens: the ordinary list unchanged
+(~8 464 of 8 480, ratchet ok); ~486 a round to an office ask alone.
+
+Tests: `agentOfficeEditHelpers.test.ts` (the worker on a real deck and
+Word file: read, refusals, one backup, the file moved over whole, `EBUSY`,
+no backup), `officeXmlEditHelpers.test.ts`, `officePackageEditHelpers.test.ts`,
+`officeChatHelpers.test.ts` (12), `agentOfficeEdit.test.mjs`, two loop
+tests in `llmBotHelpers.ut100.test.ts` (the prompt; a path refused; two
+edits named by name, both reaching the path, undone by one press; the tool
+refused outside and never called), `ChatbotAppComp.office.test.tsx` (3:
+the card with no model; a typed change asked with the file read first and
+`extra.office`; **Make a song from it** never an edit). The MCP suite
+2237 of 2237.
+
+Not done: the W-xx recipe and a corpus row wait until the window's
+conversation is seen live (`EC-762`).
+
+### EC-765 — the office conversation measured on a real model: a written-out line break, a copy and its new title, a verse — `done` 2026-11-20
+
+Toward the goal _chatbot smart enough to help editor the pptx and docx
+file_, the model was measured, not only the tool: the window's own
+`OFFICE_SYSTEM_PROMPT`, `toOfficeAsk` and tool list on gemma4:cloud
+(Ollama, no cost) at temperature 0, against the scratch instance's HTTP
+door, on fixtures written for the run (a 4-slide deck and a Word
+newsletter made with LibreOffice, nothing of the user's), each change
+undone with `owa_undo` and the MD5 checked. 16 asks first: spelling, a
+word everywhere, a title, speaker notes, a slide copied, moved and taken
+out, a line added, _Add Spanish under each line_, two changes in one
+ask, and six on the Word file (spelling, a replace, a paragraph added
+and removed, a heading, a translation replacing the English).
+
+- **Before: 12 of 16 right.** Three were the driver's own pace (the
+  firewall's 25 acting calls a minute, its undos counted). One was the
+  tool: _Add Spanish under each line_ wrote `"Welcome\\nBienvenidos"`, a
+  backslash and an n on the slide. And _Copy the Amazing Grace slide to
+  the end_ took 3 calls: a copy and a move of slide 5 in one call was
+  refused, the deck having 4.
+- **`toWrittenText`** (`officeXmlEditHelpers.ts`): a `\n` (or `\r\n`)
+  written out in a line's `text`, an added line, a replace's `to` or a
+  note is a line break -- the slide tool's `toRealLineBreaks`; a
+  replace's `from` stays the file's own words.
+- **A copy takes `to`** (`{slide, duplicate: true, to}`): its place in the
+  same change, `1` to the slide count plus one.
+- **A copy's lines come back** in the edit's answer (`copies`, read
+  from the package in memory as written, not the file again, only when a
+  slide part is new), and a line named
+  on a copy the same call makes is refused with what to do (_Make the
+  copy alone: the answer gives the copy's lines by their ids._).
+- **`owa_find_verse` rides an office ask** (`MODEL_ASK_SHARED_TOOL_MAP`),
+  as it does a slide document's: the prompt said a verse they name is read
+  before it is written, and nothing offered could read one.
+- The driver mirrors the window's tool list (`pickAskToolList`) and paces
+  its acting calls under the firewall's minute.
+- **A deck's sections follow its slides** (`toOrderedSectionsXml`): found
+  reading the copy's `to`, not by the model -- a move (and now a copy put
+  elsewhere) left `p14:sectionLst` in the old order. Each section's list is
+  written again in the slides' order; a slide out of order joins the
+  section of the slide before it. Not opened in PowerPoint (none here);
+  seen live on a three-section copy of a fixture deck (a move to the front
+  and a copy to the end in one call, valid, undone to the same MD5).
+
+**After: 18 of 18** (the 16 and two new asks: _Add John 3:16 as a new line
+under the title of slide 3_ -- read from the installed KJV, then written --
+and _Make a copy of the welcome slide at the end, then change its title on
+the copy_), every change undone to the same MD5. The copy-and-retitle ask:
+5 calls, 6 rounds, 15 369 tokens (run b, before `copies`) → 2 calls, 3
+rounds, 6 851. The other 16 asks one edit call and 2 rounds each, ~4.0k-5.4k
+tokens. `test-results/chatbot-quality/office-model-20261120-{a,b,c}.jsonl`.
+
+Tests: `officeXmlEditHelpers.test.ts` (a written-out break; the file's own
+`\n` kept), `officePackageEditHelpers.test.ts` (a copy at a place, past
+the end refused; written-out breaks in a line and a replace on the slide's
+XML), `agentOfficeEditHelpers.test.ts` (a copy's lines by their ids, none
+read for a call that copies nothing; the refusal for a copy's line named
+in the call that makes it), `agentOfficeEdit.test.mjs` (the verse finder
+with an office ask).
+
+Not measured: another model, a language other than English, a deck with
+pictures and tables in its lines, a file larger than a page of the read.
+The driver stayed a session script: kept under `scripts/`, it would need
+its two fixtures built in the run (no file of anyone's), no home path and
+its translation graders free of non-English words (`languageConfinement`).
+
+### EC-762 — see the PowerPoint / Word conversation live in the help window — `done` 2026-11-20, on a scratch dev instance
+
+`EC-761`'s tool was driven live; the window was not. The help window
+opens behind the AI caution, whose **Open** is a person's press (or an
+automated press on a DEVELOPMENT instance the user has explicitly
+authorized in that conversation). The user authorized it for this check
+(_Yes, press it_), on a fresh scratch dev profile with fixture files of
+my own writing; the caution's **Open** was pressed over raw CDP on that
+instance alone, three times, and nothing else a person answers.
+
+- **The deck**: a `.pptx` row's **Open in Chatbot** → the card and its
+  five buttons; _Change Lord to God everywhere_ answered in 4 s by Auto
+  (OWA Shared · gemma4:cloud), the two lines that said it changed in the
+  file; **Undo this change** → the file's MD5 back to
+  `f508ced1084e04f92f57b931867f2710`, as before.
+- **A copy, then its title**: _Make a copy of the welcome slide at the
+  end, then change the title on the copy to "See You Next Week"_ -- two
+  edits in one answer, the second by the ids the first answer's `copies`
+  gave (7.1k tokens); ONE **Undo this change** took both back to the
+  original MD5.
+- **The Word file**: a `.docx` row's card; _Replace Wednesday with
+  Thursday everywhere, and add a paragraph at the end: Pray for the sick
+  in our church._ -- one edit; Undo → `8f1aac5be5250152a8b5db55869d9cec`,
+  as before.
+- **Make a song from it** drafted a song (`owa_lyric_validate`, no song
+  created) and left the file as it was -- see `EC-767` for what the
+  draft held.
+- Pictures of the window in the session's scratchpad, not kept.
+- Not seen: speaker notes asked in the window (the measured model run,
+  `EC-765`, added them through the same prompt and tool), a file open in
+  PowerPoint or Word, another language -- `EC-766`.
+- The recipe is W-65 (workflowsVersion 2026-11-20a), with W-57's _Not
+  there?_ corrected (it said only a slide document could be changed); the
+  corpus row `presenter.documents.change-office-file-with-assistant` in
+  the corpus and in both packages with a `questions.json` (fr 0.0.142, km
+  0.0.154, packed), and W-65 and W-57's new sentence translated in both;
+  the knowledge rebuilt.
+
+### EC-766 — the PowerPoint / Word conversation in another language, on speaker notes, and with the file open — `open`
+
+_2026-11-21_: another language is done (`EC-772`, `EC-773`: every ask of
+those two asked in French, the window and the card in French), and so are
+speaker notes asked in the window (_Ajoute des notes du présentateur à la
+diapositive 1 : …_ -- one change, a new notes part for slide 1, put back byte
+for byte). Left: a deck open in PowerPoint on Windows, which this Mac cannot
+show. _2026-11-21, later_: a deck open in PowerPoint, Word or LibreOffice on a
+Mac or Linux, which nothing had refused, is refused by the lock file beside it
+(`EC-781`), seen live with PowerPoint's lock file written by hand.
+
+What `EC-762` did not see: the card and a change asked in a window shown
+in another language (a Gemma 4 model asked in it, any other through the
+translator, `chatbot-window.md`); _Add speaker notes to slide 1: greet the
+guests_ asked in the window; and a deck open in PowerPoint on Windows,
+where the tool answers _Close it in PowerPoint or Word_ (seen through the
+tool only). W-65 step 5 says to close and reopen it; the window's answer
+has not been read. Then CB-198's last three steps are run.
+
+### EC-767 — a song drafted from a deck held only its slide titles — `lead`
+
+Seen once, live, in `EC-762`: **Make a song from it** on the fixture deck
+(four slides, each a title and body lines) drafted a song of four lines,
+_Welcome to Sunday Worship / Amzing Grace / Praise the Lord /
+Announcements_ -- the titles, the body lines left out, where W-62 step 4
+says the headings at the top of the slides are what is left OUT. Not yet
+read against the code: the fixture is not a song (a welcome slide and
+announcements), so the drafter may have judged every body line a non-lyric
+and kept the titles as the only lines left. Re-ask on a deck of a real
+song's verses before calling it a bug.
+
+### EC-768 — _change color to green_ on a PowerPoint was refused; a slide's background colour behind its picture would have been claimed as seen — `done` 2026-11-20, seen live in the help window on a scratch dev instance
+
+The user's picture: the Chatbot Beta window with _4 .) # 4 new.pptx_
+attached, _change color to green_, and the answer _I cannot change the
+color of text or backgrounds, as that must be done directly in PowerPoint
+or Word._ circled; then the goal _chatbot can change do everything on a
+given pptx_. Two causes, read from the code: `OFFICE_SYSTEM_PROMPT` listed
+_a font, a colour, a size_ among what the tool cannot do, and it could not
+-- `owa_office_edit` changed words, lines and slides only.
+
+- **The look** (`src/ms-office/officeXmlLookHelpers.ts`, pure, the words'
+  tag scanner): `color`, `highlight` (`"none"` off), `size` (points),
+  `bold`, `italic`, `underline`, `font`, `align` on one line `{id}`, every
+  line of a slide `{slide}`, or every line of the file with neither; the
+  line's over the slide's over the file's; a new line its anchor's look
+  plus its own. Every run's props and the paragraph mark patched in place
+  in the schema's child order (`a:rPr` / `w:rPr`, `w:shd` for a Word
+  highlight, `w14:textFill` dropped when a colour is set), an attribute
+  replaced where it stands so a diff is the change alone. A colour is
+  `#RRGGBB` or an English name; anything else is refused in a sentence.
+- **A slide**: `{slide, background}` (`"none"`: the layout's; no slide:
+  every slide) and `{slide, hidden}`; a Word file refuses both, naming
+  what it can change.
+- **The picture in front** (`src/ms-office/officeSlideBoxHelpers.ts`):
+  measured on the user's own hymn deck, all seven slides are a curtain
+  picture the size of the slide with the words over it, so a background
+  colour changed nothing anyone could see -- and the first live run's
+  answer would have said _Slide 1's background is now navy_. `read` now
+  lists each slide's `pictures` (`fills: true` for one covering the slide,
+  by the deck's own `p:sldSz`); a background set behind one -- on the
+  slide, its layout or its master, `showMasterSp` read -- adds _It does
+  NOT show: … "Picture 2" on slide 1; "Picture 3" on slides 2-7_ and the
+  call that takes it off; `{slide, removeBox: name}` takes a box off by
+  name (a picture, a text box, a group whole; any case; no slide: every
+  slide that has it), a removal in the firewall's budget
+  (`checkIsOfficeRemoval`).
+- **The prompt**: _change the colour to green_ with nothing more named is
+  one `{color}` change, the background an OPTION; a covered background is
+  said, and taking the picture off offered in a SENTENCE -- offered as an
+  option, the model's _Remove the pictures_ chip was dropped by
+  `checkIsRemovalReply` (seen live) and only _Keep the pictures_ drawn.
+  The cannot-do list is now a picture added or changed, a box moved or
+  resized, a layout, a table's shape, a slide from nothing, a Word page's
+  colour or picture.
+
+Measured: in the help window (Auto, gemma4:cloud, a copy of the hymn
+deck) **0 of 1 → 3 of 3** -- green in one read and one change, the dark
+blue background said hidden with the pictures named, both pictures off in
+one change on a yes, the Presenter's preview dark blue behind green words;
+through a fresh stdio server, five looks and a hidden slide in one edit
+(39 ms), every part well formed (xmllint), every change put back to the
+file's MD5. ~497 → ~733 tokens a round to an office ask; the ordinary list
+did not move (~8 464 of 8 480). Held by `officeXmlLookHelpers.test.ts`,
+`officeSlideBoxHelpers.test.ts`, `officePackageEditHelpers.test.ts` (a
+deck given a look, a deck with pictures, a Word line's look),
+`agentOfficeEdit.test.mjs` (the schema) and `officeChatHelpers.test.ts`.
+CB-200, W-65 steps 4-6.
+
+### EC-769 — the rest of _do everything on a given pptx_ — `done` 2026-11-21, through `EC-771`, `EC-772` and `EC-773`
+
+Closed: each layer below is done and seen live in the help window (`EC-771`
+the new slide, table rows, animations and chart data; `EC-772` another
+language, the paperclip and a Word file; `EC-773` the rest), and what is left
+is said in `EC-773`. As filed:
+
+What `EC-768` and `EC-770` left to PowerPoint, each a layer of the goal: a
+NEW slide from a layout (today only a copy of a slide); a Word page's colour
+(`w:background` + `w:displayBackgroundShape`) or a picture put in a Word
+file; a table's or chart's shape; an animation. Also: the office card's own
+words (`genOfficeOpeningAnswer`) still list only words, lines and slides --
+a change needs its key in all 87 languages; `removeBox` leaves the picture's
+image part and relationship in the package, as does a picture replaced
+(valid, kept for the undo; PowerPoint drops them on its next save); a
+model asked for a WIDER box still picks an area off the slide (x -5,
+width 111.6) and only offers the fit afterwards; and all of it asked in another
+language, on a Word file in the window and with the file open (`EC-766`).
+
+### EC-770 — boxes, sizes, the show and pictures: _do everything on a given pptx_ — `done` 2026-11-20, seen live in the help window on a scratch dev instance
+
+The goal (_chatbot can change do everything on a given pptx_) measured
+first: ten asks on a copy of the user's own 7-slide hymn deck (the skill's
+`office-everything-asks` run, Auto → gemma4:cloud, the deck put back to its
+MD5 before every ask, each answer graded on the saved file) were **2 right,
+1 partly, 4 wrong, 3 refused** -- _make the words bigger_ flattened a 58 pt
+verse and a 24 pt number to one size, _move the title to the bottom_ moved
+its WORDS into the body box, a slide said _Amen_ by a copy whose title kept
+the old words, a fade, a text box and 4:3 refused, and a wider verse box
+was a new line.
+
+- **Boxes** (`officeSlideBoxHelpers.ts`): `read` gives each slide's
+  `boxes` (name, kind, `at` in % of the slide, `fills`, the lines it
+  holds), a placeholder's place read from its layout or master;
+  `{slide, box, at}` moves or sizes one (`null` keeps a number), `{slide,
+textBox, at}` adds a text box in the slide's look.
+- **Sizes**: `size` is a change (`"+20%"`, `"+4"`, `"bigger"`) worked out
+  from each run's own size or what it inherits; `words` gives a look to
+  those words alone.
+- **The show** (`officeSlideShowHelpers.ts`): `transition`, `advance`, and
+  `slideSize` with every box scaled.
+- **Pictures** (`officeSlidePictureHelpers.ts`, pure): a picture attached
+  to the chat from a folder goes on a slide (`{slide, picture: its name,
+at}`, no slide: every slide) or into another picture's place (`{box,
+picture}`); the window turns the NAME into its file
+  (`resolveOfficePictures`, `findOfficeAskPictures`; a path the model
+  writes is refused) and the relay reads the bytes (PNG, JPEG, GIF, BMP;
+  25 MB, 10 a call) into `applyOfficeChanges`. The kind and size are read
+  off the header alone; a new `ppt/media/` part (stored, written once
+  however many slides show it), its content type and an image relationship
+  per slide. A place filling the slide goes BEHIND the words, cropped to
+  fill; an area marked by a width AND a height takes the picture fitted
+  inside it, whole -- seen live, a tall area on the right had cut a
+  quarter off each side of the choir photo; a box's place is cropped to,
+  never squeezed. A behind picture under one already filling the slide is
+  refused with the call that replaces that one. Two results the live run
+  needed: a picture put in FRONT of words says so with the call that moves
+  it (`listCoveredWordBoxes`: the photo had covered half a verse and the
+  answer said nothing), and a picture replaced names any box of another
+  name drawing the same picture (`readBoxPictureRelId`: the curtain is
+  `Picture 2` on slide 1 and `Picture 3` on the rest, and _use my picture
+  instead of the curtain_ had left slide 1's, the answer saying "all the
+  slides").
+
+Three bugs the tests found before any live run: a deck with no `p:sldSz`
+had it put inside the slide list, a `{words}` not found was refused after
+another change had been made, and a placeholder was matched to its layout's
+by type where PowerPoint matches by `idx`.
+
+Measured: the ten asks **2 / 1 / 4 / 3 → 9 / 1 / 0 / 0** right / partly /
+wrong / refused (the partly one: E07's verse box widened to x -5, the
+result's _part of it is off the slide now_ not passed on -- the sentence
+now says _say so, and offer to fit it on the slide_ and the prompt's
+after-change sentence says to pass on what the tool says is off the slide,
+hidden or over words; re-asked, _Note that part of the box is now off the
+slide. Would you like me to fit it back on the slide?_: **10 / 0 / 0 /
+0**); four picture asks
+**0 → 4 of 4** (before: no tool field, the prompt naming a picture as
+PowerPoint's), each in one read and one change, 3 s, a real JPEG and PNG
+dropped into the box (`owa_drop_files`), LibreOffice opening and drawing
+the changed deck, **Undo this change** putting it back to the MD5. Tokens:
+the ten asks 65.1k → 112.7k in all; `owa_office_edit` ~733 → ~960 a round
+to an office ask alone; the ordinary list did not move (~8 464 of 8 480,
+`--stdio --ratchet`). Held by `officeSlideBoxHelpers.test.ts`,
+`officeSlideShowHelpers.test.ts`, `officeSlidePictureHelpers.test.ts`,
+`officePackageEditHelpers.test.ts`, `agentOfficeEditHelpers.test.ts` (the
+relay's picture reads and refusals), `agentOfficeEdit.test.mjs` (the
+schema), `officeChatHelpers.test.ts` and `llmBotHelpers.ut100.test.ts` (a
+picture's name becomes its path, a path is refused). CB-201, W-65 steps
+7-9.
+
+### EC-771 — a new slide from a layout, a table's rows and columns, an animation, a chart's data: _do everything on a given pptx_ — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+What `EC-769` left, measured first from the schema: `owa_office_edit` had no
+field for any of them, and the prompt named a table's or a chart's shape and an
+animation as PowerPoint's, so ten asks of them (the skill's `shape-asks`, a
+fixture "Service Plan" deck: a title slide, a 3x3 table, a column chart with its
+embedded workbook, a verse) could only be refused. Four pure modules, each a
+change of its own:
+
+- **A new slide from a layout** (`officeSlideLayoutHelpers.ts`): `read` lists the
+  deck's `layouts`; `{newSlide: true, layout, title, lines, to}` writes the slide
+  part, its relationship to the layout, the content type, the presentation's
+  relationship and `p:sldId`, and a section entry beside its neighbour. The
+  title and lines go into the layout's own placeholders; what a layout has no
+  place for is said (`leftOut`). **Beside a slide that draws its own picture
+  behind its words, a new slide with no layout named is refused** with the call
+  that copies that slide instead: live, the hymn deck's _a new slide at the end
+  that says Amen_ had made a plain white slide in a deck of curtains, and Amen
+  twice; refused, the model copied slide 7 and made the copy say Amen alone.
+  A deck with no layouts says so in a sentence (it had answered
+  `no layout "undefined"`).
+- **A table's rows and columns** (`officeSlideTableHelpers.ts`): `read` says a
+  table's `rows` x `columns`; `{slide, table, addRow | removeRow | addColumn |
+removeColumn: n, cells: [...]}` adds or takes out one, a new one in the look of
+  its neighbour, the column widths fitted to the table's own (`fitWidths`).
+  `removeRow` and `removeColumn` are removals in the firewall's budget.
+- **An animation** (`officeSlideAnimationHelpers.ts`): `{slide, box?, animation:
+appear | fade | fly | wipe | zoom | none, byLine, when: click | with | after,
+seconds}` writes the slide's `p:timing` the way PowerPoint writes an entrance
+  (`readSlideAnimations` reads it back); no box: its boxes of words.
+- **A chart's data** (`officeChartHelpers.ts`): `{slide, chart, chartTitle,
+categories, series: [{index, name, values}]}` changes the chart part's caches
+  AND its embedded workbook -- the sheet's cells, an Excel table's range and
+  headers -- through a zip inside the zip (`readBytes`, `rewriteZipParts`), and
+  drops the workbook's calculation chain, which would point at cells that moved.
+  A workbook it cannot write is said (_its data sheet still has the old ones_).
+- **The card says it** (`genOfficeOpeningAnswer`): _I can change almost anything
+  in this PowerPoint for you … add, copy, move, hide or remove slides; change
+  backgrounds, transitions, animations and the slide size; move or resize boxes;
+  change tables and charts; and put in pictures you attach_ -- two keys, all 87
+  languages, every package's version raised and packed.
+
+Measured live (Auto → gemma4:cloud, the help window, the deck put back to its MD5
+before each ask, each answer graded on the saved file with python-pptx and drawn
+by LibreOffice): the ten asks **0 → 10 of 10** right, each one read and one
+change, about 9k tokens; **Undo this change** after a chart change put the deck
+back byte for byte (its workbook too). Tokens: `owa_office_edit` ~960 → ~1 381 a
+round, to an office ask alone; the ordinary list did not move (~8 464 of 8 480,
+`--stdio --ratchet`). Held by `officeSlideLayoutHelpers.test.ts`,
+`officeSlideTableHelpers.test.ts`, `officeSlideAnimationHelpers.test.ts`,
+`officeChartHelpers.test.ts`, `officePackageShapeEdit.test.ts` (15, a deck with
+three layouts, a table and a chart with its workbook),
+`officePackageEditHelpers.test.ts` (the curtain refusal, no layouts),
+`agentOfficeEdit.test.mjs` (the schema, the removals) and
+`officeChatHelpers.test.ts` (the document text, the card).
+
+### EC-772 — the office conversation in another language, a picture by the paperclip, a Word file: four things the window got wrong — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+`EC-766`'s first half and what `EC-770` had not seen, asked live in a window
+shown in French (the package installed from Settings → Languages, Auto →
+gemma4:cloud, asked in French directly): the card in French with its new list;
+a row added to the deck's table, a fade on every slide's title, the attached
+picture put small at the top right of the giving slide, a Word file's title made
+green and a bullet added in the list's own style -- each one read and one change,
+right on the file, and each put back byte for byte by **Undo this change**. The
+picture went in by the PAPERCLIP: the real file set on the window's own file
+input over CDP (`DOM.setFileInputFiles`, no OS dialog), the path every
+**Attach a file** takes. Four things were wrong on the way:
+
+- **An empty slide document made first.** _Fais apparaître le titre de chaque
+  diapositive en fondu_ (fade in every slide's title) was read by the window's
+  no-model document maker as _make slides_, and an empty "Slides 2026-11-21"
+  went into Documents before the deck was changed. A tab holding a slide
+  document already reads a slide asked for as ITS slide; a PowerPoint open in
+  the tab or in the box now counts the same (`checkHasOpenDeck`), so only a NEW
+  slide document is made there. Re-asked: no document, one read, one change.
+- **The Undo button named half in English.** The answer wrote the button's
+  first word in French and _this change_ in English, a name no reader of French
+  can match to the button. `repairHalfTranslatedLabels` writes a window
+  button's name whole in the screen's words when it starts in them and ends in
+  English (the Undo and **Show it in the list** buttons only).
+- **A file's name translated.** The answer called `Cross.png` by the dictionary's
+  word for the label _Cross_: the cleaner reads a capitalised English word as a
+  button's name. A word before a file's extension, or after a folder's slash,
+  is a file's name now (`answerFileNames.test.ts`, every package with an
+  `assistant.json`, failing without the rule).
+- **Where a picture went, by number alone.** Asked for a slide named by words no
+  slide had (_the prayers slide_, _the announcements slide_), the model put the
+  picture on the last slide and, the first time, called it the prayers slide.
+  The result names the slide by its first words now (`on slide 4 ("John
+3:16")`); the model choosing another slide is `EC-774`.
+
+### EC-773 — a box's own look, a text's last looks, shapes, links, numbers and footers, gradients, a chart's kind, a table's colours, video and sound, a Word page's colour and picture: _do everything on a given pptx_ — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+What `EC-771` and `EC-772` left, read first off the schema and the prompt's
+cannot-do list: every one of these was refused or claimed impossible.
+
+- **A box's own look** (`officeSlideBoxLookHelpers.ts`, pure): `fill`,
+  `outline`, `transparency` (a fill's `alpha`, a picture's `alphaModFix`),
+  `brightness` (a picture's `a:lum`, its contrast kept), `rotate` (degrees),
+  `flip` (horizontal, vertical, both, none), `valign` (the words' `anchor`)
+  and `order` (front, back, forward, backward), on `{slide?, box}` or IN the
+  change that adds a text box, a shape or a picture -- a new box has no name
+  until it is made, and a look sent apart for it is refused with the call that
+  does it (asked _make the picture darker_, the model took 4 calls before the
+  refusal said so, 2 after). Each kind takes only what it can show (a table
+  or a chart no rotation; a picture no fill). A move that moves nothing is
+  said by its note alone.
+- **A text's last looks** (`officeXmlLookHelpers.ts`): `strike`, `link` (a
+  web address, `mailto:`, _slide 3_ for a jump in the show, _none_ -- a run's
+  `a:hlinkClick` with a token the package pass turns into a relationship;
+  Word refuses it), `shadow`, `lineSpacing` and `bullets`.
+- **A new shape** (`officeSlideBoxHelpers.ts` `SHAPE_LIST`): rectangle,
+  rounded rectangle, oval, triangle, diamond, star, heart, four arrows,
+  cross, speech bubble, cloud, chevron, pentagon, hexagon, sun and a line,
+  with words in it (`textBox`) or none, a square 20% wide in the middle when
+  no place is given.
+- **Slide numbers and a footer** (`officeSlideFooterHelpers.ts`): what
+  Insert → Header & Footer does -- each slide a placeholder box of its
+  layout's own kind (the master's when the layout has none), the number a
+  `slidenum` field; no slide named: every slide but a title slide, said.
+  A layout with no place for one is named, never given a box from nowhere.
+- **A gradient** (`toOfficeGradient`, `genOfficeFillXml`): a slide's
+  `background` or a box's `fill` written as two to four colours joined by
+  "to", a direction at the end (_dark blue to purple, left to right_), an
+  `a:gradFill` with a straight blend; a pattern fill is still PowerPoint's.
+- **A chart's kind and legend, a table's colours, video and sound, a Word
+  page's colour and picture**: `chartKind` (column, bar, line, pie,
+  doughnut, area; a pie's legend by category), a table's `fill`, `borders`,
+  `header` and `banded` rows (row numbers from 1), `media` with `play`
+  (a video or a sound attached, PowerPoint's own media parts and timing; a
+  box taken out loses its timing entries too), and a Word file's
+  `pageColor` (`w:background` + `w:displayBackgroundShape`) and a picture
+  put in it. The card names them all (two keys, 87 languages).
+- **Two window slips seen on the way, both in French**: a quotation of the
+  file's own words was put through the label translator -- the deck's _his
+  only Son_ came back with the dictionary's French for the label "Son" as
+  its last word; a quotation whose words the attached document holds is now
+  written as the file has it (`AnswerKeepType.fileText`, the read deck or
+  slide document's text, `holdFileQuotes`). And the model wrote _OPTIONS :_
+  with a space before the colon, as French does, so four options were drawn
+  as words with no button; a frame word in capitals is read with that space
+  (`toFrameLines` in `quickReplyHelpers.ts`), a sentence's own lowercase
+  _options :_ left alone.
+
+Measured live in French (Auto → gemma4:cloud, the help window of a scratch
+dev instance, the deck put back to its MD5 before each ask, each graded on the
+saved file and drawn by LibreOffice): a dark see-through fill and the words
+at the bottom; a picture darker in the change that adds it and the title's
+shadow; bullets off, line spacing 1.5, a title turned 5 degrees; a verse
+brought in front of a picture; a Word file double spaced with a shadow; slide
+numbers and a footer on slides 2-4, the title slide skipped and said; an
+arrow with words in it and a title linked; words struck through and a cross
+flipped upside down; a gradient background and a gradient star -- **0 → 9 of
+9**, each one read and one change, and every one put back byte for byte by
+**Undo this change**. The file quote and the options re-asked after their
+fixes: _« his only Son »_ kept and four buttons. Tokens: `owa_office_edit`
+~1 381 → ~1 993 a round, to an office ask alone; the ordinary list did not move
+(~8 464 of 8 480, `--stdio --ratchet`). Held by
+`officeSlideBoxLookHelpers.test.ts` (21), `officeSlideFooterHelpers.test.ts`,
+`officeGradientFill.test.ts`, `officePackageShapeEdit.test.ts`,
+`officePackageEditHelpers.test.ts`, `quickReplyHelpers.test.ts` and the French
+package's `answerLanguageHelpers.test.ts`.
+
+Left, said plainly in the prompt as done in PowerPoint: a picture, video or
+sound from the web or not attached (the person attaches it; the assistant
+does not fetch media), a pattern fill, SmartArt, editing the theme or slide
+master itself (a background and a font for every slide are asked for
+without a slide), and in Word a table, a list, a link, page numbers or the
+page layout. LibreOffice draws a new footer in a serif face where the master
+asks for none; the XML is PowerPoint's own, so it is LibreOffice's.
+
+### EC-774 — a slide named by words no slide has gets another slide — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+Seen in `EC-772`: asked for _the prayers slide_ in a deck with none, the model
+put the picture on the last slide and, the first time, called it the prayers
+slide. The result names the slide by its first words now, so the answer can
+say where it went; the model still chooses a slide instead of asking which.
+A slide named by words should be matched against the read slides' words, and
+none matching should be a question with the slides as options.
+
+**Done.** A change's `slide` may now be the WORDS the person named it by
+(`officeSlideNameHelpers.ts`, pure: `readSlideValue` reads a number, digits
+or words; `findSlidesSaying` matches the words, NFKC, lower case, marks and
+signs as spaces, against each slide's text). `resolveSlideNames`
+(`officePackageEditHelpers.ts`) turns them into the one slide saying them
+before anything is changed; none or several is a refusal that lists the
+slides (`slide 1 ("Sunday Service")`, twelve at most) and says to ask the
+person with the slides as options, never choosing for them. The schema's
+`slide` is a number or words; the description says "never a number
+guessed". Tests in `officeSlideNameHelpers.test.ts` and
+`officePackageEditHelpers.test.ts`.
+
+Seen in the help window 2026-11-21 (scratch dev copy, gemma4:cloud, the app
+in French, asked in English): _Put a navy background on the prayers slide._
+on `Service Plan.pptx` → _I couldn't find a slide that says "prayers". Which
+slide should I add the navy background to?_ with the four slides as buttons,
+one read and no change (MD5 unchanged); _Give the John 3:16 slide a
+background of navy stripes on white._ → slide 4, by its words.
+
+### EC-775 — a pattern fill, the theme and SmartArt's words were PowerPoint's alone — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The goal _chatbot can change do everything on a given pptx_: after `EC-772`
+the prompt still said a pattern fill, SmartArt and the theme or slide master
+were to be done in PowerPoint. Now:
+
+- **A pattern** (`officeXmlLookHelpers.ts`): wherever a colour or a gradient
+  goes -- a slide's background, a box's fill -- `pattern:<prst>:<FG>:<BG>`,
+  read from the words (_navy stripes on white_; eighteen patterns, stripes,
+  dots, checks, grid, crosshatch, bricks, waves, plaid …), written as
+  PowerPoint's own `a:pattFill` and said back in words.
+  `officePatternFill.test.ts` (5).
+- **The theme** (`officeThemeHelpers.ts`, pure): `{theme: {colors, headingFont,
+bodyFont}}` with no `slide` rewrites the theme part each slide master uses
+  (found through the master's rels): a colour slot (`dark1` … `accent6`,
+  `link`, `followedLink`) to an `srgbClr`, the Latin face of the heading and
+  body fonts (the old face's panose dropped). Every word, shape, table and
+  chart that takes the theme follows; words with a font or colour of their
+  own keep it.
+- **SmartArt** (`officeSlideBoxHelpers.ts`, `officePackageEditHelpers.ts`): a
+  graphic frame holding `dgm:relIds` is box kind `smartart`, read with its
+  `words` from the data part; `replace` reaches the data part and the
+  drawing PowerPoint keeps beside it (found through `dsp:dataModelExt`),
+  the drawing a copy and not counted twice. Its shape and layout stay
+  PowerPoint's, said so in the prompt.
+
+`owa_office_edit` ~1 993 → ~2 158 tokens a round, to an office ask alone;
+the ordinary list did not move (8 464 of 8 480, `--ratchet`).
+
+Seen in the help window 2026-11-21 (scratch dev copy, gemma4:cloud, each
+change undone by **Annuler cette modification** and the file back to its MD5
+byte for byte):
+
+- _Give the John 3:16 slide a background of navy stripes on white._ →
+  `<a:pattFill prst="dkHorz">` navy on white, drawn striped by LibreOffice.
+- _Mets les titres de toute la présentation en Georgia et la couleur
+  d'accent 1 du thème en vert foncé._ (French) → the theme's `accent1`
+  `006400`, the chart's columns dark green; the titles' lines given Georgia
+  (the model's choice over the theme's heading font, the same look).
+- _Change the deck's theme fonts: headings in Georgia and body text in
+  Verdana._ → the theme's `majorFont` Georgia, `minorFont` Verdana, no slide
+  touched.
+- _Dans le diagramme de la diapositive 3, remplace « Pray » par « Worship »._
+  (French) on `Mission Steps.pptx`, a copy of the deck with a three-step
+  SmartArt → both the data and the drawing part read _Plan, Worship, Go_,
+  drawn so by LibreOffice -- after `EC-776`; before it, three refusals.
+
+Still PowerPoint's, and said so: a picture, video or sound from the web (the
+person attaches it; the assistant fetches no media), SmartArt's shape or
+layout, and the slide master's own shapes. A deck open in PowerPoint on
+Windows is not tried here (no PowerPoint on this computer).
+
+### EC-776 — a `replace` written inside a change was refused three times and the answer said it was done — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+Seen in `EC-775`'s SmartArt ask, in French: gemma4:cloud sent
+`changes: [{replace: [{from: "Pray", to: "Worship"}]}]` three times. The
+schema drops a key a change does not have, so each was refused as a change
+naming nothing (the sentence never said where `replace` goes), and the answer
+read _Le mot « Pray » a été remplacé par « Worship »_ over an unchanged file,
+with no note: every language's claim words are first person, and this was a
+passive.
+
+- `liftOfficeNestedReplaces` (`officeChatHelpers.ts`, pure), in the window's
+  office branch before the call: a change's `replace` (a list, or one pair)
+  goes to the call's own `replace`, the change kept for what else it names;
+  beside a `slide` it is refused, saying `replace` is the whole file's and
+  one slide's words are rewritten by `id`.
+- `ToolWatchType.officeEditFailCount`, counted in `runMcpTool` for an office
+  call that is not a read and came back refused or failed: with any, and no
+  change and no undo made, the answer is handed back once with
+  `OFFICE_CLAIM_NUDGE` and a claim left standing gets the window's _No change
+  was made_ note -- whatever language the answer is in.
+
+Tests: `officeChatHelpers.test.ts` (4), `llmBotHelpers.ut100.test.ts` (1).
+Seen after: the same French ask, one call, the word changed in both parts,
+**Annuler cette modification** under the answer, undone byte for byte.
+
+### EC-777 — a picture, a video or a sound at a link the person typed is put into their PowerPoint — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The goal (_chatbot can change do everything on a given pptx_) still left
+"a picture, video or sound from the web" refused as PowerPoint's: the
+person had to save it and drag it in. Now a link they TYPE is enough.
+
+- The model gives the link, exactly as typed, as a change's `picture` or
+  `media`; the window (`fetchOfficeLinkMedia` in the office branch, before
+  the attached-name step) takes it only when the person typed that very
+  link in this ask or the tab's earlier turns (`readTypedLinks`,
+  `ToolWatchType.officeTypedLinks`) -- a link the model found, or one a
+  web page held, is refused with the way to give one
+  (`OFFICE_LINK_NOT_TYPED_REASON`).
+- `officeLinkMediaDownload.ts`, loaded only when a change names a link:
+  every hop held to a public http(s) address before it is asked
+  (`checkIsAllowedLinkUrl`: no name and password, never this computer or
+  the church's network, IPv4 written as IPv6 too), and the address the
+  connection REALLY reached checked before a byte is read
+  (`checkIsPublicAddress` on the socket: a public name that resolves
+  inside). At most 5 redirects; 60 s for a picture and 3 min for a video
+  or sound; 20 MB and 100 MB, by the header and as it comes. A web page is
+  said from its header; otherwise the FIRST BYTES decide
+  (`findLinkMediaKind`: PNG, JPEG, GIF, BMP, MP4, MOV, M4A, MP3, WAV,
+  AVI, WMV, WMA; WebP, AVIF, HEIC and SVG named as kinds a deck here does
+  not take), never the link's ending. Streamed to disk, never held whole.
+- The file goes into a folder of its own under the computer's temporary
+  folder, is named by the link's last part under the bytes' own ending,
+  joins the ask's attached pictures, and the attached-name step puts its
+  path in. The ask's folders are deleted when the ask ends (the deck keeps
+  its own copy), and any older than an hour at the next download. A
+  stand-in provider takes the file already downloaded.
+- The waiting line says _Reading <site>_ (an existing string: no language
+  changed). The tool description and the prompt say a link they typed may
+  be given; the "cannot do" list loses it: ~2 158 → ~2 172 tokens, sent
+  with an office ask only (the Word sentence below included). Ratchet
+  unchanged, ~8 464 of 8 480.
+- Seen on the way, in a Word file: _Ajoute cette image au début du
+  document : <link>_ came with `width: 100` nobody asked for, the 72-pixel
+  logo blown up to the page's width. The Word picture's `width` is now
+  written `width?: … only a size they named` in the prompt and the
+  description; asked again on a fresh app, no width was given and it went in
+  at its own size (0.75 inch), undone byte for byte.
+
+Tests: `officeLinkMediaHelpers.test.ts` (53), `officeLinkMediaDownload.test.ts`
+(17: redirects followed and refused, a local link never asked, a public name
+reaching the church network, too many redirects, a 404, a page by its header
+and by its bytes, WebP named, a video asked as a picture, too big by header
+and as it comes, unreachable, Stop, a timeout, the folders let go),
+`llmBotHelpers.ut100.test.ts` (2: a typed link downloaded once for two
+slides and let go after, an untyped link refused; a page's reason said).
+
+Seen live (scratch dev, gemma4:cloud, the app in French), each undone byte for
+byte by **Annuler cette modification**: _Mets cette image en haut à droite
+de la diapositive 2 : http://www.w3.org/Icons/w3c_home.png_ → one call, the
+W3C logo followed through two redirects (http → https → its new path) and
+drawn top right by LibreOffice; _Mets ce son sur la diapositive 3, qu'il joue
+tout seul : https://www.w3schools.com/html/horse.mp3_ → the whole 28 915-byte
+MP3 on slide 3 playing by itself; _Ajoute l'image https://www.w3.org/ sur la
+diapositive 3_ → nothing changed, the answer asking for the picture's own
+address; _Put the logo at http://192.168.1.1/logo.png on slide 1_ → refused
+before any request, said, the file unchanged; and after the cleanup, the
+temporary folder empty once the answer was in.
+
+Left: a page that is a video site's (a YouTube link) is no file and is said
+so; downloading such a video stays the Background panel's (`MD-01`). After
+refusals, the window's _No change was made, though the answer below may say
+so_ note shows over an honest answer too (`EC-776`'s rule, true in any
+language).
+
+### EC-778 — the slide master's and the layouts' own shapes: a church's name and logo on every slide — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The goal (_chatbot can change do everything on a given pptx_), the Stop
+hook's words: _the slide master's own shapes are still left to PowerPoint_.
+A logo, a church's name, a line drawn on every slide lives on the slide
+master or a layout, not on a slide: nothing read it, nothing reached it.
+
+- The read lists them under `masters` (`readSharedSlides`,
+  `toShownSharedSlide`): each master and each layout a slide USES, with
+  where it shows (_every slide_, _slides 2-4_), its OWN boxes -- never a
+  placeholder, whose words no slide shows -- and their lines, ids from
+  10001 (masters) and 10101 (layouts), numbers no deck reaches. Only on the
+  first page of a long deck.
+- A change names one as a slide: `slide: "master"` (or _the slide master_,
+  _master 2_) or `"layout: <name>"` (`findSharedSlide`), and takes what a
+  slide's box takes -- its words by id, a look, `at`, `removeBox`, a
+  picture in its place, a new text box, shape or picture, its background.
+  A slide's own change (`hidden`, `note`, `transition`, …,
+  `SHARED_REFUSED_KEY_LIST`) is refused by name. What the tool says back
+  never shows 10001: `toSharedSlideWords` writes _the slide master's line
+  10001.2_, _The slide master has no box …_.
+- `replace` reaches the master's words; a look given to every line, or to
+  words wherever they are, reaches the master's and layouts' own boxes too
+  (`allLineIds`); a box scope reaches them by name.
+- A background hidden behind a full-slide picture ON a master or layout is
+  said with the change that takes it off (`genCoveredBackgroundWords`:
+  `{"slide":"master","removeBox":"Curtain"}`), where it had said _changed in
+  PowerPoint_.
+- Seen live first: _Le nom de l'église en bas de chaque diapositive : mets-le
+  en vert et en gras_ came back as `{footer: "Grace Church", bold, color}` --
+  a SECOND "Grace Church" as a footer on slides 2-4. A footer whose words
+  are already a master's or layout's own box is now refused with that box's
+  id and the change to send (`id 10001.10`, `{slide: "master", box: "Church
+Name", …}`), and the prompt says a master's box is never made again as a
+  footer or a new box.
+
+Tests: `officePackageMasterEdit.test.ts` (14: the read, a later page, words by
+id said as the master's, a look on its box, its logo off and its background,
+a layout's box by name, a text box on every slide, its logo swapped for an
+attached picture, `replace`, words given a look everywhere, a background
+behind its curtain, a footer of its words, a slide's own key refused, an
+unknown layout and a box it lacks).
+
+Seen live (scratch dev, gemma4:cloud), on a copy of the service deck given a
+master text box _Grace Church_ and a red logo, each put back byte for byte by
+its Undo: in French, _en vert et en gras_ → the footer refused, then
+`{slide: "master", box: "Church Name"}`, green and bold at the foot of every
+slide and no slide part changed; _Enlève aussi le logo rouge en haut de
+toutes les diapositives_ → gone from every slide; _L'église s'appelle
+maintenant Hope Church : change le nom partout_ → the master and slide 1
+both renamed. In Khmer, the app in Khmer: the same green ask sent `{words:
+"Grace Church", color, bold}` everywhere -- before the `allLineIds` change
+it reached slide 1's subtitle alone and not the master; after, the master's
+name is green and bold, and so is the subtitle's "Grace Church", which was
+not asked for: **partly**.
+
+Left: a model choosing "those words everywhere" for words placed by WHERE
+they are (_at the bottom of each slide_) still colours them elsewhere too
+-- closed by `EC-782`, which asks the person.
+
+### EC-779 — a SmartArt's colours and shapes: turned into the slide's own shapes, as PowerPoint's Convert to Shapes; any box given another shape — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The Stop hook's other words: _SmartArt's shape or layout … still left to
+PowerPoint_. A SmartArt is laid out by PowerPoint from its data, its layout
+and its colour style; what a slide shows is the drawing PowerPoint keeps
+beside them (`ppt/diagrams/drawingN.xml`, `dsp:` shapes). Its words were
+changed since `EC-775`; its colours and shapes were not.
+
+- `{slide, box: a SmartArt, toShapes: true}` (`convertSmartArtToShapesXml`,
+  `officeSmartArtShapeHelpers.ts`, pure): its drawn shapes become the
+  slide's own `p:sp` boxes where it stood, in its order, moved by its place,
+  each named by its words (_Plan_, _Pray & Go_; one with none _<name> shape
+  1_), ids after the slide's highest, an animation of the frame let go.
+  Only DrawingML is carried: a picture inside it, a group or no drawing kept
+  in the file is said, with PowerPoint's own menu path. The answer names
+  the shapes and says it is no longer a SmartArt.
+- It ASKS first: a `fill`, `outline`, see-through, turn or flip aimed at a
+  SmartArt is refused with what `toShapes` does and _Say so and ask_. On the
+  yes, ONE change turns it and gives its boxes with words the fill, outline
+  or see-through asked for (`toShapesLookMap`): the free model, told to make
+  the change in a second call, had turned it and asked again.
+- An answer to such a refusal that ASKS is not marked _No change was made …
+  Ask again_ any more (`officeAskFirstCount`, `EC-776`'s rule): it had been
+  over a right question. A claim in the words is still marked.
+- `{slide, box, shape}` gives a box of words, a shape or a picture (cut to
+  it) another of the shapes a new one can be (`setBoxShapeXml`: its
+  geometry swapped, its place, fill and words kept; a placeholder with none
+  gets one; never a line).
+- Another SmartArt LAYOUT (a process made a cycle) is PowerPoint's: it needs
+  PowerPoint's layout engine -- its look as shapes is `EC-780`.
+
+Tests: `officeSmartArtShape.test.ts` (13: the shapes in place and named, a name
+taken, a picture or group or no drawing said, turned then a fill and a turn,
+turned with its fill in one change, a look on the SmartArt said, `toShapes`
+alone; `setBoxShapeXml` three ways; a box made a red circle, a placeholder a
+star, a line or a SmartArt refused); `llmBotHelpers.ut100.test.ts` (1: the
+ask-first answer).
+
+Seen live (scratch dev, gemma4:cloud), the deck's _Plan, Pray, Go_ SmartArt,
+each put back byte for byte: in French, _mets les trois cases en vert_ → asked
+first, no unmade-change note; _Oui, convertis-le en formes_ → one change,
+three green boxes where the SmartArt stood (LibreOffice); _Et fais de la case
+« Go » un cercle_ → an oval in its own box. In Khmer, the app in Khmer, the
+same two asks → asked first in Khmer, then the same file byte for byte as the
+French run. And `EC-777`'s video, live for the first time: _Ajoute cette
+vidéo sur la diapositive 2 : https://www.w3schools.com/html/mov_bbb.mp4_ →
+the 788 493-byte MP4 on slide 2 with its play poster, the answer saying it
+covers the table, the download folder empty after.
+
+Left: a deck open in PowerPoint on Windows was never tried -- this Mac has no
+PowerPoint (`EC-766`; a deck open in one on a Mac is `EC-781`); LibreOffice
+draws every result here.
+
+### EC-780 — a SmartArt made a cycle, a row or a column — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The Stop hook, after `EC-779`: _Switching a SmartArt to a different layout
+(for example a process into a cycle) still needs PowerPoint_. Another
+SmartArt LAYOUT needs PowerPoint's layout engine and its layout
+definitions, which no file here could be checked against (no PowerPoint on
+this Mac), and a SmartArt PowerPoint must repair is worse than none. So the
+look a person means is made as shapes, the same yes as `toShapes`:
+
+- `{slide, box, toShapes: true, arrange: "cycle" | "row" | "column"}`
+  (`layOutShapes`, `officeSmartArtShapeHelpers.ts`, pure): its boxes with
+  words round a circle from the top, clockwise; in a row, left to right; in
+  a column, top to bottom -- made smaller to fit, their words with them
+  (never under 8 points) -- and its first shape with no words, its arrow,
+  put between each two and turned to point on (a circle's last arrow a
+  copy, back to the first). Any other layout is refused as PowerPoint's.
+- In its own place, as PowerPoint keeps a SmartArt's place when its layout
+  changes -- but a cycle in a flat strip grows up and down round its middle,
+  inside the slide, until its boxes are half their size (`toCycleRoom`):
+  seen live, a process 1.4 inches tall made a circle with words of 8
+  points. `at` gives it any other place; the answer says the place as an
+  `at`.
+- `arrange` without `toShapes` is refused with _Say so and ask_, and the
+  reshape refusal on a SmartArt names `arrange`.
+
+Tests: `officeSmartArtShape.test.ts` (+8: a row and a column to the EMU, a
+cycle's places and its three arrows' turns, fewer than two boxes, no size,
+one change turned, laid out and filled, a flat strip grown, a place by
+`at`, `arrange` alone and another layout refused).
+
+Seen live (scratch dev, gemma4:cloud), the deck's _Plan, Pray, Go_, each put
+back byte for byte: in French, _Transforme le diagramme des étapes (Plan,
+Pray, Go) en cycle_ → one call, Plan at the top, Pray lower right, Go lower
+left (LibreOffice) -- first at 8 points in the strip, then, grown, at half
+size; in Khmer, the app in Khmer, the same ask → asked first with Yes and No,
+on the yes the same file. The model did not ask first in French (3 of 3):
+the answer said it is now separate shapes, and the Undo is under it. With
+arrows (a copy of the deck given two, through the tool): three arrows, each
+pointing to the next box round.
+
+### EC-781 — a deck open in PowerPoint on a Mac was written, and PowerPoint's next save would undo it — `done` 2026-11-21
+
+`EC-766`'s last line: _a deck open in PowerPoint on Windows_. On Windows the
+open file refuses the write, and the tool already said _Close it in
+PowerPoint or Word_. On a Mac or Linux nothing refuses it: the change is
+made, PowerPoint still shows its own copy, and its next save puts that back
+over the change -- the person sees it "undone" later, with no word why.
+
+- Before anything is backed up or written, the file an office program keeps
+  beside a document it has open is looked for (`officeOwnerFileHelpers.ts`,
+  pure; `findOpenElsewhere`): PowerPoint's and Word's `~$` and the name
+  (Word's with one or two first letters dropped), LibreOffice's
+  `.~lock.<name>#`. Found, nothing changes and the answer says the program,
+  that it may be open on another computer sharing the folder, and that a
+  hidden file left by a crash can be deleted. Not on Windows, where the
+  file answers for itself and such a file left behind is common and hidden.
+- The Documents list already hides `~$` files.
+
+Tests: `agentOfficeEditHelpers.test.ts` (+5: a deck in PowerPoint, in
+LibreOffice, a Word file's short lock name, Windows left to the file,
+another file's lock not this one's).
+
+Seen live in French: with PowerPoint's own lock file beside the church deck,
+_Mets le titre de la diapositive 1 en rouge_ → nothing changed (MD5 the
+same), the answer saying it is open in PowerPoint and to close it and ask
+again; the lock file gone (PowerPoint closed), _Je l'ai fermé dans
+PowerPoint. Réessaie._ → the title red; undone byte for byte.
+
+Left: PowerPoint itself on Windows -- this Mac has none; the lock file was
+written by hand as PowerPoint writes it.
+
+### EC-782 — words on every slide AND on a slide: the person is asked which — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+`EC-778`'s partly: in Khmer, _the church's name at the bottom of every
+slide, green and bold_ came as `{words: "Grace Church", …}` everywhere and
+greened slide 1's _Welcome to Grace Church_ too. A prompt line saying such
+words are the master's box did not move the free model (asked again: the
+same call). Made the master's alone, _every Grace Church in the file, green_
+left slide 1 and the answer said all of them. Told which call fits each
+meaning, the model sent both, for either ask.
+
+So a look on words with no slide, box or line, that a master's or layout's
+own box AND a slide's own line both say, is refused with _Say so and ask_
+-- which they mean, the one on every slide or every place it is written --
+and the two calls (`findSharedAndSlideWords`). Words no slide says stay the
+master's alone, as before.
+
+Tests: `officePackageMasterEdit.test.ts` (the refusal word for word, each
+answer's call made, words on the master alone unchanged).
+
+Seen live in Khmer (the app in Khmer), each undone byte for byte: _at the
+bottom of every slide_ → asked, with the two as buttons, no unmade-change
+mark; _the church's name on every slide_ → the master's box green and bold,
+slide 1 untouched (a box named _footer_ tried first and refused); _every
+Grace Church in the file_ → asked; _everywhere_ → the master's and slide 1's
+both green.
+
+### EC-783 — "what do I do?" in French made a slide document, and the guide's answer to a lock file left behind was not found — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+Found checking `EC-781`'s manual sentence live. Asked in a new French tab,
+_L'assistant me dit que ma présentation est ouverte dans PowerPoint, mais
+PowerPoint est fermé. Que faire ?_ → the window MADE a slide document
+(_J'ai créé « Slides 2026-11-21 » pour vous_) and then answered with a
+restart of the computer. French's request words (`createAsks`,
+`typedCreateAskHelpers.ts`, `EC-516`) count _faire_ as a word to make and
+_présentation_ as a slide document, and its how-to words had no _que
+faire_. The file was put back by its Undo.
+
+- French's `howTo` gains _que faire_, _quoi faire_, _que fais-je_, _on
+  fait quoi_ (`fr/assistant.json`, 0.0.152), and the line is a French
+  `not` sample in `src/lang/data/tests/chatbot/typedCreateAsks.json`: it
+  fails without the words (read as a slide document) and passes with them.
+- Asked again, nothing was made, but the guide search tied W-65 with W-45
+  (the PowerPoint export, 95 each) and the model opened W-45 alone: _no
+  instruction for this_. W-65's sentence now says it as a person does --
+  _open or locked in PowerPoint when PowerPoint is closed_ -- and W-65 is
+  first for _PowerPoint open error file locked_ (155 against 96) and _…
+  but PowerPoint is closed_ (97 against 62), W-45 still first for _export
+  my slides to PowerPoint_ and _save as pptx_.
+
+Seen live after (fr 0.0.153, km 0.0.164 installed): the same French line
+→ W-65 opened, the answer the four steps -- the folder, the file starting
+`~$`, delete it, ask again -- and no file made.
+
+Then for EVERY language, not only French (the same day): the word to make
+and the thing made must share a sentence (`checkHasTogether`, sentences
+ended by any script's `\p{Sentence_Terminal}` -- before a space or the
+line's end for `.`, `!` and `?`, so _3.16_ goes on; anywhere for the
+Khmer khan, the Chinese full stop, the danda, the Arabic question mark).
+_my presentation … closed. What do I do?_ said the slide document in its
+first sentence and the word to make in its second. Held in
+`typedCreateAsks.test.ts`: in each of the 55+ languages whose lists hold
+a plain make word and slide word, the two said apart -- after seven
+scripts' sentence ends -- ask for nothing, and together still ask; the
+test fails with the guard off. Every language's blind samples and
+held-out set still pass (360). A request split over two sentences (_I need
+a slide document. Can you make it?_) now goes to the model rather than
+being made at once: the cost of a miss is a model's round, the cost of a
+wrong read a file nobody asked for.
+
+Then checked in every language by lines nobody here wrote (the same day,
+the goal's review: _the other 86 languages were not checked_): a helper
+that read no file of the repository wrote, for each of the 88 languages a
+package holds, four volunteer troubles ending "what do I do?" and three
+one-sentence "what do I do with my slides / running order / Bible list?"
+-- 616 lines, each read in an English app and in its own (1 232
+readings). Of the four-line set, 0 read as a request with the guard and 26
+without it (German, Finnish, Gujarati, Hausa, Hindi, Latvian, Malay,
+Punjabi, Polish, Samoan, Urdu -- the guard is what holds them). Of the
+one-sentence set, 12 readings were requests: the language's "what do I
+do" was in no how-to list. German, Estonian, Hausa, Polish and Samoan gain
+theirs (_was mache ich_, _mida ma saan_, _me zan yi_, _co mam_, _o le ā
+se mea_ …) and Tongan its loanword _slide_ (named Tongan, the line had
+held no Tongan word for a thing made, and a neighbour read _fai_ and
+_slide_); each package's version raised (de 0.0.93, et 0.0.87, ha 0.0.91,
+pl 0.0.93, sm 0.0.90, to 0.0.88) and packed. After: 0 of 1 232. All 616
+are now `not` samples of their language in `typedCreateAsks.json` (360
+tests). Asked live in German too (0.0.93 installed on the scratch
+profile, the app in French): _Was mache ich mit dem Ablaufplan, wenn der
+Beamer aus ist?_, which had read as a running order to make, went to the
+model as a question and was answered in German, nothing made.
+
+And in the running window, every language at once (the same day): all 87
+packages packed and installed on the scratch profile (each at its current
+version), the help window's own reader (`readCreateAskInOwnLanguage`,
+reading the INSTALLED copies, as a person's window does) given the 616
+lines with the app's language English and then their own: **0 of 1 232**
+read as a request. The control, so that nothing read because nothing
+loaded cannot pass: each language's own running-order ask of
+`typedCreateAsks.json`, read in the same window, **88 of 88** a running
+order to make. No model was asked for these: the reader decides before any
+model whether a file is made, and the window's pace cap (150 model calls an
+hour, past which only a person's **Allow more** goes on) rules out asking a
+model in 88 languages.
+
+### EC-784 — a SmartArt given another of PowerPoint's layouts, kept a SmartArt — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The goal _chatbot can change do everything on a given pptx_, and the
+review of `EC-780`: _Changing a SmartArt to a different real layout (for
+example a process into a cycle) is not done; it is converted to plain
+shapes instead._ `{slide, box, smartArtLayout: "cycle" | "process" |
+"pyramid", at?}` (`officeSmartArtLayoutHelpers.ts`, pure) gives it
+PowerPoint's Basic Cycle (`layout/cycle2`), Basic Process (`process1`) or
+Basic Pyramid (`pyramid1`), still a SmartArt, with no question asked
+(nothing is lost: its words and box colours stay, and PowerPoint's own
+Layouts gallery can change it again). Five parts change together: the
+layout part is the layout's own definition (its `uniqueId`, the
+`layoutNode` names and the `cycle` / `lin` / `pyra` algorithm); the data
+part's presentation points and their links are made again for it
+(named after those nodes -- LibreOffice's engine draws nothing without
+them), a link that had no arrow ids is given them, and the diagram names
+the new layout (`loTypeId`, `loCatId`); the colour and style parts gain
+the arrows' `sibTrans2D1` label where the old layout had none (the
+arrows were drawn invisible without it); and the drawing PowerPoint
+keeps is drawn again -- circles round from the top with an arrow turned
+toward the next, a row with an arrow between each two, trapezoid levels
+-- each box keeping its own fill, line and word colour, one word size for
+all. A cycle or a pyramid in a flat strip is grown round its middle
+(`toSmartArtLayoutRoom`), or placed in `at`. Refused, said, nothing
+written: boxes with boxes under them, an assistant box, fewer than two
+boxes, another layout's name (any other is PowerPoint's; a column of
+plain shapes is still `toShapes`), a key beside it, and `toShapes` for the
+same box in the same call.
+
+Checked against what reads it. Microsoft's Open XML SDK validator
+(`DocumentFormat.OpenXml` 3.x, Office 2019 rules): 0 errors in any
+SmartArt or drawing part, for all three layouts, with and without the
+drawing (the deck's six chart errors are the fixture's own, before
+anything was changed); it flagged `alg type="pyramid"` on a first try,
+fixed to `pyra`. LibreOffice drew the written drawing as asked, and with
+the drawing TAKEN AWAY laid the cycle out itself from the definition and
+the data alone: Plan at the top, Pray, Go, arrows between. Not checked:
+PowerPoint itself (no PowerPoint or Windows on this machine) -- it
+redraws a SmartArt from its definition when the file opens, which is
+what the message says.
+
+Asked live on a scratch dev instance, gemma4:cloud: _Transforme le
+diagramme des étapes (Plan, Pray, Go) en cycle._ → one call
+`{slide: 3, box: "Steps Diagram", smartArtLayout: "cycle"}`, the
+validator 0 new errors, undone byte for byte; _Fais du diagramme des
+étapes une pyramide._ → `smartArtLayout: "pyramid"`, undone; in Khmer,
+_សូមប្ដូរដ្យាក្រាមជំហាន … ទៅជារង្វង់វដ្ត។_ → the cycle, still a SmartArt,
+undone. `officeSmartArtLayout.test.ts` (12 tests) holds the parts, the
+places, the look kept, every refusal, and a layout followed in later
+calls by new words and a turn into shapes.
+
+Left: any of PowerPoint's ~200 other layouts (a Venn, an org chart, a
+hierarchy, a matrix) -- each is a definition of its own, and a box under a
+box needs a hierarchy one.
+
+### EC-785 — a SmartArt made a Venn, or a Hierarchy that keeps boxes under boxes — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The goal's review after `EC-784`: _PowerPoint's other ~200 SmartArt
+layouts (Venn, org chart and so on) are refused … and diagrams with boxes
+under boxes are refused too._ `smartArtLayout` takes `"venn"` (Basic Venn,
+`layout/venn1`: circles round the middle, each overlapping the next, each
+fill half see-through, its own colour kept) and `"hierarchy"` (Hierarchy,
+`layout/hierarchy1`: a tree, each box over the boxes under it, joined by
+elbow lines). The Hierarchy is the first layout that READS the tree: the
+diagram's `parOf` links in their order, any depth (its definition repeats
+itself through a `forEach ref`); every link under a box is given its
+`parTrans` and `sibTrans` points, the line before each box under another
+is a `parTrans2` presentation point (`parChTrans1D2` added to the colour
+and style parts), and the drawing places each level under the one above,
+a parent centred over its boxes. A flat diagram made a Hierarchy is a row
+of tops. A diagram with boxes under boxes given a flat layout is refused
+with _Say so and ask_, offering the Hierarchy: in Khmer the first answer
+had claimed the change (the window's unmade-change note caught it) and
+sent them to PowerPoint; the refusal written as an ask, 2 of 2 asked for
+the Hierarchy and its _yes_ made it. A box under two others, an
+assistant, or fewer than two boxes are still refused.
+
+A Basic Block List (`default`, the `snake` algorithm) was built and LEFT
+OUT: with the drawing taken away, LibreOffice's engine ran its third block
+off the bottom of the slide, with spacer points and with its row length
+fixed (`bkpt fixed`, 3) -- the drawing written here was right, PowerPoint
+not tried. A layout is offered only once something other than the code
+writing it has laid it out from the definition.
+
+Checked: Microsoft's validator, 0 errors in any SmartArt or drawing part,
+for both, written drawing and none, a flat deck and a nested one (Mission
+over Plan, Pray and Go, Serve under Go; the six chart errors are the
+fixture's); LibreOffice drew both as written and, with the drawing taken
+away, laid them out itself: three overlapping circles, and the tree --
+Mission over the three, Serve under Go. Not checked: PowerPoint (none on
+this machine).
+
+Seen live, gemma4:cloud, each one call and undone byte for byte: in
+Khmer a Venn of Mission Steps and a Hierarchy of the nested Mission Tree;
+in French (_Mets le SmartArt … en diagramme de Venn_, _… en organigramme
+hiérarchique_) the same, and _Transforme … en cycle_ on the nested deck
+refused, the Hierarchy offered. `officeSmartArtLayout.test.ts` (15 tests):
+the Venn's circles, overlap and see-through fills; the Hierarchy's
+presentation points in order, the transitions given to a nested link, the
+new labels, the places and the one line drawn before the boxes; a box
+under two others said.
+
+Left: the other ~190 layouts (an org chart's assistant boxes, a matrix, a
+picture layout), each a definition of its own, offered when LibreOffice
+lays it out; and PowerPoint itself, which needs the person's machine. For
+that check, `test-results/powerpoint-check/` (git-ignored) holds eight
+files written by the edit code from three originals -- Basic Cycle,
+Pyramid, Venn, Process, a flat and a nested Hierarchy, and the two Grace
+Church changes -- each with no new validator error, LibreOffice's drawing
+of each, and a README of what PowerPoint should show.
+
+### EC-786 — words on every slide AND a slide: sent again by what was said, not asked — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The goal's review of `EC-782`: _The Khmer 'every Grace Church' case was
+handled only by asking first, not by applying the change the user likely
+wanted in every place._ A change takes `everywhere: true` beside `words`
+alone (refused with a `slide` or a `box`): every place the words are
+written, a master's box and a slide's line both. `EC-782`'s refusal now
+says to send it again at once, not to ask, by one test -- did their
+question WRITE the words? Then every place; named by where or what it is
+(_the church name at the bottom of every slide_), the master's box alone.
+
+The model did not hold the test: in Khmer _every Grace Church in the
+file_ went everywhere 3 of 3, but _the church name at the bottom of each
+slide_ went everywhere too, 2 of 3. The window holds what they typed
+(`askedText`), so it checks: a change sent `everywhere` whose words their
+line does not write -- one case, one space, no quotes -- goes back ONCE
+(`findOfficeUnwrittenEverywhere`, `officeChatHelpers.ts`), saying to send
+the box on every slide; sent again unchanged, it goes through (they may
+have chosen every place when the model asked them).
+
+Tests: `officePackageMasterEdit.test.ts` (the refusal word for word,
+`everywhere` greening the master and slide 1, `everywhere` with a slide
+refused), `officeChatHelpers.test.ts` (the words found unwritten; written
+in any case, spacing or quotes; a change not sent everywhere, no words
+typed, the first of several).
+
+Seen live in Khmer, the window's check in, each undone byte for byte: the
+church name at the bottom of each slide, green and bold → the master's box
+alone, 3 of 3, slide 1 untouched, the answer saying the name at the bottom
+of each slide; every Grace Church in the file, green → the master's box
+and slide 1, 3 of 3. No question asked in any of the six.
+
+### EC-787 — a SmartArt's boxes added, taken out or moved in ANY layout, and a layout taken from another SmartArt — `done` 2026-11-21, seen live in the help window on a scratch dev instance
+
+The goal's review after `EC-786`: _The assistant offers five SmartArt
+layouts … and says the rest are still left to PowerPoint, so the chatbot
+cannot change everything._ Each of the five had been a definition written
+by hand. This one reads the definition every SmartArt carries
+(`ppt/diagrams/layoutN.xml`) and writes its shapes itself
+(`src/ms-office/officeSmartArtModelHelpers.ts`, pure): every `layoutNode`,
+`forEach` (`axis`, `ptType`, `st`, `cnt`, `step`, `hideLastTrans`, `ref`),
+`choose` / `if` (`var`, `cnt`, `maxDepth`, `depth`, `pos`, `revPos`,
+`posEven`, `posOdd`) and `presOf`, the person's own settings of a variable
+before the definition's, the labels and their numbers, the text links in
+PowerPoint's order. **Measured against PowerPoint's own files first**: the
+55 SmartArts in LibreOffice's test decks (34 layouts, saved by
+PowerPoint), regenerated from their data and definition: **54 of 55** came
+out as PowerPoint wrote them, every text link's order 511 of 511; the 55th
+is a definition edited by hand, and the same check refuses it -- before
+anything is written, the file's own diagram is drawn again and compared
+(`checkSmartArtPresMatches`); a layout this app does not read rightly is
+said and nothing changes.
+
+- **A box** (`{slide, box, smartArtAdd | smartArtRemove | smartArtMove,
+  afterBox | beforeBox | underBox?}`): added in the look of the box it
+  goes by; taken out with the words drawn INSIDE it (a list's bullet lines,
+  read off where each box's words are drawn), a box with a shape of its own
+  under it (an org chart's) moving up into its place, as PowerPoint does;
+  moved, never under itself. Added with no place to a tree with one box at
+  its top, it goes under that box. **A box the layout would not draw is
+  refused**, naming it (a gear draws three, a cycle matrix four quadrants,
+  a radial cycle one centre): on the corpus these had made a box vanish.
+- **A layout from another SmartArt of the deck** (`smartArtLayout:
+  "chevron1"`, the `layout` read now names on each SmartArt, with `under`
+  for a box under a box): its definition copied, the colour and style
+  labels it draws with copied over, the diagram drawn anew.
+- **The drawing PowerPoint keeps beside the diagram is dropped** with its
+  link and content type, as decks PowerPoint 2007 saved have none:
+  PowerPoint and this app lay the diagram out again from the definition.
+- **A file holding no shapes** (written by a program other than
+  PowerPoint) has them drawn fresh, nothing to compare.
+
+Found on the way and fixed: the app's own Basic Cycle had no arrow from
+its last box back to its first (`hideLastTrans="0"`, as PowerPoint's);
+a SmartArt's words were read in the file's order, so a box moved first
+read back last; a box's two paragraphs were one run of words, so a box
+named by one line was not found.
+
+Checked over the corpus's 51 decks, on the final code: a box added to
+**46** (5 refused, each rightly: the hand-edited definition, a radial
+cycle's second centre, a cycle matrix's fifth quadrant, a matrix's and a
+gear's box past what they draw), taken out of **45** (2 refused: a
+diagram of one box, the hand-edited definition), moved in **42** (5
+refused: those four layouts, and a box put beside itself) -- 4 decks
+have too few boxes with words of their own for the batch to choose
+from. **No new error in Microsoft's Open XML validator** in any of the
+133 files (one deck crashes the validator, its original too), and
+LibreOffice -- this app's own renderer -- drawing each from the
+definition with the box where it was asked for (contact sheets of every
+pair checked by eye). Not checked: PowerPoint.
+
+**Seen live** (gemma4:cloud, the app in French), each one call: _add a box
+Serve after Pray_; _move Go before Plan_; _Dans l'organigramme, retire la
+case B1_ on PowerPoint's own org chart (B1 out, its boxes up under A),
+undone byte for byte by one press, said in French; _Add a step called Pray
+between a and b in the chevrons_. Three window faults the live asks found,
+each fixed and asked again:
+
+- the first ask changed TWO decks -- the one handed over and the one the
+  chat had been about -- and **Undo this change** put back one:
+  `mergeEditedDocument` now keeps every document's undo of one answer
+  (`undoNames`, one sentence each when put back), and an ask that came
+  with its own file says so (`toOfficeAsk`'s `otherNames`: _change it
+  alone_); asked again the same way -- a new tab, Mission Steps read
+  first, then Mission Process attached and the same add asked -- one
+  deck changed, the other's bytes untouched, undone byte for byte;
+- _move Go before Plan_ went `underBox` and the answer said "before": a
+  place key whose English words the question never says while it says
+  another's goes back once (`findOfficeMisplacedBox`);
+- a deck whose every word is in a SmartArt could not be ATTACHED (_I
+  cannot read Team Chart.pptx_): the converter draws a SmartArt as a
+  picture; the window now reads such a file with the app's own reader
+  (`toOfficeReadBlocks`, loaded only then).
+
+Tests: `officeSmartArtModel.test.ts` (33: a definition of a few lines
+drawn, a variable's branch, the app's five read back, add / remove / move
+and every refusal, bullet lines gone with their box, a deck's layout
+taken, the drawing dropped), plus `officeChatHelpers`, `lyricChatHelpers`,
+`documentWordsHelpers`.
+
+Left: PowerPoint itself -- `test-results/powerpoint-check/` (git-ignored)
+now also holds files 9-12 (a box added, moved, taken out, moved under
+another) and `powerpoint-made/` A-E (PowerPoint-saved Chevron, Org Chart,
+Picture List, Vertical Block List, Hierarchy4 decks, each edited), with
+the README of what PowerPoint should show. A layout no SmartArt of the
+deck has is still PowerPoint's (SmartArt Design → Layouts): its
+definition is not in the file, PowerPoint's own definitions are
+Microsoft's (this app is GPL-2.0), and writing only the layout's id for
+PowerPoint to redraw from its built-in copy cannot be checked without
+PowerPoint. Asked 2026-11-21 whether to install PowerPoint on this Mac
+to close both, the user chose to accept these limits.
+
+### EC-763 — a PowerPoint could be shown and read, never made into a slide document — `done` 2026-11-20, seen live in the help window on a scratch dev instance
+
+The user: _as a user I want to ask chatbot to help convert the pptx file to
+app-document file_, and the goal _chatbot help convert .pptx to .ows file
+with 95% alike_. The app shows a PowerPoint in its Documents list as the
+converter's HTML pages (`PptxSlide`), but a slide document (`.ows`) is what
+the Slide Editor changes, the stages show and the chatbot's slide tools edit.
+Nothing made one of the other: no tool, no menu, no ask (read from the code).
+
+- **The conversion** (`src/helper/pptxSlideDocumentHelpers.ts`, imported
+  lazily; the rules pure in `pptxSlideDocumentRules.ts`): the app's own
+  `pptx-to-html-conv` pages into a temp `.pptx-htmls` folder, each slide
+  and each build step read one page at a time, every shape a box of its
+  own (`html` for drawn shapes and words, `image` for pictures), the notes
+  on the slide's base page, each build step a slide of its own marked
+  disabled, a hidden slide disabled; pictures encoded ONCE at the size they
+  are drawn (1.5×), an opaque one as JPEG 0.88, the original kept when
+  smaller; the temp folder removed in `finally`. Five things the
+  measurement found wrong, each fixed and measured again: a transition
+  page's earlier slide taken for the slide (the LAST `.slide > svg` layer),
+  a build step's hidden shapes drawn (`checkIsHiddenElement`), a motion
+  path's CSS transform ignored (`readOwnTransform`), a translucent
+  background over black (PowerPoint paints on white), and a 20.9 MB
+  document (13.0 MB after).
+- **How alike, measured** (`slideLikenessRules.ts`, pure): each slide drawn
+  twice by the app's own capture window (`main:app:capture-document-pages`)
+  -- the converter's page as the app previews it, its animations ended, and
+  the new slide as printing builds it -- and compared by SSIM on their
+  brightness at 320 pixels wide. `likeness` `sample` (eight slides spread
+  over the deck, the default), `all` or `none`. The reference is the app's
+  own preview of the PowerPoint, not PowerPoint itself: no PowerPoint runs
+  here.
+- **`owa_media_file` `convert`** (`agentMediaFileHelpers.ts`
+  `handleConvert`): `name` in Documents or a disk `path`, `newName` or the
+  deck's name at the next free one, behind `runWithAgentBackup` (its undo
+  trashes the document), 300 slides at most, a 300 s timeout. Withheld from
+  the model, like the rest of `owa_media_file`; banner _made a slide
+  document from the PowerPoint "…"_, its key in every language. The answer names the fonts this computer lacks and what is left out
+  (videos, sounds, transitions).
+- **The window's ask, no model** (`src/chatbot/pptxSlideAskHelpers.ts`,
+  pure; `pptxSlideAnswerHelpers.ts`): _convert .pptx to .ows_, _turn the
+  PowerPoint into a slide document_, _make slides from the Sunday
+  PowerPoint_ -- never a song out of a deck (the song drafter's, `EC-590`),
+  a slide document into a PowerPoint, or an empty new slide document (the
+  document-create reader now steps aside, `EC-514`). The Documents list's
+  PowerPoints as **Make a slide document from "…"** buttons (six, how many
+  more said), or the one the ask named converted at once; the answer says
+  what was made, how alike it measured, that a build is a slide a click,
+  the missing fonts and what is left out, with **Undo this change**, and the
+  new document waits in the box with its own card (`EC-514`'s way).
+
+Measured live 2026-11-20 on a scratch dev instance (its own profile, never
+the user's), on copies of the user's nine decks, `likeness: all`, every
+slide: the eight `# N new` decks 98.7-99.5% mean, every slide 95.5% or
+more; `bg-test` 99.8%; the 51-slide worship deck 97.4% with slide 5 at
+37.7% and six slides under 95% on the first measured run, **99.6% mean,
+lowest 98.2%** after, 73 slides (22 build steps), 13.0 MB, ~95 s with
+`all` and ~12 s with the default sample (99.7%). The converted document
+opened and drew in the scratch Presenter. Through the HTTP door the help
+window uses: `bg-test.pptx` converted in 4.0 s (99.8%), its `owa_undo`
+trashed the document in 59 ms, the PowerPoint untouched; the window's own
+sentences built from that answer read right, and three asks against the
+real Documents list routed as meant (a bare ask: six buttons; a named deck:
+converted). Every deck measured again on the final code, all of every
+deck's slides through that door, each undone by its own id: the same
+figures, no slide under 95%, ten of ten undone.
+
+**Seen in the window** the same evening, on the scratch dev copy only (the
+user authorized pressing the AI caution's **Open** there, in this
+conversation): _convert .pptx to .ows_ typed in a new tab → six
+**Make a slide document from "…"** buttons under _These are 6 of the 10 in
+your Documents list…_, **Auto pick** still _chosen at each question_ (no
+model asked); a press → _Making a slide document of "1 .) # 1 new.pptx"…_,
+the tab busy, then _I made "1 .) # 1 new (5)"… 5 slides… 5 of its slides
+look 99.4% like the PowerPoint. The least alike is slide 2, at 98.4%._, the
+missing fonts, **Undo this change**, and the document waiting in the box
+with its card; **Undo this change** → the file gone, _… is taken away
+again_; _turn bg-test.pptx into a slide document_ → converted at once,
+99.8%, undone by its id. The font sentence had ended `….` when the list
+was cut (the list's `…`, then the sentence's stop): `dropStopAfterEllipsis`.
+Pressing **Undo this change** by its words with two answers above found the
+older one (_That was already undone._, nothing changed): an `owa_click`
+matter, filed as `MC-68`.
+
+Tests: `pptxSlideDocumentRules.test.ts` (19), `slideLikenessRules.test.ts`
+(12), `pptxSlideAskHelpers.test.ts` (16), the window's
+`ChatbotAppComp.pptxSlides.test.tsx` (4: the buttons with no model, a press
+converting under Undo with the document handed to the box, a named deck at
+once, a failure said), the worker's `convert` in
+`agentMediaFileHelpers.test.ts` (5), the banner in
+`notify.coverage.test.mjs`. Ratchet unchanged, ~8 464 of 8 480. Eleven
+strings in all 87 languages' dictionaries, each `meta.json` raised and
+packed.
+
+### EC-764 — the PowerPoint-to-slide-document ask in another language, in the manual, and on the PowerPoint's own card — `open`
+
+The English window was seen live 2026-11-20 (`EC-763`). Left: one ask in a
+window shown in another installed language (every sentence and button in
+it; the scratch copy had English alone, and installing a language is the
+person's press); the W-xx recipe and the corpus row in every language's
+`questions.json`; a song from a PowerPoint and an empty new slide document
+asked in the window, held by unit tests until then. Also: a **Make a slide
+document from it** button on the PowerPoint's own card
+(`genOfficeOpeningAnswer`, `EC-761`), left out while that card is another
+session's uncommitted work; and a likeness measured against PowerPoint's
+own rendering (an exported PDF of the deck), where the reference today is
+the app's preview of it.

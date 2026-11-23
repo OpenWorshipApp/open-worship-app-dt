@@ -571,6 +571,58 @@ describe('registered app tools', () => {
     expect(clicked).toMatchObject({ opened: 'panel', didChange: true });
   });
 
+  // AD-04 / MC-67: installing a language reloads the window the press was
+  // made in, and the read-back died with CDP's "Inspected target navigated
+  // or closed" -- answered as the tool's error, for a press that worked.
+  it('answers a press whose window reloaded under it as unverified, not as an error', async () => {
+    const goneError = new Error('Inspected target navigated or closed');
+    app.evaluateInApp.mockImplementation(async (expression) => {
+      if (expression.includes('"Quokka Install"')) {
+        throw goneError;
+      }
+      if (expression.includes('"Zebra Stripes"')) {
+        throw new Error('Could not attach to x');
+      }
+      return { value: 'en' };
+    });
+    for (const [name, args, pressed] of [
+      ['owa_click', { find: 'Quokka Install' }, ['Quokka Install']],
+      [
+        'owa_type',
+        { find: 'Quokka Install', value: 'km', submit: true },
+        ['Quokka Install'],
+      ],
+      ['owa_press_key', { keys: 'Enter', find: 'Quokka Install' }, 'Enter'],
+    ]) {
+      const result = JSON.parse(answer(await call(name, args)));
+      expect(result).toMatchObject({ pressed, isWindowGone: true });
+      expect(result.unverified).toContain('owa_app_state');
+    }
+    // Any other failure is still the tool's error.
+    const refused = await call('owa_click', { find: 'Zebra Stripes' });
+    expect(refused.isError).toBe(true);
+    expect(refused.content[0].text).toBe('Could not attach to x');
+  });
+
+  it('tells a window that went away from any other failure', async () => {
+    const { checkIsTargetGoneError, toTargetGonePress } =
+      await import('./owaTools.mjs');
+    expect(
+      checkIsTargetGoneError(new Error('Inspected target navigated or closed')),
+    ).toBe(true);
+    expect(
+      checkIsTargetGoneError(new Error('Execution context was destroyed.')),
+    ).toBe(true);
+    expect(checkIsTargetGoneError(new Error('Timed out evaluating'))).toBe(
+      false,
+    );
+    expect(checkIsTargetGoneError(undefined)).toBe(false);
+    expect(toTargetGonePress('View > Reload')).toMatchObject({
+      pressed: 'View > Reload',
+      isWindowGone: true,
+    });
+  });
+
   // T2 (robot run 2026-10-16): a scope now matches the name a panel SHOWS,
   // which is in the window's language, so each half of "Panel > Control" is
   // offered translated -- the whole string was no dictionary key.
@@ -762,6 +814,36 @@ describe('owa_drop_files', () => {
     expect(handlers.has('owa_drop_files')).toBe(true);
     expect(appDoor.has('owa_drop_files')).toBe(false);
     expect(appDoor.has('owa_drag')).toBe(true);
+  });
+
+  // F-9 of robot run 20261120-2021: a screen's second Bible is a
+  // Shift+click. The developer's door holds keys down; the chatbot's door
+  // has no such field, so its model pays nothing for it.
+  it('gives owa_click held keys on the stdio door only', async () => {
+    const appDoor = new Map();
+    registerOwaTools(
+      {
+        registerTool(name, schema) {
+          appDoor.set(name, schema);
+        },
+      },
+      { door: 'app' },
+    );
+    expect(Object.keys(handlers.get('owa_click').schema.inputSchema)).toContain(
+      'modifiers',
+    );
+    expect(
+      Object.keys(appDoor.get('owa_click').inputSchema),
+    ).not.toContain('modifiers');
+    app.evaluateInApp.mockResolvedValueOnce({ value: 'en' });
+    app.evaluateInApp.mockResolvedValueOnce({
+      value: { clicked: true, didChange: true, modifiers: ['shift'] },
+    });
+    await call('owa_click', { find: 'Add', modifiers: ['shift'] });
+    const pressed = app.evaluateInApp.mock.calls.find(([expression]) => {
+      return expression.includes('"Add"');
+    });
+    expect(pressed[0]).toContain('"modifiers":["shift"]');
   });
 
   it('refuses a file that is not a fixture before touching the app', async () => {

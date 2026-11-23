@@ -24,6 +24,29 @@ function toColorKey(colorCode: string) {
     return colorCode.toLowerCase();
 }
 
+/**
+ * Each colour ONCE, under the first name the lists give it. Nine colours carry
+ * two CSS names (`fuchsia` / `magenta`, `aqua` / `cyan`, `gray` / `grey` …)
+ * and a note stores only the code, so the menu offered both rows and the dot
+ * could name only one of them: `fuchsia` picked read back as "Color Note:
+ * magenta" (F-6 of robot run 20261120-2021). The menu and the dot read this
+ * one list, so the name pressed is the name said.
+ */
+function genColorEntries() {
+    const seenKeys = new Set<string>();
+    return Object.entries({
+        ...colorList.main,
+        ...colorList.extension,
+    }).filter(([, colorCode]) => {
+        const colorKey = toColorKey(colorCode);
+        if (seenKeys.has(colorKey)) {
+            return false;
+        }
+        seenKeys.add(colorKey);
+        return true;
+    });
+}
+
 export function chooseColorNote(
     colorNote: string | null,
     setColorNote: (color: string | null) => void,
@@ -31,10 +54,7 @@ export function chooseColorNote(
     defaultColorNote: string | null = null,
 ) {
     event.stopPropagation();
-    const colors = Object.entries({
-        ...colorList.main,
-        ...colorList.extension,
-    });
+    const colors = genColorEntries();
     const colorKey = colorNote ? toColorKey(colorNote) : '';
     const defaultColorKey = defaultColorNote
         ? toColorKey(defaultColorNote)
@@ -116,18 +136,11 @@ export default function ItemColorNoteComp({
     // of what a press does, and in a translated window it was the row's one
     // English word.
     const title = useMemo(() => {
-        const reverseColorMap: Record<string, string> = Object.entries({
-            ...colorList.main,
-            ...colorList.extension,
-        }).reduce(
-            (acc, [name, colorCode]) => {
-                acc[toColorKey(colorCode)] = name;
-                return acc;
-            },
-            {} as Record<string, string>,
-        );
+        const colorKey = toColorKey(colorNote ?? '');
         const colorName =
-            reverseColorMap[toColorKey(colorNote ?? '')] ?? tran('No Color');
+            genColorEntries().find(([, colorCode]) => {
+                return toColorKey(colorCode) === colorKey;
+            })?.[0] ?? tran('No Color');
         return `${tran('Color Note')}: ${colorName}`;
     }, [colorNote]);
 

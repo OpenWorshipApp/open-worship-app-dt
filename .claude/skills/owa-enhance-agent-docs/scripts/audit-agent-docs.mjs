@@ -32,6 +32,10 @@
 // --with-ledgers. The manual's RECIPES are not history: the `manual` check
 // reads them, and the coverage matrix they are verified by, against the code.
 //
+// The `privacy` check reads more than the agent docs: every markdown file in
+// the listing and everything under `.claude/`, for a home path that names an
+// account (`AD-43`).
+//
 // What it reads: the file listing (`git ls-files -co --exclude-standard`, so
 // nothing ignored leaks in), the code under it, one `git log`, and the knowledge
 // index's timestamp. What it never does: reach the app or use the network.
@@ -67,6 +71,18 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { findHomePathsWithAccount } from './homePathPrivacy.mjs';
+import {
+    countCommitsTouching,
+    listPackageKeysNamed,
+    PACKAGE_KEY_MARK,
+    pickNoteSinceMs,
+    readPackageKeyLines,
+    readPackageKeyLog,
+    readPackageKeySet,
+    toRealNotePath,
+} from './noteStaleness.mjs';
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 // The translated manual's own reader (`AD-24`), read-only. Null when it cannot
 // be loaded, so the rest of the audit still runs.
@@ -87,6 +103,7 @@ const CHECK_LIST = [
     'memory',
     'rules',
     'skills',
+    'privacy',
     'knowledge',
     'manual',
     'budget',
@@ -119,6 +136,7 @@ const CLAIM_CHECK_LIST = [
     'env',
     'ids',
     'memory',
+    'privacy',
 ];
 const checkSet = new Set(
     checkArg ? checkArg.split(',') : docArg ? CLAIM_CHECK_LIST : CHECK_LIST,
@@ -477,6 +495,13 @@ const repoFileList = runGit(['ls-files', '-co', '--exclude-standard'])
     .split('\n')
     .filter(Boolean);
 const repoFileSet = new Set(repoFileList);
+// The files at the repository's root that are not prose: `.npmrc`,
+// `.mcp.json`, `electron.tsconfig.json` (`AD-45`).
+const ROOT_FILE_SET = new Set(
+    repoFileList.filter((relPath) => {
+        return !relPath.includes('/') && !/\.md$/i.test(relPath);
+    }),
+);
 const basenameMap = new Map();
 for (const relPath of repoFileList) {
     const name = relPath.slice(relPath.lastIndexOf('/') + 1);
@@ -725,6 +750,17 @@ function parsePathToken(token, doc) {
         (FILE_EXTENSION_PATTERN.test(relPath) || relPath.endsWith('/'))
     ) {
         return { relPath: relPath.replace(/\/$/, ''), lineNumber };
+    }
+    // A root file is named bare, under no root folder: `.mcp.json` was no
+    // path at all, so a note about it was never due (`AD-45`). Only one that
+    // exists, and only a name no other folder's file carries -- a language
+    // package has its own `.npmrc` -- as the basename route below asks.
+    if (
+        !relPath.includes('/') &&
+        ROOT_FILE_SET.has(relPath) &&
+        basenameMap.get(relPath)?.length === 1
+    ) {
+        return { relPath, lineNumber };
     }
     return null;
 }
@@ -1006,7 +1042,7 @@ function readRegisteredTools() {
     return toolSet;
 }
 
-// `owa_guide_start` / `_step` / `_status` is how CLAUDE.md lists a family, and
+// `owa_guide_start` / `_step` / `_status` is how a listing names a family, and
 // `owa_foreground` / `_edit` a tool beside its own variant.
 function checkMentionsTool(text, toolName) {
     if (text.includes(toolName)) {
@@ -1050,9 +1086,11 @@ function runToolsCheck(docList) {
             }
         });
     }
-    // The three places a reader looks for "which tools are there".
+    // The two places a reader looks for "which tools are there". CLAUDE.md
+    // listed every tool too until 2026-11-19 (`AD-38`): ~1.5 KB in every
+    // session, repeating the MCP listing each session already receives, and
+    // grown by every new tool; it now points at these two.
     const listingDocList = [
-        '.claude/CLAUDE.md',
         '.claude/rules/agent-tools.md',
         'tools/owa-devtools-mcp/README.md',
     ].filter((relPath) => checkIsInDocArg({ relPath }));
@@ -1177,6 +1215,49 @@ function runEnvCheck(docList) {
     }
     return [
         { label: 'OWA_* variables no code reads', items: sortHits(unknown) },
+    ];
+}
+
+// ---- privacy ------------------------------------------------------------------
+
+/**
+ * A home path with an account name in any document that ships or is
+ * published (`AD-43`, `homePathPrivacy.mjs`): every markdown file in the
+ * listing -- ledgers, the manual sources and the language packages' manual
+ * pages included, since a ledger ships like any note -- and every file under
+ * `.claude/`. History is no exemption: the name is the problem, not the claim.
+ */
+function runPrivacyCheck() {
+    const hitList = [];
+    for (const relPath of repoFileList) {
+        if (
+            !(relPath.endsWith('.md') || relPath.startsWith('.claude/')) ||
+            (docArg && !relPath.startsWith(docArg))
+        ) {
+            continue;
+        }
+        const text = readText(relPath);
+        if (text === null) {
+            continue;
+        }
+        for (const { line, path: homePath } of findHomePathsWithAccount(text)) {
+            hitList.push({
+                at: `${relPath}:${line}`,
+                doc: relPath,
+                name: null,
+                kind: 'privacy',
+                text: `${homePath} -- names an account`,
+            });
+        }
+    }
+    return [
+        {
+            label: 'home paths naming an account (shipped in plaintext)',
+            text:
+                'write `../<repo>` for a sibling checkout, `$HOME` or `~` for ' +
+                'the home folder; memory `no-user-specific-references-in-notes`',
+            items: hitList,
+        },
     ];
 }
 
@@ -1632,6 +1713,15 @@ function runSkillsCheck() {
     ];
 }
 
+// A ledger entry's commit, by its short hash; 0 when it is gone (a rebase) or
+// not a commit at all.
+function readCommitMs(commitish) {
+    if (!/^[0-9a-f]{7,40}$/.test(commitish ?? '')) {
+        return 0;
+    }
+    const stamp = runGit(['show', '-s', '--format=%ct', commitish]).trim();
+    return Number(stamp) * 1000 || 0;
+}
 function readLastCommitMs(relPath) {
     const stamp = runGit(['log', '-1', '--format=%ct', '--', relPath]).trim();
     return stamp ? Number(stamp) * 1000 : 0;
@@ -1805,15 +1895,18 @@ function readCommitList() {
         '--name-only',
         // Rename detection costs 20x the rest of the log on this repo.
         '--no-renames',
-        '--format=%x00%ct %s',
+        '--format=%x00%h %ct %s',
     ]);
     commitListCache = output
         .split('\0')
         .filter(Boolean)
         .map((chunk) => {
-            const [head, ...fileList] = chunk.split('\n');
+            const [line, ...fileList] = chunk.split('\n');
+            const sha = line.slice(0, line.indexOf(' '));
+            const head = line.slice(sha.length + 1);
             const spaceIndex = head.indexOf(' ');
             return {
+                sha,
                 timeMs: Number(head.slice(0, spaceIndex)) * 1000,
                 subject: head.slice(spaceIndex + 1),
                 fileList: fileList.filter(Boolean),
@@ -1877,7 +1970,71 @@ function collectDocReferences(docList, claimList) {
         }
         referenceMap.get(key).add(relPath);
     }
+    // `package.json` is hot and dropped above; the names a note uses from it
+    // are followed one line each (`AD-45`, `noteStaleness.mjs`).
+    const spanTokenMap = new Map();
+    for (const claim of claimList) {
+        if (claim.kind === 'span') {
+            const key = claim.doc.relPath;
+            spanTokenMap.set(key, [
+                ...(spanTokenMap.get(key) ?? []),
+                claim.token,
+            ]);
+        }
+    }
+    const packageKeySet = readRepoPackageKeySet();
+    for (const [key, tokenList] of spanTokenMap) {
+        const namedSet = listPackageKeysNamed(tokenList, packageKeySet);
+        if (namedSet.size === 0) {
+            continue;
+        }
+        if (!referenceMap.has(key)) {
+            referenceMap.set(key, new Set());
+        }
+        for (const name of namedSet) {
+            referenceMap.get(key).add(`${PACKAGE_KEY_MARK}${name}`);
+        }
+    }
     return referenceMap;
+}
+
+let packageKeySetCache = null;
+function readRepoPackageKeySet() {
+    if (packageKeySetCache === null) {
+        packageKeySetCache = readPackageKeySet(readText('package.json'));
+    }
+    return packageKeySetCache;
+}
+
+// The commit list with, for each commit that changed `package.json`, the
+// names whose line it changed as files of their own -- one `git log` for the
+// window, only when some note follows a name.
+function withPackageKeyFiles(commitList) {
+    const changedMap = readPackageKeyLog(
+        runGit([
+            'log',
+            `--since=${STALENESS_WINDOW_DAYS}.days`,
+            '-p',
+            '-U0',
+            '--no-renames',
+            '--format=%x00%h',
+            '--',
+            'package.json',
+        ]),
+    );
+    return commitList.map((commit) => {
+        const keySet = changedMap.get(commit.sha);
+        if (!keySet || keySet.size === 0) {
+            return commit;
+        }
+        return {
+            ...commit,
+            fileList: [
+                ...commit.fileList,
+                ...[...keySet].map((one) => `${PACKAGE_KEY_MARK}${one}`),
+            ],
+        };
+    });
 }
 
 function runCoverageCheck(docList, claimList) {
@@ -1992,7 +2149,12 @@ function hashNoteText(text) {
 const fileHashCache = new Map();
 function hashRepoFile(relPath) {
     if (!fileHashCache.has(relPath)) {
-        const text = readText(relPath, NOTE_READ_BYTES);
+        const text = relPath.startsWith(PACKAGE_KEY_MARK)
+            ? readPackageKeyLines(
+                  readText('package.json', NOTE_READ_BYTES),
+                  relPath.slice(PACKAGE_KEY_MARK.length),
+              )
+            : readText(relPath, NOTE_READ_BYTES);
         fileHashCache.set(relPath, text === null ? 'gone' : hashNoteText(text));
     }
     return fileHashCache.get(relPath);
@@ -2001,7 +2163,12 @@ function hashRepoFile(relPath) {
 const headHashCache = new Map();
 function hashHeadFile(relPath) {
     if (!headHashCache.has(relPath)) {
-        const text = readHeadText(relPath, NOTE_READ_BYTES);
+        const text = relPath.startsWith(PACKAGE_KEY_MARK)
+            ? readPackageKeyLines(
+                  readHeadText('package.json', NOTE_READ_BYTES),
+                  relPath.slice(PACKAGE_KEY_MARK.length),
+              )
+            : readHeadText(relPath, NOTE_READ_BYTES);
         headHashCache.set(relPath, text === null ? 'gone' : hashNoteText(text));
     }
     return headHashCache.get(relPath);
@@ -2013,7 +2180,7 @@ function hashNoteCode(fileList, headSet = null) {
     return hashNoteText(
         fileList
             .map((one) => {
-                const hash = headSet?.has(one)
+                const hash = headSet?.has(toRealNotePath(one))
                     ? hashHeadFile(one)
                     : hashRepoFile(one);
                 return `${one}\n${hash}`;
@@ -2022,12 +2189,95 @@ function hashNoteCode(fileList, headSet = null) {
     );
 }
 
+// The same hash over what the files held at a commit: a stamp's own, when the
+// list a note names has grown since by what the check now follows (`AD-45`).
+const atHashCache = new Map();
+function hashFileAt(relPath, commit) {
+    const cacheKey = `${commit}:${relPath}`;
+    if (!atHashCache.has(cacheKey)) {
+        let text = null;
+        try {
+            text = execFileSync(
+                'git',
+                ['show', `${commit}:${toRealNotePath(relPath)}`],
+                {
+                    cwd: REPO_ROOT,
+                    encoding: 'utf-8',
+                    maxBuffer: 256 * 1024 * 1024,
+                    stdio: ['ignore', 'pipe', 'ignore'],
+                },
+            );
+        } catch {
+            text = null;
+        }
+        if (text !== null && relPath.startsWith(PACKAGE_KEY_MARK)) {
+            text = readPackageKeyLines(
+                text,
+                relPath.slice(PACKAGE_KEY_MARK.length),
+            );
+        }
+        atHashCache.set(
+            cacheKey,
+            text === null || Buffer.byteLength(text) > NOTE_READ_BYTES
+                ? 'gone'
+                : hashNoteText(text),
+        );
+    }
+    return atHashCache.get(cacheKey);
+}
+
+// Followed only since `AD-45`: a `package.json` name, or a root file the
+// basename route did not already reach.
+function checkIsNewlyFollowed(relPath) {
+    if (relPath.startsWith(PACKAGE_KEY_MARK)) {
+        return true;
+    }
+    return (
+        ROOT_FILE_SET.has(relPath) &&
+        basenameMap.get(relPath)?.length === 1 &&
+        !BASENAME_PATTERN.test(relPath)
+    );
+}
+
+// A note stamped before the check followed those names the same files it
+// did then, plus them: its list grew, the note did not name anything new.
+function checkIsListGrownByFollowing(review, state) {
+    const newList = state.fileList.filter(checkIsNewlyFollowed);
+    if (newList.length === 0 || review.files === state.files) {
+        return false;
+    }
+    const oldList = state.fileList.filter((one) => !checkIsNewlyFollowed(one));
+    return hashNoteText(oldList.join('\0')) === review.files;
+}
+
+// ... and was read against this very code when the rest of its list holds
+// what the stamp hashed and each newly followed file is as the stamp's commit
+// had it.
+function checkIsReadBeforeFollowing(review, state) {
+    if (!checkIsListGrownByFollowing(review, state)) {
+        return false;
+    }
+    const oldList = state.fileList.filter((one) => !checkIsNewlyFollowed(one));
+    return (
+        hashNoteCode(oldList) === review.code &&
+        state.fileList
+            .filter(checkIsNewlyFollowed)
+            .every((one) => hashFileAt(one, review.at) === hashRepoFile(one))
+    );
+}
+
 function readNoteState(relPath, relPathSet, headSet = null) {
     // Files only. A note that says `tools/` names a folder, which has no
     // content to hash and, handed to `git diff`, lists everything under it.
     // A file that is gone stays: that IS a change.
     const fileList = [...(relPathSet ?? [])]
-        .filter((one) => repoFileSet.has(one) || !checkExists(one))
+        .filter((one) => {
+            return (
+                repoFileSet.has(one) ||
+                one.startsWith(PACKAGE_KEY_MARK) ||
+                !checkExists(one)
+            );
+        })
         .sort();
     return {
         fileList,
@@ -2043,18 +2293,41 @@ function runStalenessCheck(docList, claimList) {
     const referenceMap = collectDocReferences(docList, claimList);
     const reviewMap = readNotesReviewMap();
     const dirtySet = readDirtySet();
-    const commitList = readCommitList();
+    const commitList = withPackageKeyFiles(readCommitList());
     const rowList = [];
     const uncommittedRowList = [];
+    const neverReadRowList = [];
     for (const doc of docList) {
         if (!checkIsAudited(doc) || doc.kind === 'historical') {
             continue;
         }
         const relPathSet = referenceMap.get(doc.relPath);
+        const review = reviewMap[doc.relPath];
+        // Never read, and naming no file to follow: no commit can ever list
+        // it, so it is listed once, to be read and stamped (`AD-45`: 51
+        // documents, 38 of them memory notes, had never been read at all).
+        if (review === undefined) {
+            const followedList = [...(relPathSet ?? [])].filter((one) => {
+                return (
+                    repoFileSet.has(one) ||
+                    one.startsWith(PACKAGE_KEY_MARK) ||
+                    !checkExists(one)
+                );
+            });
+            if (followedList.length === 0) {
+                neverReadRowList.push({
+                    at: doc.relPath,
+                    text:
+                        relPathSet && relPathSet.size > 0
+                            ? 'never read; it names only folders'
+                            : 'never read; it names no file',
+                });
+                continue;
+            }
+        }
         if (!relPathSet || relPathSet.size === 0) {
             continue;
         }
-        const review = reviewMap[doc.relPath];
         if (review !== undefined) {
             const state = readNoteState(doc.relPath, relPathSet);
             // Every file it names is outside what the repository tracks (a
@@ -2068,8 +2341,20 @@ function runStalenessCheck(docList, claimList) {
             // A one-line edit to a 60 KB rule must not pass for a re-read of
             // it: while the note names the same files, it is the CODE that
             // decides, whatever was reworded since.
-            if (review.text === state.text || review.files === state.files) {
-                if (review.code !== state.code) {
+            if (
+                review.text === state.text ||
+                review.files === state.files ||
+                checkIsListGrownByFollowing(review, state)
+            ) {
+                // The list of files it names grew by what this check learned
+                // to follow -- a root file, a `package.json` name (`AD-45`):
+                // still read against this very code when nothing it named
+                // then moved and each new one is as the stamp's commit had it.
+                const isSameCodeSinceStamp = checkIsReadBeforeFollowing(
+                    review,
+                    state,
+                );
+                if (review.code !== state.code && !isSameCodeSinceStamp) {
                     // Only work in progress moved under it: with every
                     // uncommitted file read as the last commit has it, this
                     // is the very code it was checked against. Reading it now
@@ -2078,7 +2363,7 @@ function runStalenessCheck(docList, claimList) {
                     // save -- eight notes went due this way mid-run on
                     // 2026-10-11, from one file nobody had committed.
                     const dirtyList = state.fileList.filter((one) => {
-                        return dirtySet.has(one);
+                        return dirtySet.has(toRealNotePath(one));
                     });
                     if (
                         dirtyList.length > 0 &&
@@ -2095,18 +2380,24 @@ function runStalenessCheck(docList, claimList) {
                         '--name-only',
                         review.at,
                         '--',
-                        ...state.fileList,
+                        ...new Set(state.fileList.map(toRealNotePath)),
                     ])
                         .split('\n')
                         .filter(Boolean);
+                    // The stamp's commit was rewritten out of the history:
+                    // nothing can be diffed against it, so say that instead
+                    // of a diff that comes back empty (README.md, 2026-11-20).
+                    const isStampGone = readCommitMs(review.at) === 0;
+                    const diffText =
+                        changedList.length > 0
+                            ? ` -- git diff ${review.at} -- ${changedList.slice(0, 3).join(' ')}` +
+                              (changedList.length > 3 ? ' …' : '')
+                            : '';
                     rowList.push({
                         at: doc.relPath,
-                        text:
-                            `the code it names changed since it was checked on ${review.reviewed}` +
-                            (changedList.length > 0
-                                ? ` -- git diff ${review.at} -- ${changedList.slice(0, 3).join(' ')}` +
-                                  (changedList.length > 3 ? ' …' : '')
-                                : ''),
+                        text: isStampGone
+                            ? `checked on ${review.reviewed} at ${review.at}, a commit no longer in the history; read it against today's code`
+                            : `the code it names changed since it was checked on ${review.reviewed}${diffText}`,
                         commitCount: Math.max(1, changedList.length),
                         // Whole, for `--json`: the text above cuts it at
                         // three, and a reader splitting the work needs all.
@@ -2116,39 +2407,37 @@ function runStalenessCheck(docList, claimList) {
                 // Read against this very code: due only when the code moves.
                 continue;
             }
-            // Edited to name other files since it was checked: whoever edited
-            // it wrote that against the code of the day, so it is judged like
-            // a note never checked.
+            // Edited to name other files since it was checked: counted from
+            // the stamp, not from the edit (`AD-42`, `noteStaleness.mjs`). An
+            // edit is no read -- two edits of a note had each cleared a
+            // "never" a commit between them broke.
         }
         const docMs = dirtySet.has(doc.relPath)
             ? Date.now()
             : readLastCommitMsFromList(commitList, doc.relPath);
-        if (docMs === 0) {
-            continue;
-        }
-        const movedSet = new Set();
-        let commitCount = 0;
-        for (const commit of commitList) {
-            if (commit.timeMs <= docMs) {
-                continue;
-            }
-            const touchedList = commit.fileList.filter((relPath) => {
-                return relPathSet.has(relPath);
-            });
-            if (touchedList.length > 0) {
-                commitCount++;
-                touchedList.forEach((relPath) => movedSet.add(relPath));
-            }
-        }
+        const reviewMs =
+            review === undefined ? 0 : readCommitMs(review.at);
+        const sinceMs = pickNoteSinceMs({ docMs, reviewMs });
+        const { commitCount, movedSet } = countCommitsTouching(
+            commitList,
+            sinceMs,
+            relPathSet,
+        );
         if (commitCount > 0) {
             rowList.push({
                 at: doc.relPath,
                 text:
-                    `${commitCount} commits since its last edit touched ` +
+                    `${commitCount} commits since its ` +
+                    (reviewMs > 0
+                        ? `check on ${review.reviewed} touched `
+                        : 'last edit touched ') +
                     `${movedSet.size} of the ${relPathSet.size} files it names: ` +
                     [...movedSet].slice(0, 3).join(', ') +
                     (movedSet.size > 3 ? ', …' : ''),
                 commitCount,
+                // Whole, for `--json`, as the row above gives it.
+                changed: [...movedSet],
+                since: reviewMs > 0 ? review.at : undefined,
             });
         }
     }
@@ -2164,6 +2453,13 @@ function runStalenessCheck(docList, claimList) {
             label: 'notes due only because of an uncommitted file',
             text: UNCOMMITTED_TEXT,
             items: uncommittedRowList,
+        },
+        {
+            label: 'notes never read that name no file to follow',
+            text: 'no commit can list one; read it once against the code it describes, then --stamp-notes=<path>',
+            items: neverReadRowList.sort((one, other) => {
+                return one.at.localeCompare(other.at);
+            }),
         },
     ];
 }
@@ -2191,7 +2487,11 @@ function stampNotesReview(pathArg, docList, claimList) {
         const dirtySet = readDirtySet();
         const refusedList = wantedList.flatMap((relPath) => {
             const dirtyList = [...(referenceMap.get(relPath) ?? [])]
-                .filter((one) => dirtySet.has(one) && !docSet.has(one))
+                .filter((one) => {
+                    return (
+                        dirtySet.has(toRealNotePath(one)) && !docSet.has(one)
+                    );
+                })
                 .sort();
             return dirtyList.length > 0
                 ? [`${relPath}: ${dirtyList.join(', ')}`]
@@ -2868,6 +3168,7 @@ const RUNNER_MAP = {
     memory: () => runMemoryCheck(targetDocList),
     rules: () => runRulesCheck(),
     skills: () => runSkillsCheck(),
+    privacy: () => runPrivacyCheck(),
     knowledge: () => {
         return runKnowledgeCheck(
             docList.filter((doc) => doc.kind !== 'project'),

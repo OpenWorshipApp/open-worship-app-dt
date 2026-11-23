@@ -5,6 +5,7 @@ import {
 } from '../../../tools/owa-devtools-mcp/bibleBookNames.mjs';
 import { useAppCurrentRef, useAppEffect } from '../../helper/appHooks';
 import { allLocalesMap, tran, type LocaleType } from '../../lang/langHelpers';
+import { toImportLocale } from './bibleImportLocaleHelpers';
 import { loadLangBibleBooks } from '../../lang/langPackageFileHelpers';
 import {
     getAllXMLFileKeys,
@@ -105,9 +106,11 @@ export default function BibleImportReviewComp({
     const [takenKeys, setTakenKeys] = useState<string[] | null>(null);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
-    const [locale, setLocale] = useState<string>(data.info.locale);
+    const [locale, setLocale] = useState<string>(() => {
+        return toImportLocale(data.info.locale);
+    });
     const localeRef = useAppCurrentRef(locale);
-    const [localeDraft, setLocaleDraft] = useState<string>(data.info.locale);
+    const [localeDraft, setLocaleDraft] = useState<string>(locale);
     const [numbers, setNumbers] = useState(() => {
         const existing = Array.from(
             { length: 10 },
@@ -117,7 +120,7 @@ export default function BibleImportReviewComp({
             (digit) => typeof digit === 'string' && digit.length > 0,
         ) && existing.join('') !== '0123456789'
             ? existing
-            : getBibleNumberChoices(data.info.locale)[0];
+            : getBibleNumberChoices(locale)[0];
     });
     const [books, setBooks] = useState<string[] | null>(null);
     const [result, setResult] = useState<NamesResultType | null>(null);

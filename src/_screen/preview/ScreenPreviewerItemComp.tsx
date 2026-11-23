@@ -113,6 +113,11 @@ export default function ScreenPreviewerItemComp({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
     const handleDragOver = useCallback((event: any) => {
+        // Not cancelled, so the drop is refused and the pointer says so: the
+        // drag carries nothing a screen shows (`dragStore.isScreenRefused`).
+        if (dragStore.isScreenRefused) {
+            return;
+        }
         event.preventDefault();
         event.currentTarget.classList.add(RECEIVING_DROP_CLASSNAME);
     }, []);

@@ -28,7 +28,7 @@ re-renders only when ITS OWN answer flips. Three rules that look wrong out of co
   never per file.
 
 Preset matching: marquee and message rows match on TEXT (every message up, not the
-first of the same length), `time`/`camera`/`screen` on id, `web`/`video`/`image` on filePath.
+first of the same length), `time`/`camera`/`screen` on id, `web`/`video`/`image` on filePath, `fill`/`animation` on their `src` (since 2026-11-15).
 **Countdown / stopwatch / quick-text match on a ROW KEY** (2026-10-02): the screen keeps
 nothing of the row (a countdown's time is worked out at show time, a quick text holds
 rendered html), so `applyForegroundDragData` stamps `rowKey = toForegroundRowKey(data)` on

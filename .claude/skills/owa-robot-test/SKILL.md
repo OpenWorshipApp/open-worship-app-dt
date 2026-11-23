@@ -1,6 +1,6 @@
 ---
 name: owa-robot-test
-description: 'Autonomous QA / robot end-to-end UI/UX testing of the RUNNING Open Worship App (Electron + React + Vite) through the app''s own owa-devtools MCP (chrome-devtools tools + app-level owa_* ones) — and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test, or FULL-COVERAGE test the real app UI; to hunt for UI/UX bugs, visual glitches, console errors, broken buttons/tabs, dead links, or accessibility problems on the live app; OR to generate a tutorial / help page / user guide for the app, or to verify a learning document / manual / tutorial against the real app behavior. The workflow starts "npm run dev", waits until the Electron remote-debugging (CDP) endpoint the app publishes is attached, connects the owa-devtools MCP, walks the presenter / reader / slide-editor / settings / popup-window UI like a QA engineer, captures screenshots + console + network, and reports findings by severity. Screen controlling & presenting checks (present content, drive the screen.html output target, clear/restore), a LOCALE SWITCH pass (run the touched screens in an installed non-English language — a missing key THROWS in dev and blanks the page, and an English-only run structurally cannot see it), and a MEDIA DOWNLOAD pass (download one video AND one audio from the canonical YouTube link — the only product flow that runs the on-demand extra-bin yt-dlp/ffmpeg/qjs binaries (the dev-only experiments page also can)) and a DRAG-AND-DROP pass (an internal drag, a drop on a hidden screen and a real file dropped from the disk through owa_drop_files — DD-08/12/15, §6h; the argument "dnd" runs all DD-01..19) are MANDATORY in every run not focused on one area. Full-coverage runs are tracked row-by-row against docs/test-paths/coverage-matrix.md (~970 stable-ID rows incl. a full keyboard-shortcut matrix KB-01..65 and a context-menu-item matrix CM-01..101, resumable across sessions via a coverage-<runid>.json state file). Asked to IMPORT A BIBLE XML, add a bible translation from a link/URL, or fix one that reads in English, run §6g (ST-41..ST-50): the URL import, the inline Review Bible import panel, and the Info editor''s Choose Locale → Edit Numbers Map → Edit Books Map actions that make a non-English translation read in its own script and numerals. The argument "presenting flow" (or "run sheet") selects PRESENTING_FLOW DEEP MODE (§6f): a tracked, coverage-accounted 11-phase pass over all 69 run-sheet rows (PL-10, PL-29, PL-32..76, PL-81..102) — storage kinds, the tree, both action families, CC elements, screen pinning, the floating preview as a player, failure surfaces, archives, performance guards — driven from a scratch presenting flow and torn down afterwards. Tutorial/doc work is grounded in references/user-workflows.md (stable W-xx task recipes with screenshot checkpoints, each traceable to matrix rows). Newer areas covered by the matrix and workflows: the Resources panel (RD-81..90, W-37), the Connection Graph (RD-92..106, W-38), SongSelect import (PL-103..104, W-35), Public Domain Songs import (PL-105, W-36), the app-wide ⋮ button (GL-24, W-01b), verse marks that highlight & comment bible text into Bible Notes (RD-108..112, W-40), and whole-Bible-Note-file sharing as .owanote.tar.gz (PR-30/31, CM-98/99, W-41). The argument "prod" (or "release" / "packaged") selects PROD MODE (§2b): build the release with `npm run pack:<os>` (vite + electron build + electron-builder into `release/`), start the PACKAGED app from `release/<os>-unpacked/` through `scripts/prod-app.mjs` (which checks the AI switch — ON by default, and only an explicit `ai-enabled: "false"` turns it off — strips `ELECTRON_RUN_AS_NODE`, and records the pid so only that instance is ever stopped), attach with `wait-for-debugger.mjs --prod`, and run the same procedure against `owa://local/…` pages — proving the asar/protocol/native-module packaging and every prod-only default (no `tran()` throw, no dev stamps, real Extra Binaries download, un-suffixed userData) that a dev run structurally cannot see. It is a TARGET that combines with any focus or mode (`prod presenter`, `prod full`, `prod presentingFlow`).'
+description: 'QA and robot end-to-end testing of the RUNNING Open Worship App through its own owa-devtools MCP, and the SOURCE OF TRUTH for user-facing documentation. Use when asked to robot test, QA test, smoke test, e2e test or full-coverage test the real app UI; to hunt UI/UX bugs, visual glitches, console errors, broken buttons or tabs, dead links or accessibility problems on the live app; to generate or update a tutorial, help page, user guide or manual recipe (W-xx), or to verify a learning document against the real app; to test presenting to a screen, drag and drop, a video or audio download, a non-English language, the presenting flow (run sheet), or a Bible XML imported from a link; or to test the PACKAGED release build. Every run not focused on one area presents a real item to a real screen and drives screen.html, switches to an installed non-English language (a missing key throws in dev), downloads one video and one audio (the only product path that runs yt-dlp/ffmpeg), and drags and drops. Full runs are tracked row by row against docs/test-paths/coverage-matrix.md (stable ids, resumable); tutorials come from references/user-workflows.md and never publish a step not observed live. Arguments: a focus area, full, presenting flow, dnd, prod [focus] (build with npm run pack:<os> and drive the packaged app), tutorial, verify-doc <path|url>.'
 argument-hint: '[focus area e.g. "presenter", "bible lookup" — or "presenting flow" for the tracked deep run-sheet pass — or "dnd" for every drag-and-drop pairing (DD-01..19) — or "full" for a tracked full-coverage run — or "prod [focus]" to build the release and test the PACKAGED app under release/ — or "tutorial [workflows]" to generate a help page — or "verify-doc <path|url>" to check a learning document against the live app]'
 ---
 
@@ -37,7 +37,10 @@ unit or Playwright tests.
 - "Check this manual / tutorial / learning doc against the app" → **doc-verify mode**
   (§10). Both are grounded in
   [references/user-workflows.md](./references/user-workflows.md) — the user-facing
-  task recipes that this skill keeps in sync with the live app.
+  task recipes that this skill keeps in sync with the live app. It is ~550 KB:
+  read the recipe you need, not the file — `grep -n '^### W-' references/user-workflows.md`
+  for its line, then Read from there with `offset`/`limit` (or its one page under
+  `docs/manual-sources/`, `npm run docs:gen`'s output).
 
 ## How it works (architecture)
 
@@ -380,7 +383,13 @@ origin driven is not a prod report.
    With more than one app running (a packaged app beside dev counts), every tool first
    answers with the list of apps and does nothing: ask the user which to drive, then
    `owa_choose_app` its `pid`.
-2. `mcp__owa-devtools__select_page` on that page.
+2. `mcp__owa-devtools__select_page` on that page. Every chrome-devtools page tool after
+   it -- `wait_for`, `take_snapshot`, `take_screenshot`, `click`,
+   `list_console_messages` ... -- works on the page chosen there, or on another by the
+   `pageId` `list_pages` prints. (chrome-devtools-mcp 1.12 made `pageId` required, and 9
+   calls in 3 sessions were refused for leaving it out; `makePageIdOptional` in
+   `server.mjs` made it optional again on 2026-11-19, `AD-39`.) The `owa_*` tools name a
+   window by `page` instead.
 3. Confirm React finished mounting (not just DOM-loaded) with
    `mcp__owa-devtools__wait_for` on a name the page only draws once it has mounted.
    `wait_for` matches ACCESSIBLE names as well as visible text (verified 2026-09-12: it
@@ -839,8 +848,8 @@ interlock, human-only` rather than a row to fake. A HUMAN tester still uses the 
    This step still runs when MD-01/MD-02 are BLOCKED or failed — a partial download leaves
    the biggest debris.
 
-Triage before filing (a 403 is usually NOT an app bug), the known orphaned-`.part` bug,
-and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
+Triage before filing (a 403 is usually NOT an app bug), the orphaned-`.part` bug fixed
+on 2026-11-22 (one seen now is a regression), and the `(1)` de-duplication suffix are all documented in the matrix §MD — read it before
 reporting a download failure. A `(1)` on the run's _first_ download means step 0 was
 skipped, not that the app misbehaved.
 
@@ -923,10 +932,10 @@ than the position (PL-53).
 #### P3 — Actions, both families (PL-71..PL-74, PL-95, PL-96, PL-97)
 
 The **Add Action** menu is four levels now: every clear folds behind **Clear Screen**, and
-the twelve per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
+the fourteen per-widget foreground clears behind **Other Clear FG Items** inside it (PL-71).
 Two families, and the difference is the whole point:
 
-- **Screen actions** (20: the 19 in **Add Action** — five clears, twelve per-widget foreground clears, **Screen: Show** / **Screen: Hide** — plus one more) — `apply(screenManager, presentingFlowItem)`. **Fire every one of them at least once against a real, showing screen** (PL-72, PL-74). They are the only presenting flow rows that write to a screen while carrying no content; a mis-wired clear is invisible in the tree. **Clear All** cannot be added by an agent at all — the MCP firewall refuses its label even in this menu — so say so rather than counting it, and a per-widget clear with nothing of its kind up proves only that it does no harm. The twentieth, `Slide: Media Control` (PL-102), is the odd one:
+- **Screen actions** (22: the 21 in **Add Action** — five clears, fourteen per-widget foreground clears, **Screen: Show** / **Screen: Hide** — plus one more) — `apply(screenManager, presentingFlowItem)`. **Fire every one of them at least once against a real, showing screen** (PL-72, PL-74). They are the only presenting flow rows that write to a screen while carrying no content; a mis-wired clear is invisible in the tree. **Clear All** cannot be added by an agent at all — the MCP firewall refuses its label even in this menu — so say so rather than counting it, and a per-widget clear with nothing of its kind up proves only that it does no harm. The twenty-second, `Slide: Media Control` (PL-102), is the odd one:
   it is NOT in the `Add Action` menu at all — it is attached to a slide from that slide's
   own menu (**Add Media Control**), its settings live on the attachment, and its pin
   NARROWS the host's screens rather than replacing them.
@@ -1104,7 +1113,7 @@ The block (mandatory, ~2 minutes):
    Pass: `owa_presenting_flow info` lists one `appDocument` line.
 2. **`[DD-12]`** With the screens **hidden** (never on a screen in live use — EX-02), note
    what screen 0 holds (`owa_list_screens`), `owa_drag` a colour swatch from Background →
-   **Colors** onto its Mini Screen card, read it back, then put the old background back the
+   **Fills** onto its Mini Screen card, read it back, then put the old background back the
    same way. A camera tile with no camera running raises **Camera Error** — the person's
    Ok, so do not use cameras in this block.
 3. **`[DD-15]`** `owa_drop_files` the fixture PNG onto Background → **Images** (aim at the
@@ -1164,7 +1173,7 @@ leftovers.
 - In **presenting flow deep mode** (§6f) the report MUST additionally carry: the per-phase table
   (P0..P10 → status), the coverage summary over the 69-row scope set, the fixture's name
   and **what was torn down vs. left behind**, and — because they are the rows most easily
-  faked — an explicit line each for the **screen actions fired against a showing screen** (PL-72/74: each one named, and every one of the 19 in **Add Action** not fired named with its reason), the **folded-sheet walk** (PL-99) and the **performance
+  faked — an explicit line each for the **screen actions fired against a showing screen** (PL-72/74: each one named, and every one of the 21 in **Add Action** not fired named with its reason), the **folded-sheet walk** (PL-99) and the **performance
   measurements** (PL-63/70) with their numbers.
 - In **prod mode** (§2b) the report MUST open with the **Build under test** block
   (version, commit + dirty flag, exe path and `builtAt`, the pack artefacts written to

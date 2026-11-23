@@ -9,8 +9,8 @@ metadata:
 ---
 
 A new screen layer added after `#foreground` in `ScreenAppComp` / `MiniScreenAppComp`
-is NOT automatically on top. Every foreground overlay carries its own **Always on
-Top** number — `zIndex` in the item's `extraStyle`, 7 by default — and `#foreground`
+is NOT automatically on top. A foreground overlay with **Always on
+Top** ticked carries its own number — `zIndex` in the item's `extraStyle`, 1 by default, and none while it is off — and `#foreground`
 deliberately makes no stacking context, so that number competes directly with the
 new layer in the ROOT stacking context. A layer with `z-index: auto` loses to it.
 

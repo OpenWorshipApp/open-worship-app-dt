@@ -329,6 +329,72 @@ export function takeChatbotForegroundRequest(): ForegroundAskType | null {
     }
 }
 
+// One more kind (2026-11-19, the user, the shader's Edit Code panel open:
+// _add chatbot icon to open in chatbot and let chatbot control editor_):
+// WHICH animation editor -- the Background panel's or Animation Show's, by
+// its screen -- and the animation's name as the panel shows it, for the
+// card. Never the animation itself: the assistant reads it live.
+const ANIMATION_HANDOFF_KEY = 'chatbot-handoff-animation';
+
+export type AnimationAskType = {
+    editorId: string;
+    name: string;
+    engine: 'css' | 'glsl';
+};
+
+export function toValidAnimationAsk(value: unknown): AnimationAskType | null {
+    const data = value as Partial<AnimationAskType> | null;
+    if (
+        data === null ||
+        typeof data !== 'object' ||
+        typeof data.editorId !== 'string' ||
+        !/^(background|foreground):(\d{1,3}|none)$/.test(data.editorId) ||
+        (data.engine !== 'css' && data.engine !== 'glsl')
+    ) {
+        return null;
+    }
+    return {
+        editorId: data.editorId,
+        name:
+            typeof data.name === 'string'
+                ? data.name.replace(/\s+/g, ' ').trim().slice(0, 80)
+                : '',
+        engine: data.engine,
+    };
+}
+
+export function requestChatbotAnimation(ask: AnimationAskType) {
+    const valid = toValidAnimationAsk(ask);
+    if (valid === null) {
+        return;
+    }
+    setSetting(
+        ANIMATION_HANDOFF_KEY,
+        JSON.stringify({ ...valid, at: Date.now() }),
+    );
+}
+
+/** The waiting animation editor, once; null when none waits or it is stale. */
+export function takeChatbotAnimationRequest(): AnimationAskType | null {
+    const raw = getSettingForce(ANIMATION_HANDOFF_KEY);
+    if (!raw) {
+        return null;
+    }
+    removeSetting(ANIMATION_HANDOFF_KEY);
+    try {
+        const data = JSON.parse(raw);
+        if (
+            typeof data?.at !== 'number' ||
+            Math.abs(Date.now() - data.at) > HANDOFF_MAX_AGE_MS
+        ) {
+            return null;
+        }
+        return toValidAnimationAsk(data);
+    } catch (_error) {
+        return null;
+    }
+}
+
 // A sixth kind (2026-11-14, EC-760, the user with the Bibles panel's
 // **Add Bible Item** circled: _`Open in Chatbot` should open the chatbot
 // and put pretext prompt to let user continue editing by pasting more

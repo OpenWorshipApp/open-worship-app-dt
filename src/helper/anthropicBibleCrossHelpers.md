@@ -1,3 +1,5 @@
+Sample output of `anthropicBibleCrossHelpers.ts`, removed on 2025-10-01 together with its thematic variant (`focusThemes`, the second sample); today's helper is `src/helper/ai/anthropicBibleCrossRefHelpers.ts` (`AnthropicBibleCrossReference`), whose result has the first sample's shape.
+
 ### Generating cross-references for Genesis 1:1...
 
 ```json

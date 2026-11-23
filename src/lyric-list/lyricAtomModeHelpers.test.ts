@@ -241,11 +241,14 @@ describe('every stage splits a real song the same way', () => {
         try {
             const counts = await getLyricAtomLineCounts(openLyric);
             expect(counts).toEqual({ Intro: 1, 'Verse 1': 3, Chorus: 3 });
+            // What stage 0 sends: `basicOpenLyricOptions` says no to comments,
+            // since open-lyric 0.1.108 draws them when the flag is absent.
             const stage0Map = await openLyric.getElementMap({
                 type: 'html',
                 isWithInfo: false,
                 isWithKeyNote: false,
                 isShowingIndex: false,
+                isShowingCommentText: false,
             });
             const stage1Map = await openLyric.getElementMap({
                 type: 'html',

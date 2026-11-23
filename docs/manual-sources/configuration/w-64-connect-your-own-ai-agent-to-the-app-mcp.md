@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [ST-93, MD-05]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-64 — Connect your own AI agent to the app (MCP)
 
@@ -70,5 +70,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `ST-93` · `MD-05`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

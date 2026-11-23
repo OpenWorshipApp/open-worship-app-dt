@@ -9,6 +9,7 @@ import { showSimpleToast } from '../toast/toastHelpers';
 import { electronSendAsync } from './appHelpers';
 import appProvider from './appProvider';
 import { fsDeleteDir, fsReadFile, pathJoin } from './fileHelpers';
+import { getPptxOmitBackground } from './pptxBuildOptionHelpers';
 import { unlocking } from './unlockingHelpers';
 
 function toPptxHtmlsPreviewDirPath(filePath: string) {
@@ -21,7 +22,11 @@ function toPptxHtmlsPreviewDirPath(filePath: string) {
 
 export async function removePptxHtmlsPreview(filePath: string) {
     const outDir = toPptxHtmlsPreviewDirPath(filePath);
-    return await fsDeleteDir(outDir);
+    await fsDeleteDir(outDir);
+    // `info.json` is read through the short-lived file cache, which a folder
+    // deleted whole does not reach: the rebuild right after would read the
+    // OLD one back, take it for a stale preview and build the deck again.
+    FileSource.forgetCachedDataUnder(outDir);
 }
 
 export async function getSlidesCount(filePath: string) {
@@ -32,7 +37,11 @@ export async function getSlidesCount(filePath: string) {
     return count;
 }
 
-export async function pptxToHtmls(filePath: string, outDir: string) {
+export async function pptxToHtmls(
+    filePath: string,
+    outDir: string,
+    noBackground = false,
+) {
     const progressBarKey = `Exporting PPTX Slides "${FileSource.getInstance(filePath).name}"`;
     showSimpleToast(
         tran('Exporting PPTX Slides'),
@@ -41,9 +50,10 @@ export async function pptxToHtmls(filePath: string, outDir: string) {
     showProgressBar(progressBarKey);
     const isSuccess = await electronSendAsync<boolean>(
         'main:app:pptx-to-htmls',
-        { filePath, outDir },
+        { filePath, outDir, noBackground },
     );
     hideProgressBar(progressBarKey);
+    FileSource.forgetCachedData(pathJoin(outDir, 'info.json'));
     return isSuccess;
 }
 
@@ -88,10 +98,45 @@ export type PptxDataType100 = {
     };
     baseDir: string;
 };
+/**
+ * Whether the preview on disk is of THIS copy of the deck, by THIS converter,
+ * built the way the deck is asked for now. A preview from before the
+ * background choice existed has no `noBackground` and was built with it, so
+ * it is rebuilt -- silently, like any other stale preview.
+ */
+function checkIsPptxPreviewCurrent(
+    infoData: AnyObjectType,
+    expected: {
+        md5: string;
+        toolVersion: string | null;
+        noBackground: boolean;
+    },
+) {
+    if (infoData.checksum?.md5 !== expected.md5) {
+        return false;
+    }
+    if (
+        expected.toolVersion !== null &&
+        infoData.toolVersion !== expected.toolVersion
+    ) {
+        return false;
+    }
+    return (infoData.noBackground === true) === expected.noBackground;
+}
+
 export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
     const key = `get-pptx-data-${filePath}`;
     return unlocking<PptxDataType100 | null>(key, async () => {
         const fileMd5 = await appProvider.systemUtils.generateFileMD5(filePath);
+        const toolVersion = await getPptxToHtmlsVersion();
+        const noBackground = await getPptxOmitBackground(filePath);
+        const expected = {
+            md5: fileMd5,
+            // A converter that cannot say its version leaves the preview to
+            // the other two checks rather than rebuilding it every time.
+            toolVersion: typeof toolVersion === 'string' ? toolVersion : null,
+            noBackground,
+        };
         const outDir = toPptxHtmlsPreviewDirPath(filePath);
         const infoFilePath = pathJoin(outDir, 'info.json');
         const infoFileSource = FileSource.getInstance(infoFilePath);
@@ -100,13 +145,13 @@ export function getPptxData(filePath: string): Promise<PptxDataType100 | null> {
         while (i < 3) {
             infoData = await infoFileSource.readFileJsonData();
             if (infoData !== null) {
-                if (infoData.checksum?.md5 === fileMd5) {
+                if (checkIsPptxPreviewCurrent(infoData, expected)) {
                     break;
                 }
                 await removePptxHtmlsPreview(filePath);
                 infoData = null;
             }
-            await pptxToHtmls(filePath, outDir);
+            await pptxToHtmls(filePath, outDir, noBackground);
             i += 1;
         }
         if (infoData === null) {

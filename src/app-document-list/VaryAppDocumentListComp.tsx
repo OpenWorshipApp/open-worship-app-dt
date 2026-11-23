@@ -65,6 +65,7 @@ import {
     getSongSelectSetting,
 } from '../plugins/song-select/songSelectSettingHelpers';
 import PublicDomainSongsPopupComp from '../plugins/public-domain-songs/PublicDomainSongsPopupComp';
+import { checkIsOpenLyricFileFullName } from '../lyric-list/openLyricFileNameHelpers';
 
 type ImportPopupHandlersType = {
     openPublicDomainSongs: () => void;
@@ -109,7 +110,23 @@ function handleFileTaking(
         importDroppedAppDocumentArchive(file);
         return true;
     }
+    // An Open Lyric song is a lyric the app reads only as a `.owl`: it is
+    // converted, never copied in as `.ol.md`.
+    if (checkIsOpenLyricFileFullName(fileFullName)) {
+        const { dirPath } = dirSource;
+        import('../lyric-list/openLyricFileHelpers')
+            .then(({ importOpenLyricFile }) => {
+                return importOpenLyricFile(file, dirPath);
+            })
+            .catch(handleError);
+        return true;
+    }
     const dotExtension = getFileDotExtension(fileFullName).toLocaleLowerCase();
+    // Any other Markdown is no document: `.md` is offered by Add Local Files
+    // only so a `.ol.md` can be picked, and must not be copied in unread.
+    if (dotExtension === '.md') {
+        return true;
+    }
     if (dotExtension === '.docx') {
         return false;
     }
@@ -358,6 +375,10 @@ function VaryAppDocumentListBodyComp({
             new Set([
                 ...getMimetypeExtensions('appDocument'),
                 ...getMimetypeExtensions('lyric'),
+                // The file dialog filters by the LAST extension only (a
+                // macOS panel never matches `ol.md`), so every `.md` is
+                // offered and `handleFileTaking` keeps the `.ol.md` ones.
+                'md',
                 ...getMimetypeExtensions('pdf'),
                 ...getMimetypeExtensions('pptx'),
                 ...getMimetypeExtensions('docx'),

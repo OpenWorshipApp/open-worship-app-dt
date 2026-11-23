@@ -1,6 +1,8 @@
 import path from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
+import enFonts from '../src/lang/data/en/fonts.json';
+
 const {
     exportPptx,
     getSlidesCount,
@@ -8,6 +10,8 @@ const {
     exportDocx,
     getDocxVersion,
     toUnpackedPath,
+    readFileSync,
+    writeFileSync,
 } = vi.hoisted(() => ({
     exportPptx: vi.fn(),
     getSlidesCount: vi.fn(),
@@ -15,7 +19,11 @@ const {
     exportDocx: vi.fn(),
     getDocxVersion: vi.fn(),
     toUnpackedPath: vi.fn(() => '/unpacked-root'),
+    readFileSync: vi.fn(),
+    writeFileSync: vi.fn(),
 }));
+
+vi.mock('node:fs', () => ({ readFileSync, writeFileSync }));
 
 // The converters' package names since 86e75ddb ("upgraded modules").
 vi.mock('pptx-to-html-conv', () => ({
@@ -66,7 +74,18 @@ describe('msHelpers', () => {
         expect(getSlidesCount).toHaveBeenCalledWith('/slides/deck.pptx');
     });
 
-    test('converts PPTX decks with the eot2ttf helper', () => {
+    const INFO_PATH = path.resolve('/slides/deck-htmls', 'info.json');
+
+    function readStamped() {
+        expect(writeFileSync).toHaveBeenCalledTimes(1);
+        const [filePath, text] = writeFileSync.mock.calls[0];
+        expect(filePath).toBe(INFO_PATH);
+        return JSON.parse(text);
+    }
+
+    test('converts PPTX decks with the eot2ttf helper, backgrounds kept by default', () => {
+        readFileSync.mockReturnValue('{"toolVersion":"1.1.0"}');
+
         expect(
             pptxToHtmls({
                 filePath: '/slides/deck.pptx',
@@ -74,11 +93,74 @@ describe('msHelpers', () => {
             }),
         ).toBe(true);
 
+        // A face of the deck the computer lacks falls to the app's default
+        // face -- English's, named in its package alone -- which the
+        // converter puts in front of each generic family.
         expect(exportPptx).toHaveBeenCalledWith(
             '/slides/deck.pptx',
             '/slides/deck-htmls',
             EOT2TTF_PATH,
+            false,
+            enFonts.uiFamily,
         );
+        expect(readStamped()).toEqual({
+            toolVersion: '1.1.0',
+            noBackground: false,
+        });
+    });
+
+    test('builds a deck without backgrounds when asked, and says so in its info.json', () => {
+        // The converter writes the file with a byte-order mark.
+        readFileSync.mockReturnValue('\uFEFF{"toolVersion":"1.1.0"}');
+
+        expect(
+            pptxToHtmls({
+                filePath: '/slides/deck.pptx',
+                outDir: '/slides/deck-htmls',
+                noBackground: true,
+            }),
+        ).toBe(true);
+
+        expect(exportPptx).toHaveBeenCalledWith(
+            '/slides/deck.pptx',
+            '/slides/deck-htmls',
+            EOT2TTF_PATH,
+            true,
+            enFonts.uiFamily,
+        );
+        expect(readFileSync).toHaveBeenCalledWith(INFO_PATH, 'utf8');
+        expect(readStamped()).toEqual({
+            toolVersion: '1.1.0',
+            noBackground: true,
+        });
+    });
+
+    test('anything but a real true over IPC is the default', () => {
+        readFileSync.mockReturnValue('{}');
+
+        pptxToHtmls({
+            filePath: '/slides/deck.pptx',
+            outDir: '/slides/deck-htmls',
+            noBackground: 'yes' as any,
+        });
+
+        expect(exportPptx.mock.calls[0][3]).toBe(false);
+        expect(readStamped()).toEqual({ noBackground: false });
+    });
+
+    test('a conversion that left no readable info.json is a failed one', () => {
+        readFileSync.mockImplementation(() => {
+            throw new Error('ENOENT');
+        });
+
+        expect(
+            pptxToHtmls({
+                filePath: '/slides/deck.pptx',
+                outDir: '/slides/deck-htmls',
+                noBackground: true,
+            }),
+        ).toBe(false);
+        expect(writeFileSync).not.toHaveBeenCalled();
     });
 
     test('reports a failed PPTX conversion instead of throwing', () => {

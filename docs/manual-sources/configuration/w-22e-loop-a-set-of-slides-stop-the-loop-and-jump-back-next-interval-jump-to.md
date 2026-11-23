@@ -5,7 +5,7 @@ section: "Configuration"
 verify: []
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-22e — Loop a set of slides, stop the loop, and jump back (Next: Interval, Jump to)
 
@@ -64,6 +64,7 @@ where you say, and a running order that can go back to an earlier line.
    pair of them cannot send the run back and forth for ever.) If it has nothing attached,
    or the line it named has since been deleted, it says so instead of quietly doing
    nothing.
+
 5. **A loop of slides before the service, from start to finish.** The slides of the set
    are lines of the presenting flow already. (a) Right-click the presenting flow →
    **[en:tran:Add Action]** → **[en:tran:Next: Interval]**, type the seconds each slide

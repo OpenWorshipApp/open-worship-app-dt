@@ -49,6 +49,7 @@ import {
     NoBackupError,
     genBlobTooBigReason,
     genNoBackupReason,
+    findAgentFreeName,
     genUndoField,
     listAgentFiles,
     renameAgentFile,
@@ -80,6 +81,9 @@ export type AgentMediaFileRequestType = {
     path?: unknown;
     // `info` on a document: also draw the pages with no readable words.
     pictures?: unknown;
+    // `convert` (a PowerPoint into a slide document): how many slides are
+    // drawn both ways and compared -- `sample` (eight), `all` or `none`.
+    likeness?: unknown;
 };
 
 type KindType = {
@@ -641,6 +645,147 @@ async function handleImport(place: PlaceType, pathValue: unknown) {
     }
 }
 
+const PPTX_NAME_PATTERN = /\.pptx$/i;
+
+function toLikenessMode(value: unknown) {
+    return value === 'all' || value === 'none' ? value : 'sample';
+}
+
+// Only what was left out is said: an empty list is nothing to tell.
+function toLeftOutField(leftOut: Record<string, string[] | number[]>) {
+    return Object.fromEntries(
+        Object.entries(leftOut).filter(([, list]) => {
+            return list.length > 0;
+        }),
+    );
+}
+
+/**
+ * A PowerPoint of the Documents folder -- or, named by its `path`, one
+ * anywhere on the disk -- made into a slide document in the Documents
+ * folder (2026-11-20, `EC-763`). Never over an existing document: the next
+ * free name is taken, as a create takes it. Undoing it moves the new
+ * document to the trash; the PowerPoint is never touched.
+ */
+async function handleConvert(
+    place: PlaceType,
+    request: AgentMediaFileRequestType,
+) {
+    if (place.kindName !== 'document') {
+        return fail(
+            'Only a PowerPoint is converted, into a slide document: use ' +
+                'kind "document".',
+        );
+    }
+    let pptxPath: string;
+    let pptxName: string;
+    const sourcePath = toText(request.path);
+    if (sourcePath === '') {
+        const found = await findFile(place, request.name);
+        if (!checkIsFound(found)) {
+            return found;
+        }
+        pptxPath = found.filePath;
+        pptxName = found.fullName;
+    } else {
+        if (!(await fsCheckFileExist(sourcePath))) {
+            return fail(`There is no file at "${sourcePath}".`);
+        }
+        pptxPath = sourcePath;
+        pptxName = getFileFullName(sourcePath) ?? sourcePath;
+    }
+    if (!PPTX_NAME_PATTERN.test(pptxName)) {
+        return fail(
+            `"${pptxName}" is not a PowerPoint (.pptx). Only a PowerPoint ` +
+                'is made into a slide document.',
+        );
+    }
+    const wantedName =
+        request.newName === undefined || request.newName === null
+            ? splitName(pptxName).stem.trim()
+            : toText(request.newName);
+    const nameReason = checkAgentFileName(wantedName);
+    if (nameReason !== null) {
+        return fail(nameReason);
+    }
+    const extension = getMimetypeExtensions('appDocument')[0];
+    const wantedPath = toAgentFilePath(place.dirPath, wantedName, extension);
+    if (wantedPath === null) {
+        return fail('That name would not stay inside the folder.');
+    }
+    const name = (await fsCheckFileExist(wantedPath))
+        ? await findAgentFreeName(place.dirPath, wantedName, extension)
+        : wantedName;
+    const filePath = toAgentFilePath(place.dirPath, name, extension) as string;
+    const { convertPptxToSlides } = await import('./pptxSlideDocumentHelpers');
+    const converted = await convertPptxToSlides(
+        pptxPath,
+        toLikenessMode(request.likeness),
+    );
+    if ('reason' in converted) {
+        return fail(converted.reason);
+    }
+    try {
+        const { meta, value: fileSource } = await runWithAgentBackup(
+            `Made the slide document “${name}” from the PowerPoint ` +
+                `“${pptxName}”`,
+            [{ type: 'file', filePath, text: null, kind: 'slide' }],
+            async () => {
+                const { default: AppDocument } =
+                    await import('../app-document-list/AppDocument');
+                const created = await AppDocument.createWithContent(
+                    place.dirPath,
+                    name,
+                    converted.slides,
+                );
+                if (created === null) {
+                    throw new Error('The slide document could not be made.');
+                }
+                return created;
+            },
+        );
+        fileSource.fireUpdateEvent();
+        const leftOut = toLeftOutField(converted.leftOut);
+        return {
+            created: name,
+            from: pptxName,
+            filePath,
+            ...(name === wantedName ? {} : { renamedTo: name }),
+            slideCount: converted.slides.length,
+            pptxSlideCount: converted.pptxSlideCount,
+            ...(converted.stepSlideCount === 0
+                ? {}
+                : {
+                      stepSlideCount: converted.stepSlideCount,
+                      steps:
+                          'A PowerPoint slide that shows its parts click ' +
+                          'by click is a slide a step here, one after ' +
+                          'another, as the app presents the PowerPoint.',
+                  }),
+            hiddenSlideCount: converted.hiddenSlideCount,
+            size: `${converted.width}x${converted.height}`,
+            ...(converted.likeness === null
+                ? {}
+                : { likeness: converted.likeness }),
+            ...(converted.missingFonts.length === 0
+                ? {}
+                : { missingFonts: converted.missingFonts }),
+            ...(Object.keys(leftOut).length === 0 ? {} : { leftOut }),
+            ...genUndoField(meta),
+            note:
+                'Each shape is a box of its own, the words as the ' +
+                'PowerPoint styled them. The PowerPoint is untouched. ' +
+                '`likeness` is how alike the slides measured look, in ' +
+                'percent. Undoing it moves the new document to the trash.',
+        };
+    } catch (error) {
+        return toChangeFailure(
+            error,
+            `Making the slide document “${name}” from “${pptxName}”`,
+        );
+    }
+}
+
 /**
  * One request from `owa_media_file`. Always answers with a plain object and
  * never throws: the caller is a page expression whose only channel back is a
@@ -664,10 +809,13 @@ export async function handleAgentMediaFileRequest(
         if (action === 'import') {
             return await handleImport(place, request.path);
         }
+        if (action === 'convert') {
+            return await handleConvert(place, request);
+        }
         if (!['info', 'update', 'rename', 'delete'].includes(action)) {
             return fail(
                 'Unknown action. Use list, info, create, update, rename, ' +
-                    'delete or import.',
+                    'delete, import or convert.',
             );
         }
         const found = await findFile(place, request.name);

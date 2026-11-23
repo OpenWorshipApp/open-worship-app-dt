@@ -1276,6 +1276,8 @@ describe('countdown panel', () => {
             dateTime: target,
             id: 'session-a',
         });
+        // Reset is the NEXT minute, which Start takes (F-14): the box
+        // holds minutes only, and "now" was already gone.
         await clickTitle('Reset Date and Time to Now');
         expect(
             (
@@ -1290,7 +1292,33 @@ describe('countdown panel', () => {
                     '[aria-label="Countdown Time"]',
                 ) as HTMLInputElement
             ).value,
-        ).toBe('09:00');
+        ).toBe('09:01');
+        mocks.toast.mockClear();
+        await click('Start Countdown to DateTime');
+        expect(mocks.toast).not.toHaveBeenCalled();
+        expect(mocks.showCountdown.mock.calls.at(-1)?.[1]).toEqual(
+            new Date('2026-10-14 09:01'),
+        );
+    });
+
+    test('Reset just before midnight rolls the date over (F-14)', async () => {
+        vi.setSystemTime(new Date('2026-10-14T23:59:30'));
+        await render(<ForegroundCountDownComp />);
+        await clickTitle('Reset Date and Time to Now');
+        expect(
+            (
+                container.querySelector(
+                    '[aria-label="Countdown Date"]',
+                ) as HTMLInputElement
+            ).value,
+        ).toBe('2026-10-15');
+        expect(
+            (
+                container.querySelector(
+                    '[aria-label="Countdown Time"]',
+                ) as HTMLInputElement
+            ).value,
+        ).toBe('00:00');
     });
 
     test('a right-click on the date-time start, or its dots, asks which screens', async () => {

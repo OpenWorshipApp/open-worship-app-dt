@@ -1,0 +1,30 @@
+// Screen Scale: a fold in the place of a section title, so it reads as one of
+// the panel's sections and opens like the stage does.
+.bible-style-screen-scale-fold {
+  width: 100%;
+  margin: 0;
+  text-align: start;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(var(--bs-info-rgb), 0.06);
+  }
+
+  .bi-chevron-right,
+  .bi-chevron-down {
+    color: var(--app-muted);
+  }
+}
+
+// Each screen's row wears its identity colour on its icon, as its badge on
+// the Mini Screen does: "screen 2" is found by colour before its number.
+.bible-style-screen-scale-row {
+  min-width: 0;
+
+  .fg-prop-name i {
+    color: var(--screen-id-color);
+  }
+}

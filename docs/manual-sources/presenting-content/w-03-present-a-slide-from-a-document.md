@@ -2,10 +2,10 @@
 id: W-03
 title: "Present a slide from a document"
 section: "Presenting content"
-verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM-170]
+verify: [PL-01, PM-05, PM-06, PM-07, PM-08, PM-09, PM-54, PM-149, PM-157, ED-17, ED-39, KB-05, KB-08, PM-170, PM-202]
 screenshots: 3
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-03 — Present a slide from a document
 
@@ -85,6 +85,14 @@ Tips:
   and in the Slide Editor: press it and the slides that differ take the display's size,
   and the button goes away. One slide at a time is the Slide Editor's **[en:tran:Width]** and
   **[en:tran:Height]** boxes, with **[en:tran:Apply All Slides]** for the whole document.
+- **A PowerPoint file's own background, or yours.** At the left of the row over a
+  PowerPoint file's slides — the row the document's ⋮ sits at the end of — **[en:tran:Omit Background]**
+  is ticked: the slides are built without the background they were made with, so the
+  background you put up from the **[en:tran:Background]** panel (W-08) shows behind them.
+  Untick it to have the file's own backgrounds back; the slides are built again, which
+  takes a moment on a long file. The choice is that file's alone, and goes with it when
+  it is renamed or moved to the trash. A PowerPoint file opened for the first time since
+  this box came is built again once, by itself.
 
 - **More than one folder of songs and slides.** The row of buttons under the
   **[en:tran:Documents]** title — **[en:tran:Default]** and **＋** — keeps other folders
@@ -93,7 +101,7 @@ Tips:
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08` · `PM-170`
+`PL-01` · `PM-05` · `PM-06` · `PM-07` · `PM-08` · `PM-09` · `PM-54` · `PM-149` · `PM-157` · `ED-17` · `ED-39` · `KB-05` · `KB-08` · `PM-170` · `PM-202`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

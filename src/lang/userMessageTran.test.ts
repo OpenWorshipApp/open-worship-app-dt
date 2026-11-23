@@ -103,6 +103,15 @@ const ALLOWED_LIST: { file: string; text: string; reason: string }[] = [
             reason: 'the development branch: a command for the developer',
         };
     }),
+    ...['${} (PNG)', '${} (MP4)'].map((text) => {
+        return {
+            file: 'src/background/AnimationExportDialogComp.tsx',
+            text,
+            reason:
+                'a file format named beside its translated label: PNG and ' +
+                'MP4 are written the same in every language',
+        };
+    }),
     ...[
         '1: Test Title',
         'This is a test message',

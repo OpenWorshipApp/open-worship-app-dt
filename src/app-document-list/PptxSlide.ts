@@ -10,8 +10,21 @@ import type { AnyObjectType } from '../helper/typeHelpers';
 
 import slideSchemaJson from './PptxSlideSchema.json';
 import FileSource from '../helper/FileSource';
+import { toSubSlideIndex } from './slideViewIndexHelpers';
 import { pathJoin } from '../server/fileHelpers';
 const pptxSlideSchema: SchemaNode = compileSchema(slideSchemaJson);
+
+/**
+ * How many ids each slide's sub-slides own. A sub-slide's id is everything a
+ * screen, a card's key, the on-screen marker and the arrow keys know it by, so
+ * it must be unique in its document. `parent.id + 999 + index` was not: the
+ * 4th step of slide 46, the 2nd of 48 and the 1st of 49 were all 1047, so one
+ * press lit three cards, React dropped cards over the shared key, and an arrow
+ * press on two grouped screens stepped from all three at once -- the screens
+ * raced between them. Each slide now owns its own block, above every
+ * top-level id (`0..N`) while a deck holds fewer slides than this.
+ */
+const SUB_SLIDE_ID_BLOCK = 10_000;
 
 export type PptxSlidePropsType = {
     id: number;
@@ -46,7 +59,7 @@ export default class PptxSlide
         const subHtmls = this.originalJson.subHtmls ?? [];
         return this.originalJson.subHtmlFilePaths.map((htmlFilePath, index) => {
             const json: PptxSlidePropsType = {
-                id: this.id + 999 + index,
+                id: PptxSlide.toSubSlideId(this.id, index),
                 htmlFilePath,
                 subHtmlFilePaths: [],
                 html: subHtmls[index],
@@ -190,7 +203,11 @@ export default class PptxSlide
         return item instanceof this;
     }
 
+    static toSubSlideId(parentId: number, index: number) {
+        return (parentId + 1) * SUB_SLIDE_ID_BLOCK + index;
+    }
+
     static calcIndex(i: number, j: number) {
-        return i + (j + 1) * 0.01;
+        return toSubSlideIndex(i, j);
     }
 }

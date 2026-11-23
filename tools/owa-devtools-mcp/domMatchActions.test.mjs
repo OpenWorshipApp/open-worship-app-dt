@@ -141,6 +141,89 @@ describe('a press of another kind', () => {
     expect(seen).toEqual(['click']);
   });
 
+  it('presses as a mouse does, button down and up before the click (F-3)', () => {
+    document.body.innerHTML = '<button>Open</button>';
+    const button = document.querySelector('button');
+    const seen = [];
+    const types = ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click', 'dblclick'];
+    for (const type of types) {
+      button.addEventListener(type, (event) => {
+        seen.push([type, event.detail, event.buttons]);
+      });
+    }
+    const press = new Function(`return (${PRESS_AT_CENTRE_SOURCE})`)();
+    press(button);
+    expect(seen).toEqual([
+      ['pointerdown', 0, 1],
+      ['mousedown', 1, 1],
+      ['pointerup', 0, 0],
+      ['mouseup', 1, 0],
+      ['click', 1, 0],
+    ]);
+    seen.length = 0;
+    press(button, { clicks: 2 });
+    expect(seen.map(([type, detail]) => type + detail)).toEqual([
+      'pointerdown0', 'mousedown1', 'pointerup0', 'mouseup1', 'click1',
+      'pointerdown0', 'mousedown2', 'pointerup0', 'mouseup2', 'click2',
+      'dblclick2',
+    ]);
+  });
+
+  it('holds the keys it is given through every event of the press (F-9)', () => {
+    document.body.innerHTML = '<button>Add</button>';
+    const button = document.querySelector('button');
+    const seen = [];
+    for (const type of ['mousedown', 'mouseup', 'click']) {
+      button.addEventListener(type, (event) => {
+        seen.push([type, event.shiftKey, event.ctrlKey, event.altKey, event.metaKey]);
+      });
+    }
+    const press = new Function(`return (${PRESS_AT_CENTRE_SOURCE})`)();
+    press(button, { modifiers: ['shift'] });
+    expect(seen).toEqual([
+      ['mousedown', true, false, false, false],
+      ['mouseup', true, false, false, false],
+      ['click', true, false, false, false],
+    ]);
+    seen.length = 0;
+    press(button);
+    expect(seen.every((row) => row.slice(1).every((held) => !held))).toBe(true);
+  });
+
+  it('says which keys a click held, and drops a key it does not know', async () => {
+    document.body.innerHTML = '<button>Add</button>';
+    let shift = null;
+    document.querySelector('button').addEventListener('click', (event) => {
+      shift = event.shiftKey;
+    });
+    const result = await run(
+      genClickExpression(['Add'], 100, 10, { modifiers: ['shift', 'hyper'] }),
+    );
+    expect(shift).toBe(true);
+    expect(result.modifiers).toEqual(['shift']);
+  });
+
+  it('picks a verse that is chosen on mousedown and applied on the body\'s mouseup (F-3)', async () => {
+    // The Bible Lookup's verse strip, as RenderVerseNumOptionComp builds it.
+    document.body.innerHTML =
+      '<div role="button" aria-label="Verse 16" aria-pressed="false"' +
+      ' data-verse-index="16">16</div>';
+    const verse = document.querySelector('[data-verse-index]');
+    let picked = null;
+    let applied = null;
+    verse.addEventListener('mousedown', () => { picked = 16; });
+    document.body.addEventListener('mouseup', () => {
+      if (picked !== null) {
+        applied = picked;
+        verse.setAttribute('aria-pressed', 'true');
+      }
+    });
+    const result = await run(genClickExpression(['Verse 16'], 100, 10));
+    expect(applied).toBe(16);
+    expect(result.didChange).toBe(true);
+    expect(result.isOnNow).toBe(true);
+  });
+
   it('reports the menu a right-click opened, and the button it used', async () => {
     document.body.innerHTML =
       '<li title="Amazing Grace.owl">Amazing Grace</li>' +
@@ -850,6 +933,84 @@ describe('dragging one thing onto another', () => {
     expect(result.accepted).toBe(true);
   });
 
+  // A run sheet's line is wrapped with what it holds, so its row has no next
+  // sibling: the line after it is found by its number (F-35), and after the
+  // LAST line there is nowhere that means "after" (F-37).
+  function setUpRunSheet() {
+    document.body.innerHTML =
+      '<ul><li id="song" draggable="true" title="Amazing Grace.owl">' +
+      '<span>Amazing Grace</span></li></ul>' +
+      '<li class="presenting-flow-file">' +
+      '<div data-presenting-flow-line="1">' +
+      '<div class="app-presenting-flow-row-group">' +
+      '<div id="one" draggable="true" title="Welcome">Welcome</div></div>' +
+      '<div><div id="slide" draggable="true" title="Slide 1">Slide 1</div>' +
+      '</div></div>' +
+      '<div data-presenting-flow-line="2">' +
+      '<div class="app-presenting-flow-row-group">' +
+      '<div id="two" draggable="true" title="Offering">Offering</div>' +
+      '</div></div></li>';
+    document.getElementById('song').addEventListener('dragstart', (event) => {
+      event.dataTransfer.setData('text', '{"type":"appDocument"}');
+    });
+    const seen = [];
+    for (const id of ['one', 'slide', 'two']) {
+      const row = document.getElementById(id);
+      row.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        seen.push([id, event.ctrlKey, event.clientY]);
+      });
+      row.addEventListener('drop', (event) => {
+        event.preventDefault();
+      });
+    }
+    return seen;
+  }
+
+  it('lands after a run sheet line on the next LINE, past what it holds', async () => {
+    const seen = setUpRunSheet();
+    // The list redraws on the drop, and a node gone from the page has no box.
+    const boxOf = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+      return this.isConnected
+        ? boxOf.call(this)
+        : { x: 0, y: 0, width: 0, height: 0, top: 0, left: 0, right: 0, bottom: 0 };
+    };
+    document.getElementById('two').addEventListener('drop', () => {
+      document.getElementById('one').remove();
+    });
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Welcome'], {
+        place: 'after',
+        settleMs: 10,
+      }),
+    );
+    expect(seen).toEqual([['two', true, 12]]);
+    expect(result.accepted).toBe(true);
+    // Read when the drop landed, not after: a redrawn row is a node gone.
+    expect(result.onto.label).toContain('Welcome');
+    expect(result.onto.position).toEqual({
+      x: 10,
+      y: 10,
+      width: 40,
+      height: 20,
+    });
+  });
+
+  it('refuses after the last line of a run sheet, in words', async () => {
+    const seen = setUpRunSheet();
+    const result = await run(
+      genDragExpression(['Amazing Grace'], ['Offering'], {
+        place: 'after',
+        settleMs: 10,
+      }),
+    );
+    expect(result.dragged).toBeNull();
+    expect(result.reason).toContain('last line of its run sheet');
+    expect(result.reason).toContain('Move to Bottom');
+    expect(seen).toEqual([]);
+  });
+
   it('says so when nothing under the point took the drop', async () => {
     document.body.innerHTML =
       '<li id="song" draggable="true" title="Amazing Grace.owl">Amazing Grace</li>' +
@@ -1000,7 +1161,8 @@ describe('a row named by its file name', () => {
 describe('scrolling a list', () => {
   function setUpList() {
     document.body.innerHTML =
-      '<div data-widget-name="Document List"><div id="list">' +
+      '<div data-widget-name="Document List">' +
+      '<div id="list" style="overflow-y: auto">' +
       '<li title="Alpha.owl">Alpha</li><li title="Beta.owl">Beta</li>' +
       '</div></div><button>Elsewhere</button>';
     const list = document.getElementById('list');
@@ -1057,6 +1219,74 @@ describe('scrolling a list', () => {
     expect(top.now).toBe(0);
     expect(top.isAtTop).toBe(true);
     expect(list.scrollTop).toBe(0);
+  });
+
+  // F-7 of robot run 20261120-2021: the Reader split into small panes,
+  // every one called "Bible View".
+  function setUpPanes() {
+    const pane = (title, verse) => {
+      return (
+        '<div data-widget-name="Bible View"><div class="bible-view card">' +
+        '<div class="card-header"><button>' + title + '</button></div>' +
+        '<div class="card-body" style="overflow-y: auto">' +
+        '<div role="button">' + verse + '</div></div></div></div>'
+      );
+    };
+    document.body.innerHTML =
+      pane('Genesis 1', 'In the beginning') +
+      pane('John 3', 'For God so loved');
+    const bodies = [...document.querySelectorAll('.card-body')];
+    bodies.forEach((body, i) => {
+      Object.defineProperty(body, 'scrollHeight', { value: 900 });
+      Object.defineProperty(body, 'clientHeight', { value: 90 });
+      // Under the 200 by 100 a guess is held to.
+      body.getBoundingClientRect = () => {
+        return {
+          x: i * 160, y: 30, width: 150, height: 90,
+          top: 30, left: i * 160, right: i * 160 + 150, bottom: 120,
+        };
+      };
+    });
+    return bodies;
+  }
+
+  it('scrolls the small pane a row is in', async () => {
+    const [first, second] = setUpPanes();
+    const result = await run(
+      genScrollExpression(['For God so loved'], { settleMs: 10 }),
+    );
+    expect(result.scrolled).toBe('Bible View');
+    expect(result.didChange).toBe(true);
+    expect(second.scrollTop).toBe(81);
+    expect(first.scrollTop).toBe(0);
+    expect(result.twins).toBeUndefined();
+  });
+
+  it('scrolls the pane whose title is named, never the next one', async () => {
+    const [first, second] = setUpPanes();
+    await run(genScrollExpression(['Bible View > John 3'], { settleMs: 10 }));
+    expect(second.scrollTop).toBe(81);
+    expect(first.scrollTop).toBe(0);
+  });
+
+  it('says when a name is several panes\' and how to name one', async () => {
+    setUpPanes();
+    const result = await run(
+      genScrollExpression(['Bible View'], { settleMs: 10 }),
+    );
+    expect(result.didChange).toBe(true);
+    expect(result.twins).toBe(2);
+    expect(result.note).toContain('"Bible View > <its title>"');
+  });
+
+  it('never moves a box that does not scroll by itself', async () => {
+    const [first] = setUpPanes();
+    first.style.overflowY = 'hidden';
+    const result = await run(
+      genScrollExpression(['In the beginning'], { timeoutMs: 50, settleMs: 10 }),
+    );
+    expect(first.scrollTop).toBe(0);
+    expect(result.scrolled).toBeNull();
   });
 
   it('answers with the near misses when nothing is called that', async () => {

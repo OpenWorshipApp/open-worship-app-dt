@@ -29,10 +29,12 @@ import {
 import {
     type ChatAttachmentType,
     checkIsCarriedFileName,
+    checkIsMediaName,
     checkIsFileAttachment,
     checkIsImageName,
     checkIsReadableTextName,
     genFileAttachment,
+    genMediaAttachment,
     genImageAttachment,
     genTextAttachment,
     getAttachmentData,
@@ -387,6 +389,11 @@ export async function genAttachmentFromPath(
     }
     if (checkIsCarriedFileName(name)) {
         return { attachment: await genPdfAttachment(name, byteSize, filePath) };
+    }
+    // Never read: named for a slide to play (2026-11-21), any size -- the
+    // PowerPoint change says when one is too large to go in.
+    if (checkIsMediaName(name)) {
+        return { attachment: genMediaAttachment(name, byteSize, filePath) };
     }
     if (byteSize > MAX_READ_BYTES) {
         return {

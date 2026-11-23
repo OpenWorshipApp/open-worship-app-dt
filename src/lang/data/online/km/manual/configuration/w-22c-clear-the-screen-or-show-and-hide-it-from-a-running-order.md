@@ -3,7 +3,7 @@ id: W-22c
 title: "លុបអេក្រង់ ឬបង្ហាញ និងលាក់វា ពីតារាងកម្មវិធី"
 section: "ការកំណត់រចនាសម្ព័ន្ធ"
 lang: km
-translatedFrom: ff28bb64602ac801
+translatedFrom: eb9cb564b1ff2a10
 ---
 # W-22c — លុបអេក្រង់ ឬបង្ហាញ និងលាក់វា ពីតារាងកម្មវិធី
 
@@ -23,7 +23,7 @@ translatedFrom: ff28bb64602ac801
 
    នៅក្រោមការលុបទាំងប្រាំនោះ **[en:tran:Other Clear FG Items]** ផ្ដល់
    **ការលុបលម្អិតជាង សម្រាប់ធាតុផ្ទៃខាងមុខម្តងមួយ** ដូច្នេះអ្នកអាចដករាប់ថយក្រោយចេញ ហើយទុក
-   អក្សររត់ឲ្យបន្តដំណើរការ: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) និង **[en:tran:Clear FG Web Show]** (`WB`)។ នីមួយៗធ្វើដូចប៊ូតុងលាក់ផ្ទាល់របស់ធាតុនោះ នៅក្នុងផ្ទាំង **[en:tran:Foreground]** ដែរ។ ធាតុ **[en:tran:Messages]**, **[en:tran:Time]**, **[en:tran:Video Show]**, **[en:tran:Image Show]**, **[en:tran:Camera Show]**, **[en:tran:Screen Show]** និង **[en:tran:Web Show]** លុបរបស់ទាំងអស់របស់វា ក្នុងពេលតែមួយ។
+   អក្សររត់ឲ្យបន្តដំណើរការ: **[en:tran:Clear FG Messages]** (`MS`), **[en:tran:Clear FG Marquee Top]** (`M↑`), **[en:tran:Clear FG Marquee Bottom]** (`M↓`), **[en:tran:Clear FG Quick Text]** (`QT`), **[en:tran:Clear FG Countdown]** (`CD`), **[en:tran:Clear FG Stopwatch]** (`SW`), **[en:tran:Clear FG Time]** (`TM`), **[en:tran:Clear FG Video Show]** (`VD`), **[en:tran:Clear FG Image Show]** (`IM`), **[en:tran:Clear FG Fill Show]** (`FL`), **[en:tran:Clear FG Animation Show]** (`AN`), **[en:tran:Clear FG Camera Show]** (`CM`), **[en:tran:Clear FG Screen Show]** (`SS`) និង **[en:tran:Clear FG Web Show]** (`WB`)។ នីមួយៗធ្វើដូចប៊ូតុងលាក់ផ្ទាល់របស់ធាតុនោះ នៅក្នុងផ្ទាំង **[en:tran:Foreground]** ដែរ។ ធាតុ **[en:tran:Messages]**, **[en:tran:Time]**, **[en:tran:Video Show]**, **[en:tran:Image Show]**, **[en:tran:Fill Show]**, **[en:tran:Animation Show]**, **[en:tran:Camera Show]**, **[en:tran:Screen Show]** និង **[en:tran:Web Show]** លុបរបស់ទាំងអស់របស់វា ក្នុងពេលតែមួយ។
 2. **សកម្មភាពអេក្រង់ ត្រូវបានប្រតិបត្តិ មិនមែនបង្ហាញទេ។** ចុចវាដើម្បីលុប អូសវាទៅលើអេក្រង់តូចមួយ
    ដើម្បីលុបតែអេក្រង់នោះ ឬចុចកណ្ដុរស្ដាំ → **[en:tran:Apply on Screens]** ដើម្បីជ្រើសរើស។ វាមិនដែល
    ភ្លឺជា "កំពុងបង្ហាញ" ទេ ព្រោះគ្មានអ្វីរបស់វានៅលើអេក្រង់ ដែលត្រូវបង្ហាញ។ នៅក្នុង
@@ -56,4 +56,4 @@ translatedFrom: ff28bb64602ac801
    មិនផ្លាស់ប្ដូរអ្វីដែលធាតុនោះត្រូវបានខ្ទាស់ទៅទេ។
 4. **កន្លែងដែលសកម្មភាពស្ថិតនៅក្នុងម៉ឺនុយ។** **[en:tran:Add Action]** បើកដោយ **[en:tran:Clear Screen]** —
    ជួរមួយដែលមិនបន្ថែមអ្វីទេ ហើយបើកការលុបទាំងប្រាំ ជាមួយ **[en:tran:Other Clear FG Items]**
-   នៅក្រោមពួកវា សម្រាប់ការលុបផ្ទៃខាងមុខតាមធាតុនីមួយៗទាំងដប់ពីរ — បន្ទាប់មក **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]** បន្ទាប់មកសកម្មភាពប្រាំ ដែលបញ្ជាការដំណើរការ។
+   នៅក្រោមពួកវា សម្រាប់ការលុបផ្ទៃខាងមុខតាមធាតុនីមួយៗទាំងដប់បួន — បន្ទាប់មក **[en:tran:Screen: Show]** / **[en:tran:Screen: Hide]** បន្ទាប់មកសកម្មភាពប្រាំ ដែលបញ្ជាការដំណើរការ។

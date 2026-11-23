@@ -177,7 +177,7 @@ describe('readAgentSlideDocument', () => {
             {
                 ...genTextBox(1),
                 type: 'video',
-                filePath: 'C:\\Users\\racky\\a b.mp4',
+                filePath: 'C:\\Users\\username\\a b.mp4',
             } as any,
             {
                 ...genTextBox(2),
@@ -195,7 +195,7 @@ describe('readAgentSlideDocument', () => {
         }
         const [video, image] = read.slideDocument.slides[0].items;
         expect(video.file).toBe('a b.mp4');
-        expect(JSON.stringify(read)).not.toContain('racky');
+        expect(JSON.stringify(read)).not.toContain('username');
         expect(image).not.toHaveProperty('file');
         expect(JSON.stringify(image)).not.toContain('base64');
     });
@@ -704,18 +704,18 @@ describe('readAgentSlideDocument edges', () => {
                 type: 'youtube',
                 url: `https://youtu.be/${'v'.repeat(300)}`,
             },
-            { id: 3, type: 'audio', filePath: '/home/racky/Music/hymn.mp3' },
+            { id: 3, type: 'audio', filePath: '/home/username/Music/hymn.mp3' },
             {
                 id: 4,
                 type: 'image',
                 srcData:
-                    'file:///C:/Users/racky/My%20Pictures/Cross%20Light.png?v=2#top',
+                    'file:///C:/Users/username/My%20Pictures/Cross%20Light.png?v=2#top',
                 locked: true,
             },
             {
                 id: 5,
                 type: 'video',
-                filePath: 'file:///C:/Users/racky/bad%E0%A4%A.mp4',
+                filePath: 'file:///C:/Users/username/bad%E0%A4%A.mp4',
             },
             { id: 6, type: 'shape' },
             { id: 7, type: 'website', url: 42 },
@@ -749,7 +749,7 @@ describe('readAgentSlideDocument edges', () => {
             height: null,
         });
         expect(broken).not.toHaveProperty('url');
-        expect(JSON.stringify(document)).not.toContain('racky');
+        expect(JSON.stringify(document)).not.toContain('username');
     });
 
     it("reads a text box's style in the words a request uses", () => {

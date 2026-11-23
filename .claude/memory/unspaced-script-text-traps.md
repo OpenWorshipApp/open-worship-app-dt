@@ -13,7 +13,7 @@ Khmer text in this app's data and in model answers has two spacing traps:
 - **Zero-width spaces (U+200B) between words** (`អ្នក​ជំងឺ`, the Bible text,
   the cross-reference bundle). `title.includes('អ្នកជំងឺ')` misses every one
   written that way: a check for "patient" read as a sick person found 0 of
-  the 90 (EC-417). Strip `[​-‍﻿]` before matching words.
+  the 90 (EC-417). Strip `[\u200B-\u200D\u2060\uFEFF]` before matching words.
 - **No space inside a sentence.** A whole Khmer question is ONE
   whitespace-separated "word", so a "bare name" test took
   `តើមានខគម្ពីរណាផ្សេងទៀត…?` as a name and loaded the 34 MB names dataset
@@ -26,7 +26,7 @@ pass while real data fails.
 **How to apply:** when matching or counting words of a script written without
 spaces (Khmer is the one measured; Thai, Lao and Burmese share the trait), normalise the
 zero-width characters first, and never treat "one token" as "one word".
-Writing the escape `​` through the Edit tool can put the literal
+Writing the escape `\u200B` through the Edit tool can put the literal
 character into the file instead — eslint's `no-irregular-whitespace` catches
 it in `src/`, nothing does in `extra-work/`; write such regexes from a script
 file. Related: [[chatbot-follows-app-language]], [[electron-icu-trimmed-locales]].

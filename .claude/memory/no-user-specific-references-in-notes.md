@@ -26,3 +26,9 @@ the user pasted, describe its shape ("a chord-sheet URL with a query string"),
 not the value. Remember
 `node extra-work/build-knowledge.mjs` when scrubbing one that slipped in
 ([[claude-dir-edits-need-knowledge-rebuild]]).
+
+One shape is held by the gate since 2026-11-20 (`AD-43`): a home path naming
+an account (`/Users/<name>/`, `C:\Users\<name>\`, `/c/Users/<name>/`,
+`/home/<name>/`) in any markdown file or anything under `.claude/` fails the
+agent-docs audit's `privacy` check in `npm run lint`. Two notes had carried
+one, one for 82 days. Write `../<repo>` for a sibling checkout.

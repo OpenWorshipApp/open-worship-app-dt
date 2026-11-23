@@ -149,13 +149,9 @@ describe('Khmer package', () => {
     });
 
     test('a book name without a single Khmer number after "ទី" stays as it is', () => {
-        expect(km.transformBibleBookName('លោកុប្បត្តិ')).toEqual([
-            'លោកុប្បត្តិ',
-        ]);
+        expect(km.transformBibleBookName('លោកុប្បត្តិ')).toEqual(['លោកុប្បត្តិ']);
         expect(km.transformBibleBookName('ទី១')).toEqual(['ទី១']);
-        expect(km.transformBibleBookName('ពេត្រុសទីមួយ')).toEqual([
-            'ពេត្រុសទីមួយ',
-        ]);
+        expect(km.transformBibleBookName('ពេត្រុសទីមួយ')).toEqual(['ពេត្រុសទីមួយ']);
         expect(km.transformBibleBookName('ពេត្រុសទី1')).toEqual(['ពេត្រុសទី1']);
     });
 
@@ -209,11 +205,18 @@ describe('Khmer package', () => {
         consoleError.mockRestore();
     });
 
-    test('adds its editor plugin and its font to Open Lyric', () => {
+    test('adds its editor plugin, its song labels and its font to Open Lyric', () => {
         const editor = { addPlugin: vi.fn() };
         const system = { title: 'System', fontFaces: ['Arial'], indexRange: 1 };
-        const openLyric: any = { fontFaces: [system] };
-        const markdownManager: any = {};
+        const genSurface = (fields: object) => {
+            return {
+                ...fields,
+                addPlugin: vi.fn(),
+                hasPlugin: () => false,
+            } as any;
+        };
+        const openLyric = genSurface({ fontFaces: [system] });
+        const markdownManager = genSurface({});
         km.initOpenLyricPlugins!({
             editor: editor as any,
             openLyric,
@@ -225,6 +228,21 @@ describe('Khmer package', () => {
         const [name, plugin] = editor.addPlugin.mock.calls[0];
         expect(name).toBe('km-KH');
         expect(plugin).toBeInstanceOf(EditorPluginKmKh);
+        // The preview and the Config card get the plugin's LABELS, alone
+        // (F-10 of robot run 20261120-2021).
+        for (const [surface, target] of [
+            ['lyric', openLyric],
+            ['markdown', markdownManager],
+        ]) {
+            expect(target.addPlugin).toHaveBeenCalledOnce();
+            const [id, labelPlugin] = target.addPlugin.mock.calls[0];
+            expect(id).toBe('km-KH');
+            expect(labelPlugin.surfaces).toEqual([surface]);
+            expect(Object.keys(labelPlugin.contributes)).toEqual(['language']);
+            expect(labelPlugin.contributes.language.labels.Attachments).toMatch(
+                /\p{Script=Khmer}/u,
+            );
+        }
         const khmer = {
             title: 'Khmer',
             fontFaces: ['app-Battambang'],

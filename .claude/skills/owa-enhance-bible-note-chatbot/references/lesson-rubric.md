@@ -77,7 +77,7 @@ whether anything in it would mislead the people who hear it.
    asked). One JSON line a lesson: the ask, the calls, the answer, the note's
    blocks, the seconds.
 2. `node scripts/lesson-rubric.mjs <results.jsonl>` prints the structure
-   checks; `--text <dir>` writes each lesson as text for the reader.
+   checks; `--text=<dir>` writes each lesson as text for the reader.
 3. A reader who did not write the lessons — a sub-agent told only this file,
    the ask and the lesson, never the model, the prompt or what was changed —
    scores each criterion with one quoted line of evidence, lists every

@@ -124,6 +124,13 @@ import {
     type CaptureDocumentPagesParamsType,
 } from './documentCaptureHelpers';
 import {
+    captureAnimationFrame,
+    closeAnimationCapture,
+    openAnimationCapture,
+    type AnimationCaptureFrameParamsType,
+    type AnimationCaptureOpenParamsType,
+} from './animationCaptureHelpers';
+import {
     getPagesCount,
     pdfToChatPages,
     pdfToImages,
@@ -1112,6 +1119,34 @@ export function initEventOther(appController: ElectronAppController) {
         'main:app:capture-document-pages',
         (data: CaptureDocumentPagesParamsType) => {
             return captureDocumentPages(data);
+        },
+    );
+
+    // A CSS animation drawn in a hidden window, one frame at a time, for
+    // Save as Image / Save as Video (`animationCaptureHelpers.ts`).
+    onAsync(
+        ipcMain,
+        'main:app:animation-capture-open',
+        (data: AnimationCaptureOpenParamsType, event) => {
+            return openAnimationCapture(data, event.sender);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:animation-capture-frame',
+        (data: AnimationCaptureFrameParamsType) => {
+            return captureAnimationFrame(data);
+        },
+    );
+    onAsync(
+        ipcMain,
+        'main:app:animation-capture-close',
+        (data: { captureId?: string }) => {
+            // Only the capture named: no id must not close another's.
+            if (typeof data?.captureId !== 'string' || !data.captureId) {
+                return false;
+            }
+            return closeAnimationCapture({ captureId: data.captureId });
         },
     );
 

@@ -50,10 +50,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import {
-    checkIsDestructiveLabelText,
-    genDestructiveLabelRule,
+  checkIsDestructiveLabelText,
+  genDestructiveLabelRule,
 } from './destructiveLabel.mjs';
 import { AGENT_REMOVING_ACTIONS, toUndoAction } from './agentData.mjs';
+import { checkIsOfficeRemoval } from './agentOfficeRemoval.mjs';
+import { toAnimationEditArgs } from './agentAnimationArgs.mjs';
 import { loadTranBundle } from './tran.mjs';
 import { checkWebUrl } from './webUrlPolicy.mjs';
 
@@ -61,22 +63,22 @@ import { checkWebUrl } from './webUrlPolicy.mjs';
 // to say instead. Each entry is a sentence the model can act on and a
 // volunteer could understand if it were ever shown to them.
 const DENIED_TOOL_MAP = {
-    evaluate_script:
-        "Running code in the app window is switched off. This app's windows " +
-        'run with full access to the computer -- files, settings, other ' +
-        'programs -- so a script here is not "just a page script". Use the ' +
-        "app's own tools instead: owa_app_state for what the app is doing, " +
-        'owa_list_ui for the controls on screen, owa_find_ui to point one ' +
-        'out, owa_click and owa_type to use one.',
-    take_heapsnapshot:
-        'Memory dumps are switched off. A heap snapshot contains every string ' +
-        "the window is holding -- the user's API keys, their songs, their " +
-        'notes -- and writes them to disk. If you need to know what the app ' +
-        'is doing, use owa_app_state.',
-    upload_file:
-        'Choosing a file for the app is switched off, because it hands a file ' +
-        'off the disk to a page that can send it anywhere. Ask the user to ' +
-        'pick the file themselves -- owa_find_ui will point at the button.',
+  evaluate_script:
+    "Running code in the app window is switched off. This app's windows " +
+    'run with full access to the computer -- files, settings, other ' +
+    'programs -- so a script here is not "just a page script". Use the ' +
+    "app's own tools instead: owa_app_state for what the app is doing, " +
+    'owa_list_ui for the controls on screen, owa_find_ui to point one ' +
+    'out, owa_click and owa_type to use one.',
+  take_heapsnapshot:
+    'Memory dumps are switched off. A heap snapshot contains every string ' +
+    "the window is holding -- the user's API keys, their songs, their " +
+    'notes -- and writes them to disk. If you need to know what the app ' +
+    'is doing, use owa_app_state.',
+  upload_file:
+    'Choosing a file for the app is switched off, because it hands a file ' +
+    'off the disk to a page that can send it anywhere. Ask the user to ' +
+    'pick the file themselves -- owa_find_ui will point at the button.',
 };
 
 // Budgets, shared across every session in the process on purpose: the things
@@ -97,9 +99,9 @@ const DENIED_TOOL_MAP = {
 // Documents folder into the trash still costs a volunteer their morning, and
 // no honest request removes more than a handful of things.
 const RATE_BUDGET_MAP = {
-    acting: { windowMilliseconds: 60 * 1000, limit: 25 },
-    network: { windowMilliseconds: 5 * 60 * 1000, limit: 10 },
-    removing: { windowMilliseconds: 5 * 60 * 1000, limit: 10 },
+  acting: { windowMilliseconds: 60 * 1000, limit: 25 },
+  network: { windowMilliseconds: 5 * 60 * 1000, limit: 10 },
+  removing: { windowMilliseconds: 5 * 60 * 1000, limit: 10 },
 };
 
 // What the operator can look back at. Bounded because this app runs on very
@@ -108,17 +110,17 @@ const RATE_BUDGET_MAP = {
 const LOG_LIMIT = 100;
 
 const state = {
-    rateAtMap: new Map(),
-    logList: [],
-    // `{at, rule}` -- see `getDestructiveLabelRule`.
-    destructiveRule: null,
+  rateAtMap: new Map(),
+  logList: [],
+  // `{at, rule}` -- see `getDestructiveLabelRule`.
+  destructiveRule: null,
 };
 
 /** Tests drive the rate limiters, the log and the rule; all need a clean slate. */
 export function resetFirewallState() {
-    state.rateAtMap = new Map();
-    state.logList = [];
-    state.destructiveRule = null;
+  state.rateAtMap = new Map();
+  state.logList = [];
+  state.destructiveRule = null;
 }
 
 /**
@@ -131,24 +133,24 @@ export function resetFirewallState() {
  * can reach it, which is the whole point.
  */
 export function readFirewallMode() {
-    return process.env.OWA_MCP_FIREWALL === 'off' ? 'off' : 'strict';
+  return process.env.OWA_MCP_FIREWALL === 'off' ? 'off' : 'strict';
 }
 
 /** Whether the point-don't-press interlock is in force. */
 export function checkIsInterlockOn() {
-    return readFirewallMode() === 'strict';
+  return readFirewallMode() === 'strict';
 }
 
 function recordDecision(entry) {
-    state.logList.push({ at: Date.now(), ...entry });
-    if (state.logList.length > LOG_LIMIT) {
-        state.logList.shift();
-    }
+  state.logList.push({ at: Date.now(), ...entry });
+  if (state.logList.length > LOG_LIMIT) {
+    state.logList.shift();
+  }
 }
 
 /** The last decisions, oldest first. For an operator asking what was done. */
 export function getFirewallLog() {
-    return [...state.logList];
+  return [...state.logList];
 }
 
 /**
@@ -160,115 +162,119 @@ export function getFirewallLog() {
  * budget slot).
  */
 const ACTING_TOOL_SET = new Set([
-    'click',
-    'drag',
-    'fill',
-    'fill_form',
-    'hover',
-    'press_key',
-    'type_text',
-    'handle_dialog',
-    'navigate_page',
-    'new_page',
-    'close_page',
-    'resize_page',
-    'emulate',
-    'owa_click',
-    'owa_type',
-    // A keystroke and a drag, by label (2026-10-10). Judged in the page the
-    // way a press is -- the key by the control whose title names it, the
-    // drop by both ends -- and counted here like one.
-    'owa_press_key',
-    'owa_drag',
-    // Real files dropped on a control (2026-10-22): the stdio door's alone,
-    // and a drop copies what it carries into the user's folders.
-    'owa_drop_files',
-    // The native menu bar. A `list` reads; counted all the same, the way a
-    // `check` is -- the budget counts the tool, not the argument.
-    'owa_menu',
-    // Moves the list under the user's eyes.
-    'owa_scroll',
-    'owa_goto_page',
-    'owa_hide_screens',
-    'owa_guide_start',
-    'owa_guide_step',
-    // These two write the user's own documents. They are the only acting
-    // tools whose effect outlives the session -- a click can be clicked
-    // again, a created file stays created -- so being inside the budget
-    // matters more here than anywhere: a loop must not be able to fill
-    // somebody's Documents folder.
-    'owa_lyric_file',
-    'owa_slide_file',
-    // Puts a passage on the projector. A `check` only reads, but the budget
-    // counts the tool, not the argument: a loop presenting verse after verse
-    // is exactly what the cap is for.
-    'owa_present_bible',
-    // Opens a found verse in the Bible Lookup. A search only reads, and is
-    // counted all the same: each one scans a whole Bible, and a loop of
-    // them is the thing the cap is for.
-    'owa_find_verse',
-    // Reads a person, a place or a passage. Changes nothing, and is counted
-    // all the same: a record no open panel holds loads the ~34MB names
-    // dataset for the read, and a loop of those is a church laptop frozen.
-    'owa_lookup_record',
-    // Reads a Resources file. Changes nothing, and is counted all the
-    // same: each PDF read draws its pages in a child process, and a
-    // loop of those is a church laptop busy for minutes.
-    'owa_resource_file',
-    // Starts a countdown, a clock or a message on the projector, or takes one
-    // off. A `check` only reads, but the budget counts the tool, not the
-    // argument, for the same reason as the passage above.
-    'owa_foreground',
-    // The user's saved Bible passages and notes, and putting back a change.
-    // Written straight to disk -- a Bibles list and a notes file have no
-    // editing history -- which is why each change is backed up first and
-    // why the budget still counts them.
-    'owa_bible_item',
-    'owa_bible_note',
-    'owa_undo',
-    // Installs, changes and removes whole Bibles. Every change is backed up
-    // first; the budget is for the loop that installs one after another.
-    'owa_bible_xml',
-    // The run sheets. A presenting flow has no editing history -- every
-    // write is the file -- so each change is backed up first, and counted.
-    'owa_presenting_flow',
-    // The Background tabs' files: a clip trashed is copied beside its
-    // backup first; an import writes into the user's folders.
-    'owa_media_file',
+  'click',
+  'drag',
+  'fill',
+  'fill_form',
+  'hover',
+  'press_key',
+  'type_text',
+  'handle_dialog',
+  'navigate_page',
+  'new_page',
+  'close_page',
+  'resize_page',
+  'emulate',
+  'owa_click',
+  'owa_type',
+  // A keystroke and a drag, by label (2026-10-10). Judged in the page the
+  // way a press is -- the key by the control whose title names it, the
+  // drop by both ends -- and counted here like one.
+  'owa_press_key',
+  'owa_drag',
+  // Real files dropped on a control (2026-10-22): the stdio door's alone,
+  // and a drop copies what it carries into the user's folders.
+  'owa_drop_files',
+  // The native menu bar. A `list` reads; counted all the same, the way a
+  // `check` is -- the budget counts the tool, not the argument.
+  'owa_menu',
+  // Moves the list under the user's eyes.
+  'owa_scroll',
+  'owa_goto_page',
+  'owa_hide_screens',
+  'owa_guide_start',
+  'owa_guide_step',
+  // These two write the user's own documents. They are the only acting
+  // tools whose effect outlives the session -- a click can be clicked
+  // again, a created file stays created -- so being inside the budget
+  // matters more here than anywhere: a loop must not be able to fill
+  // somebody's Documents folder.
+  'owa_lyric_file',
+  'owa_slide_file',
+  // Puts a passage on the projector. A `check` only reads, but the budget
+  // counts the tool, not the argument: a loop presenting verse after verse
+  // is exactly what the cap is for.
+  'owa_present_bible',
+  // Opens a found verse in the Bible Lookup. A search only reads, and is
+  // counted all the same: each one scans a whole Bible, and a loop of
+  // them is the thing the cap is for.
+  'owa_find_verse',
+  // Reads a person, a place or a passage. Changes nothing, and is counted
+  // all the same: a record no open panel holds loads the ~34MB names
+  // dataset for the read, and a loop of those is a church laptop frozen.
+  'owa_lookup_record',
+  // Reads a Resources file. Changes nothing, and is counted all the
+  // same: each PDF read draws its pages in a child process, and a
+  // loop of those is a church laptop busy for minutes.
+  'owa_resource_file',
+  // Starts a countdown, a clock or a message on the projector, or takes one
+  // off. A `check` only reads, but the budget counts the tool, not the
+  // argument, for the same reason as the passage above.
+  'owa_foreground',
+  // The user's saved Bible passages and notes, and putting back a change.
+  // Written straight to disk -- a Bibles list and a notes file have no
+  // editing history -- which is why each change is backed up first and
+  // why the budget still counts them.
+  'owa_bible_item',
+  'owa_bible_note',
+  'owa_undo',
+  // Installs, changes and removes whole Bibles. Every change is backed up
+  // first; the budget is for the loop that installs one after another.
+  'owa_bible_xml',
+  // The run sheets. A presenting flow has no editing history -- every
+  // write is the file -- so each change is backed up first, and counted.
+  'owa_presenting_flow',
+  // The Background tabs' files: a clip trashed is copied beside its
+  // backup first; an import writes into the user's folders.
+  'owa_media_file',
 ]);
 
 // The tools whose `action` can take something away (see
 // `AGENT_REMOVING_ACTIONS`). Judged on the arguments, like a network call: a
 // `list` must not spend a removal slot.
 const REMOVING_TOOL_SET = new Set([
-    'owa_lyric_file',
-    'owa_slide_file',
-    // `remove-section` takes a part out of a song.
-    'owa_lyric_edit',
-    // `delete-slide` takes a slide out of a slide document.
-    'owa_slide_edit',
-    // `remove-lines` takes lines out of a presenting flow.
-    'owa_presenting_flow_edit',
-    'owa_bible_item',
-    'owa_bible_note',
-    'owa_undo',
-    'owa_bible_xml',
-    'owa_presenting_flow',
-    'owa_media_file',
+  'owa_lyric_file',
+  'owa_slide_file',
+  // `remove-section` takes a part out of a song.
+  'owa_lyric_edit',
+  // `delete-slide` takes a slide out of a slide document.
+  'owa_slide_edit',
+  // `remove-lines` takes lines out of a presenting flow.
+  'owa_presenting_flow_edit',
+  // An `edit` with `remove` or `removeSlide` in it takes a line or a slide
+  // out of a PowerPoint or Word file (`checkIsOfficeRemoval`).
+  'owa_office_edit',
+  'owa_bible_item',
+  'owa_bible_note',
+  'owa_undo',
+  'owa_bible_xml',
+  'owa_presenting_flow',
+  'owa_media_file',
 ]);
 
 /** Does THIS call take something of the user's away? */
 export function checkIsRemovingCall(name, args) {
-    // An undo sent with an id and no action is still an undo (EC-615): read
-    // as the tool reads it, or it would spend no removal slot.
-    const action = name === 'owa_undo' ? toUndoAction(args) : args?.action;
-    return (
-        REMOVING_TOOL_SET.has(name) && AGENT_REMOVING_ACTIONS.includes(action)
-    );
+  if (name === 'owa_office_edit') {
+    return checkIsOfficeRemoval(args);
+  }
+  // An undo sent with an id and no action is still an undo (EC-615): read
+  // as the tool reads it, or it would spend no removal slot.
+  const action = name === 'owa_undo' ? toUndoAction(args) : args?.action;
+  return REMOVING_TOOL_SET.has(name) && AGENT_REMOVING_ACTIONS.includes(action);
 }
 
 export function checkIsActingTool(name) {
-    return ACTING_TOOL_SET.has(name);
+  return ACTING_TOOL_SET.has(name);
 }
 
 // Tools that act with ONE of their actions and only read with the rest, so
@@ -277,7 +283,7 @@ export function checkIsActingTool(name) {
 // its `check` is asked by the help window at every step of a conversation
 // about a language, and `list` only reads.
 const ACTING_ACTION_MAP = {
-    owa_language: ['install'],
+  owa_language: ['install'],
 };
 
 // The other way round: tools that only READ with these actions and change
@@ -286,35 +292,47 @@ const ACTING_ACTION_MAP = {
 // other actions writes the song (backed up, unsaved) and is counted like
 // `owa_lyric_file`.
 const READING_ACTION_MAP = {
-    owa_lyric_edit: ['read'],
-    // The same for an attached slide document (`owa_slide_edit`): `slides` is
-    // read before every question about it.
-    owa_slide_edit: ['slides'],
-    // And for an attached Bible note (`owa_note_edit`): `read` is asked
-    // before every question about it; `edit` writes it (backed up, unsaved).
-    owa_note_edit: ['read'],
-    // And for an attached presenting flow (`owa_presenting_flow_edit`):
-    // `lines` is read before every question about it.
-    owa_presenting_flow_edit: ['lines'],
-    // And for a foreground component (`owa_foreground_edit`): `read` is
-    // asked before every question about an attached session; every other
-    // action changes a session or a screen (backed up).
-    owa_foreground_edit: ['read'],
-    // And for the screens' own controls (`owa_screen_edit`): `read` is
-    // asked before every screen question; `set` changes a screen (backed
-    // up).
-    owa_screen_edit: ['read'],
+  owa_lyric_edit: ['read'],
+  // The same for an attached slide document (`owa_slide_edit`): `slides` is
+  // read before every question about it.
+  owa_slide_edit: ['slides'],
+  // And for an attached Bible note (`owa_note_edit`): `read` is asked
+  // before every question about it; `edit` writes it (backed up, unsaved).
+  owa_note_edit: ['read'],
+  // And for an attached presenting flow (`owa_presenting_flow_edit`):
+  // `lines` is read before every question about it.
+  owa_presenting_flow_edit: ['lines'],
+  // And for an attached PowerPoint or Word file (`owa_office_edit`): `read`
+  // is asked before every question about it; `edit` writes the file
+  // (backed up as a whole copy).
+  owa_office_edit: ['read'],
+  // And for a foreground component (`owa_foreground_edit`): `read` is
+  // asked before every question about an attached session; every other
+  // action changes a session or a screen (backed up).
+  owa_foreground_edit: ['read'],
+  // And for the screens' own controls (`owa_screen_edit`): `read` is
+  // asked before every screen question; `set` changes a screen (backed
+  // up).
+  owa_screen_edit: ['read'],
+  // And for an animation in Customize (`owa_animation_edit`): `read` is
+  // asked before every animation question; `set`, `code` and `undo`
+  // change what a screen shows.
+  owa_animation_edit: ['read'],
 };
 
 /** Does THIS call change the app (the tool, or the action it was given)? */
 export function checkIsActingCall(name, args) {
-    return (
-        checkIsActingTool(name) ||
-        (Object.hasOwn(ACTING_ACTION_MAP, name) &&
-            ACTING_ACTION_MAP[name].includes(args?.action)) ||
-        (Object.hasOwn(READING_ACTION_MAP, name) &&
-            !READING_ACTION_MAP[name].includes(args?.action))
-    );
+  // Read as the tool reads a call with no action (`toAnimationEditArgs`).
+  if (name === 'owa_animation_edit') {
+    return toAnimationEditArgs(args).action !== 'read';
+  }
+  return (
+    checkIsActingTool(name) ||
+    (Object.hasOwn(ACTING_ACTION_MAP, name) &&
+      ACTING_ACTION_MAP[name].includes(args?.action)) ||
+    (Object.hasOwn(READING_ACTION_MAP, name) &&
+      !READING_ACTION_MAP[name].includes(args?.action))
+  );
 }
 
 /**
@@ -335,18 +353,18 @@ const NETWORK_TOOL_SET = new Set(['owa_read_website']);
 // The Bible importer is the same: `check` downloads what `url` names, and
 // nothing else it does takes an address.
 const NETWORK_WHEN_URL_TOOL_SET = new Set([
-    'owa_lyric_validate',
-    'owa_bible_xml',
+  'owa_lyric_validate',
+  'owa_bible_xml',
 ]);
 
 /** Does THIS call go out to the internet? The name, or the name plus a url. */
 export function checkIsNetworkCall(name, args) {
-    return (
-        NETWORK_TOOL_SET.has(name) ||
-        (NETWORK_WHEN_URL_TOOL_SET.has(name) &&
-            typeof args?.url === 'string' &&
-            args.url.trim() !== '')
-    );
+  return (
+    NETWORK_TOOL_SET.has(name) ||
+    (NETWORK_WHEN_URL_TOOL_SET.has(name) &&
+      typeof args?.url === 'string' &&
+      args.url.trim() !== '')
+  );
 }
 
 /**
@@ -360,25 +378,25 @@ export function checkIsNetworkCall(name, args) {
  * loads gets the disk.
  */
 export function checkIsAppUrl(url) {
-    if (typeof url !== 'string' || url === '') {
-        return false;
-    }
-    if (url === 'about:blank') {
-        return true;
-    }
-    let parsed;
-    try {
-        parsed = new URL(url);
-    } catch {
-        return false;
-    }
-    if (parsed.protocol === 'file:') {
-        return true;
-    }
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-        return false;
-    }
-    return ['localhost', '127.0.0.1', '[::1]', '::1'].includes(parsed.hostname);
+  if (typeof url !== 'string' || url === '') {
+    return false;
+  }
+  if (url === 'about:blank') {
+    return true;
+  }
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol === 'file:') {
+    return true;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return false;
+  }
+  return ['localhost', '127.0.0.1', '[::1]', '::1'].includes(parsed.hostname);
 }
 
 /**
@@ -388,14 +406,14 @@ export function checkIsAppUrl(url) {
  * thing about to be pressed.
  */
 function toCandidateLabels(find) {
-    const list = Array.isArray(find) ? find : [find];
-    return list
-        .filter((one) => {
-            return typeof one === 'string' && one !== '';
-        })
-        .map((one) => {
-            return one.split('>').pop().trim();
-        });
+  const list = Array.isArray(find) ? find : [find];
+  return list
+    .filter((one) => {
+      return typeof one === 'string' && one !== '';
+    })
+    .map((one) => {
+      return one.split('>').pop().trim();
+    });
 }
 
 // Read on every `owa_click`, `owa_type` and walkthrough start and on every
@@ -411,34 +429,31 @@ const DESTRUCTIVE_RULE_TTL_MILLISECONDS = 60 * 1000;
  * derived from the app's own `tran()` dictionary (`destructiveLabel.mjs`).
  */
 export function getDestructiveLabelRule(now = Date.now()) {
-    const cached = state.destructiveRule;
-    if (
-        cached === null ||
-        now - cached.at > DESTRUCTIVE_RULE_TTL_MILLISECONDS
-    ) {
-        state.destructiveRule = {
-            at: now,
-            rule: genDestructiveLabelRule(loadTranBundle()),
-        };
-    }
-    return state.destructiveRule.rule;
+  const cached = state.destructiveRule;
+  if (cached === null || now - cached.at > DESTRUCTIVE_RULE_TTL_MILLISECONDS) {
+    state.destructiveRule = {
+      at: now,
+      rule: genDestructiveLabelRule(loadTranBundle()),
+    };
+  }
+  return state.destructiveRule.rule;
 }
 
 /** Whether a label names something that cannot be undone, in any language. */
 export function checkIsDestructiveText(text) {
-    if (typeof text !== 'string' || text === '') {
-        return false;
-    }
-    return checkIsDestructiveLabelText(text, getDestructiveLabelRule());
+  if (typeof text !== 'string' || text === '') {
+    return false;
+  }
+  return checkIsDestructiveLabelText(text, getDestructiveLabelRule());
 }
 
 export function findDestructiveLabel(find) {
-    for (const label of toCandidateLabels(find)) {
-        if (checkIsDestructiveText(label)) {
-            return label;
-        }
+  for (const label of toCandidateLabels(find)) {
+    if (checkIsDestructiveText(label)) {
+      return label;
     }
-    return null;
+  }
+  return null;
 }
 
 // A key the app binds to a control that cannot be undone, whether or not that
@@ -483,22 +498,22 @@ const DESTRUCTIVE_KEY_MAP = new Map([['f6', 'Clear All [F6]']]);
 // destructive, and the firewall starts refusing ordinary work -- the exact
 // failure the label list above is kept short to avoid.
 const INTERACTIVE_ROLE_SET = new Set([
-    'button',
-    'checkbox',
-    'combobox',
-    'link',
-    'menuitem',
-    'menuitemcheckbox',
-    'menuitemradio',
-    'option',
-    'radio',
-    'searchbox',
-    'slider',
-    'spinbutton',
-    'switch',
-    'tab',
-    'textbox',
-    'treeitem',
+  'button',
+  'checkbox',
+  'combobox',
+  'link',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'option',
+  'radio',
+  'searchbox',
+  'slider',
+  'spinbutton',
+  'switch',
+  'tab',
+  'textbox',
+  'treeitem',
 ]);
 
 // `  uid=1_112 button "Clear All" description="Clear All [F6]"`
@@ -510,22 +525,22 @@ const SNAPSHOT_LINE_PATTERN = /^ *uid=(\S+) +([A-Za-z]+)(.*)$/gm;
 // inside some ordinary sentence of the dictionary), which the quotes and the
 // description beside it would otherwise never equal.
 function checkIsDestructiveRow(rest) {
-    if (checkIsDestructiveText(rest)) {
-        return true;
+  if (checkIsDestructiveText(rest)) {
+    return true;
+  }
+  for (const match of rest.matchAll(/"((?:[^"\\]|\\.)*)"/g)) {
+    if (checkIsDestructiveText(match[1])) {
+      return true;
     }
-    for (const match of rest.matchAll(/"((?:[^"\\]|\\.)*)"/g)) {
-        if (checkIsDestructiveText(match[1])) {
-            return true;
-        }
-    }
-    return false;
+  }
+  return false;
 }
 
 // A snapshot names its page in every uid (`1_112`), so one page's tree can be
 // replaced without touching another's.
 function toUidPagePrefix(uid) {
-    const index = String(uid).indexOf('_');
-    return index === -1 ? '' : String(uid).slice(0, index + 1);
+  const index = String(uid).indexOf('_');
+  return index === -1 ? '' : String(uid).slice(0, index + 1);
 }
 
 /**
@@ -538,51 +553,51 @@ function toUidPagePrefix(uid) {
  * ordinary work is a firewall the model learns to route around.
  */
 export function genUidLabelMemory({ limit = 200 } = {}) {
-    const destructiveMap = new Map();
-    return {
-        /** Harvest a result that may carry a snapshot. Cheap when it doesn't. */
-        remember(text) {
-            if (typeof text !== 'string' || !text.includes('uid=')) {
-                return;
-            }
-            const foundMap = new Map();
-            const seenPrefixSet = new Set();
-            SNAPSHOT_LINE_PATTERN.lastIndex = 0;
-            let match = SNAPSHOT_LINE_PATTERN.exec(text);
-            while (match !== null) {
-                const [, uid, role, rest] = match;
-                seenPrefixSet.add(toUidPagePrefix(uid));
-                if (
-                    INTERACTIVE_ROLE_SET.has(role.toLowerCase()) &&
-                    checkIsDestructiveRow(rest)
-                ) {
-                    foundMap.set(uid, rest.trim());
-                }
-                match = SNAPSHOT_LINE_PATTERN.exec(text);
-            }
-            if (seenPrefixSet.size === 0) {
-                return;
-            }
-            for (const uid of [...destructiveMap.keys()]) {
-                if (seenPrefixSet.has(toUidPagePrefix(uid))) {
-                    destructiveMap.delete(uid);
-                }
-            }
-            for (const [uid, label] of foundMap) {
-                if (destructiveMap.size >= limit) {
-                    break;
-                }
-                destructiveMap.set(uid, label);
-            }
-        },
-        /** The remembered wording, or null for a uid never seen as destructive. */
-        lookup(uid) {
-            return destructiveMap.get(uid) ?? null;
-        },
-        get size() {
-            return destructiveMap.size;
-        },
-    };
+  const destructiveMap = new Map();
+  return {
+    /** Harvest a result that may carry a snapshot. Cheap when it doesn't. */
+    remember(text) {
+      if (typeof text !== 'string' || !text.includes('uid=')) {
+        return;
+      }
+      const foundMap = new Map();
+      const seenPrefixSet = new Set();
+      SNAPSHOT_LINE_PATTERN.lastIndex = 0;
+      let match = SNAPSHOT_LINE_PATTERN.exec(text);
+      while (match !== null) {
+        const [, uid, role, rest] = match;
+        seenPrefixSet.add(toUidPagePrefix(uid));
+        if (
+          INTERACTIVE_ROLE_SET.has(role.toLowerCase()) &&
+          checkIsDestructiveRow(rest)
+        ) {
+          foundMap.set(uid, rest.trim());
+        }
+        match = SNAPSHOT_LINE_PATTERN.exec(text);
+      }
+      if (seenPrefixSet.size === 0) {
+        return;
+      }
+      for (const uid of [...destructiveMap.keys()]) {
+        if (seenPrefixSet.has(toUidPagePrefix(uid))) {
+          destructiveMap.delete(uid);
+        }
+      }
+      for (const [uid, label] of foundMap) {
+        if (destructiveMap.size >= limit) {
+          break;
+        }
+        destructiveMap.set(uid, label);
+      }
+    },
+    /** The remembered wording, or null for a uid never seen as destructive. */
+    lookup(uid) {
+      return destructiveMap.get(uid) ?? null;
+    },
+    get size() {
+      return destructiveMap.size;
+    },
+  };
 }
 
 /**
@@ -599,53 +614,51 @@ export function genUidLabelMemory({ limit = 200 } = {}) {
  * Bounded, and forgotten after half an hour.
  */
 export function genOwnChangeMemory({
-    limit = 200,
-    keepMilliseconds = 30 * 60 * 1000,
+  limit = 200,
+  keepMilliseconds = 30 * 60 * 1000,
 } = {}) {
-    const atMap = new Map();
-    return {
-        /** Harvest an answer's `undoId`s. Cheap when it carries none. */
-        remember(text, now = Date.now()) {
-            if (typeof text !== 'string' || !text.includes('undoId')) {
-                return;
-            }
-            for (const match of text.matchAll(
-                /"undoId"\s*:\s*"([^"\\]{1,100})"/g,
-            )) {
-                atMap.delete(match[1]);
-                atMap.set(match[1], now);
-                if (atMap.size > limit) {
-                    atMap.delete(atMap.keys().next().value);
-                }
-            }
-        },
-        has(undoId, now = Date.now()) {
-            const at = atMap.get(undoId);
-            return at !== undefined && now - at <= keepMilliseconds;
-        },
-        get size() {
-            return atMap.size;
-        },
-    };
+  const atMap = new Map();
+  return {
+    /** Harvest an answer's `undoId`s. Cheap when it carries none. */
+    remember(text, now = Date.now()) {
+      if (typeof text !== 'string' || !text.includes('undoId')) {
+        return;
+      }
+      for (const match of text.matchAll(/"undoId"\s*:\s*"([^"\\]{1,100})"/g)) {
+        atMap.delete(match[1]);
+        atMap.set(match[1], now);
+        if (atMap.size > limit) {
+          atMap.delete(atMap.keys().next().value);
+        }
+      }
+    },
+    has(undoId, now = Date.now()) {
+      const at = atMap.get(undoId);
+      return at !== undefined && now - at <= keepMilliseconds;
+    },
+    get size() {
+      return atMap.size;
+    },
+  };
 }
 
 /** An `owa_undo` putting back, by its own id, a change this session made. */
 export function checkIsOwnChangeUndo(name, args, checkIsOwnChange) {
-    return (
-        name === 'owa_undo' &&
-        toUndoAction(args) === 'undo' &&
-        typeof args?.id === 'string' &&
-        typeof checkIsOwnChange === 'function' &&
-        checkIsOwnChange(args.id) === true
-    );
+  return (
+    name === 'owa_undo' &&
+    toUndoAction(args) === 'undo' &&
+    typeof args?.id === 'string' &&
+    typeof checkIsOwnChange === 'function' &&
+    checkIsOwnChange(args.id) === true
+  );
 }
 
 // Which argument of which tool is a uid. `upload_file` takes one too and is
 // denied outright above, so it is not here.
 const UID_ARG_MAP = {
-    click: ['uid'],
-    fill: ['uid'],
-    drag: ['from_uid', 'to_uid'],
+  click: ['uid'],
+  fill: ['uid'],
+  drag: ['from_uid', 'to_uid'],
 };
 
 /**
@@ -654,29 +667,29 @@ const UID_ARG_MAP = {
  * own rather than bent into `UID_ARG_MAP`.
  */
 export function findDestructiveUid(name, args, lookupUidLabel) {
-    if (typeof lookupUidLabel !== 'function') {
-        return null;
-    }
-    const uidList = [];
-    for (const key of UID_ARG_MAP[name] ?? []) {
-        if (typeof args?.[key] === 'string') {
-            uidList.push(args[key]);
-        }
-    }
-    if (name === 'fill_form' && Array.isArray(args?.elements)) {
-        for (const element of args.elements) {
-            if (typeof element?.uid === 'string') {
-                uidList.push(element.uid);
-            }
-        }
-    }
-    for (const uid of uidList) {
-        const label = lookupUidLabel(uid);
-        if (label !== null && label !== undefined) {
-            return label;
-        }
-    }
+  if (typeof lookupUidLabel !== 'function') {
     return null;
+  }
+  const uidList = [];
+  for (const key of UID_ARG_MAP[name] ?? []) {
+    if (typeof args?.[key] === 'string') {
+      uidList.push(args[key]);
+    }
+  }
+  if (name === 'fill_form' && Array.isArray(args?.elements)) {
+    for (const element of args.elements) {
+      if (typeof element?.uid === 'string') {
+        uidList.push(element.uid);
+      }
+    }
+  }
+  for (const uid of uidList) {
+    const label = lookupUidLabel(uid);
+    if (label !== null && label !== undefined) {
+      return label;
+    }
+  }
+  return null;
 }
 
 /**
@@ -684,95 +697,91 @@ export function findDestructiveUid(name, args, lookupUidLabel) {
  * that stops this call and the rule it fell to, or null.
  */
 function findInterlockLabel(name, args, lookupUidLabel) {
-    if (
-        name === 'owa_click' ||
-        name === 'owa_type' ||
-        name === 'owa_press_key'
-    ) {
-        const label = findDestructiveLabel(args?.find);
-        if (label !== null) {
-            return { rule: 'destructive-label', label };
-        }
+  if (name === 'owa_click' || name === 'owa_type' || name === 'owa_press_key') {
+    const label = findDestructiveLabel(args?.find);
+    if (label !== null) {
+      return { rule: 'destructive-label', label };
     }
-    if (name === 'owa_press_key') {
-        const label =
-            findDestructiveLabel(args?.keys) ??
-            DESTRUCTIVE_KEY_MAP.get(
-                String(args?.keys ?? '')
-                    .trim()
-                    .toLowerCase(),
-            ) ??
-            null;
-        if (label !== null) {
-            return { rule: 'destructive-label', label };
-        }
+  }
+  if (name === 'owa_press_key') {
+    const label =
+      findDestructiveLabel(args?.keys) ??
+      DESTRUCTIVE_KEY_MAP.get(
+        String(args?.keys ?? '')
+          .trim()
+          .toLowerCase(),
+      ) ??
+      null;
+    if (label !== null) {
+      return { rule: 'destructive-label', label };
     }
-    if (name === 'owa_menu' && args?.action === 'click') {
-        const label = findDestructiveLabel(args?.item);
-        if (label !== null) {
-            return { rule: 'destructive-label', label };
-        }
+  }
+  if (name === 'owa_menu' && args?.action === 'click') {
+    const label = findDestructiveLabel(args?.item);
+    if (label !== null) {
+      return { rule: 'destructive-label', label };
     }
-    if (name === 'owa_drag') {
-        const label =
-            findDestructiveLabel(args?.from) ?? findDestructiveLabel(args?.to);
-        if (label !== null) {
-            return { rule: 'destructive-label', label };
-        }
+  }
+  if (name === 'owa_drag') {
+    const label =
+      findDestructiveLabel(args?.from) ?? findDestructiveLabel(args?.to);
+    if (label !== null) {
+      return { rule: 'destructive-label', label };
     }
-    if (name === 'owa_drop_files') {
-        const label = findDestructiveLabel(args?.to);
-        if (label !== null) {
-            return { rule: 'destructive-label', label };
-        }
+  }
+  if (name === 'owa_drop_files') {
+    const label = findDestructiveLabel(args?.to);
+    if (label !== null) {
+      return { rule: 'destructive-label', label };
     }
-    // chrome-devtools' own acting tools are aimed by a uid, which means
-    // nothing on its own -- so the label comes from the snapshot that minted
-    // it, remembered on the way out by `guardToolCalls`.
-    const uidLabel = findDestructiveUid(name, args, lookupUidLabel);
-    if (uidLabel !== null) {
-        return { rule: 'destructive-uid', label: uidLabel };
-    }
-    return null;
+  }
+  // chrome-devtools' own acting tools are aimed by a uid, which means
+  // nothing on its own -- so the label comes from the snapshot that minted
+  // it, remembered on the way out by `guardToolCalls`.
+  const uidLabel = findDestructiveUid(name, args, lookupUidLabel);
+  if (uidLabel !== null) {
+    return { rule: 'destructive-uid', label: uidLabel };
+  }
+  return null;
 }
 
 function checkHasRoom(kind, now) {
-    const { windowMilliseconds, limit } = RATE_BUDGET_MAP[kind];
-    const since = now - windowMilliseconds;
-    const atList = (state.rateAtMap.get(kind) ?? []).filter((at) => {
-        return at > since;
-    });
-    state.rateAtMap.set(kind, atList);
-    return atList.length < limit;
+  const { windowMilliseconds, limit } = RATE_BUDGET_MAP[kind];
+  const since = now - windowMilliseconds;
+  const atList = (state.rateAtMap.get(kind) ?? []).filter((at) => {
+    return at > since;
+  });
+  state.rateAtMap.set(kind, atList);
+  return atList.length < limit;
 }
 
 function useRoom(kind, now) {
-    state.rateAtMap.get(kind)?.push(now);
+  state.rateAtMap.get(kind)?.push(now);
 }
 
 function checkRate(kind, now) {
-    if (!checkHasRoom(kind, now)) {
-        return false;
-    }
-    useRoom(kind, now);
-    return true;
+  if (!checkHasRoom(kind, now)) {
+    return false;
+  }
+  useRoom(kind, now);
+  return true;
 }
 
 const ALLOWED = { isAllowed: true };
 
 function refuse(rule, reason) {
-    return { isAllowed: false, rule, reason };
+  return { isAllowed: false, rule, reason };
 }
 
 // One sentence for both halves of the interlock, because they are the same
 // refusal: the model found the right control and must not press it itself.
 export function genDestructiveReason(label) {
-    return (
-        `Pressing "${label}" for the user is switched off, because it ` +
-        'cannot be undone by pressing it again. Point at it instead -- ' +
-        'owa_find_ui with highlight -- and tell the user in one sentence ' +
-        'what it will do and to press it themselves if they want it.'
-    );
+  return (
+    `Pressing "${label}" for the user is switched off, because it ` +
+    'cannot be undone by pressing it again. Point at it instead -- ' +
+    'owa_find_ui with highlight -- and tell the user in one sentence ' +
+    'what it will do and to press it themselves if they want it.'
+  );
 }
 
 // --- The page half -----------------------------------------------------
@@ -788,10 +797,10 @@ export function genDestructiveReason(label) {
 // refuses authoritatively.
 
 const QUESTION_REASON =
-    'That control is part of a question the app is asking the user -- a ' +
-    'confirm, an alert or a box to fill in -- and answering it is theirs to ' +
-    'do, never yours. Tell them in one sentence what the app is asking and ' +
-    'let them press it.';
+  'That control is part of a question the app is asking the user -- a ' +
+  'confirm, an alert or a box to fill in -- and answering it is theirs to ' +
+  'do, never yours. Tell them in one sentence what the app is asking and ' +
+  'let them press it.';
 
 /**
  * What a press carries into the page to be judged by, or null when the
@@ -799,7 +808,7 @@ const QUESTION_REASON =
  * the page half can never be stricter or looser than the rest of the policy.
  */
 export function genPressGuard() {
-    return checkIsInterlockOn() ? { rule: getDestructiveLabelRule() } : null;
+  return checkIsInterlockOn() ? { rule: getDestructiveLabelRule() } : null;
 }
 
 /**
@@ -807,32 +816,30 @@ export function genPressGuard() {
  * the control, so it is told to say so rather than to point at it again.
  */
 export function genPressRefusalReason(refusal, { isGuide = false } = {}) {
-    if (refusal?.refused === 'question') {
-        return QUESTION_REASON;
-    }
-    const label = String(refusal?.label ?? 'that control');
-    if (!isGuide) {
-        return genDestructiveReason(label);
-    }
-    return (
-        `Pressing "${label}" for the user is switched off, because it ` +
-        'cannot be undone by pressing it again. The walkthrough card is ' +
-        'already ringing it: tell the user in one sentence what it will do ' +
-        'and to press it themselves if they want it, then move the ' +
-        'walkthrough on with next.'
-    );
+  if (refusal?.refused === 'question') {
+    return QUESTION_REASON;
+  }
+  const label = String(refusal?.label ?? 'that control');
+  if (!isGuide) {
+    return genDestructiveReason(label);
+  }
+  return (
+    `Pressing "${label}" for the user is switched off, because it ` +
+    'cannot be undone by pressing it again. The walkthrough card is ' +
+    'already ringing it: tell the user in one sentence what it will do ' +
+    'and to press it themselves if they want it, then move the ' +
+    'walkthrough on with next.'
+  );
 }
 
 /** A refusal the page made is logged beside the ones made here. */
 export function recordPressRefusal(name, refusal) {
-    recordDecision({
-        name,
-        rule:
-            refusal?.refused === 'question'
-                ? 'question-press'
-                : 'destructive-press',
-        isAllowed: false,
-    });
+  recordDecision({
+    name,
+    rule:
+      refusal?.refused === 'question' ? 'question-press' : 'destructive-press',
+    isAllowed: false,
+  });
 }
 
 /**
@@ -845,109 +852,109 @@ export function recordPressRefusal(name, refusal) {
  * was going to be refused anyway does not use one up.
  */
 export function checkToolCall(
-    name,
-    args,
-    { now = Date.now(), lookupUidLabel = null, checkIsOwnChange = null } = {},
+  name,
+  args,
+  { now = Date.now(), lookupUidLabel = null, checkIsOwnChange = null } = {},
 ) {
-    if (readFirewallMode() === 'off') {
-        return ALLOWED;
-    }
-    const denied = DENIED_TOOL_MAP[name];
-    if (denied !== undefined) {
-        return refuse('denied-tool', denied);
-    }
-    if (name === 'navigate_page' || name === 'new_page') {
-        // Reload, back and forward carry no address at all, so the allowlist
-        // had nothing to look at and refused every one of them -- including
-        // reloading the page the window is already showing, which cannot go
-        // anywhere by definition. History is safe for the same reason the
-        // allowlist works: nothing outside the app can be navigated TO, so
-        // there is nothing outside the app to go BACK to.
-        const isHistoryMove =
-            name === 'navigate_page' &&
-            args?.url === undefined &&
-            ['reload', 'back', 'forward'].includes(args?.type);
-        if (!isHistoryMove && !checkIsAppUrl(args?.url)) {
-            return refuse(
-                'foreign-url',
-                'Opening an address outside this app is switched off. The ' +
-                    "app's windows can read the computer's files, so a page " +
-                    'loaded into one is not a normal web page. Use ' +
-                    'owa_goto_page to move between the presenter and the ' +
-                    'reader.',
-            );
-        }
-    }
-    // Reaching out to the internet. The address rules live in
-    // `webUrlPolicy.mjs` because the main process enforces the same ones
-    // again, asynchronously and with DNS, at the moment it opens the socket
-    // -- this is the cheap synchronous half, made here so that a refusal is
-    // logged where every other refusal is logged and costs no round trip to
-    // the app.
-    if (checkIsNetworkCall(name, args)) {
-        const verdict = checkWebUrl(args?.url);
-        if (!verdict.isAllowed) {
-            return refuse('foreign-url', verdict.reason);
-        }
-    }
-    // The interlock, in its two halves: the words a call carries, read here;
-    // the control itself, read in the page (`genPressGuard`).
-    const interlock = findInterlockLabel(name, args, lookupUidLabel);
-    if (interlock !== null) {
-        return refuse(interlock.rule, genDestructiveReason(interlock.label));
-    }
-    // Both budgets are looked at before either is spent, so a call refused
-    // by one does not use up a slot of the other.
-    const isActing = checkIsActingCall(name, args);
-    // Putting back this session's own change takes nothing of the user's
-    // away (`genOwnChangeMemory`): an acting call, not a removal.
-    const isRemoving =
-        checkIsRemovingCall(name, args) &&
-        !checkIsOwnChangeUndo(name, args, checkIsOwnChange);
-    if (isActing && !checkHasRoom('acting', now)) {
-        return refuse(
-            'rate-limit',
-            'Too many actions in the app in the last minute. Something is ' +
-                'looping. Stop acting, tell the user in plain words what you ' +
-                'were trying to do and what you would need from them, and ' +
-                'let them act.',
-        );
-    }
-    if (isRemoving && !checkHasRoom('removing', now)) {
-        return refuse(
-            'rate-limit',
-            'Too many things removed in the last few minutes. Each one went ' +
-                'to the trash and can be put back with owa_undo, but no ' +
-                'honest request removes this many this fast. Stop, tell the ' +
-                'user what was removed, and ask what they want.',
-        );
-    }
-    if (isActing) {
-        useRoom('acting', now);
-    }
-    if (isRemoving) {
-        useRoom('removing', now);
-    }
-    if (checkIsNetworkCall(name, args) && !checkRate('network', now)) {
-        return refuse(
-            'rate-limit',
-            'Too many pages read off the internet in the last few minutes. ' +
-                'Stop reading and answer from what you already have, or tell ' +
-                'the user which page you would need them to look at. Reading ' +
-                'the same site again will not answer it.',
-        );
-    }
+  if (readFirewallMode() === 'off') {
     return ALLOWED;
+  }
+  const denied = DENIED_TOOL_MAP[name];
+  if (denied !== undefined) {
+    return refuse('denied-tool', denied);
+  }
+  if (name === 'navigate_page' || name === 'new_page') {
+    // Reload, back and forward carry no address at all, so the allowlist
+    // had nothing to look at and refused every one of them -- including
+    // reloading the page the window is already showing, which cannot go
+    // anywhere by definition. History is safe for the same reason the
+    // allowlist works: nothing outside the app can be navigated TO, so
+    // there is nothing outside the app to go BACK to.
+    const isHistoryMove =
+      name === 'navigate_page' &&
+      args?.url === undefined &&
+      ['reload', 'back', 'forward'].includes(args?.type);
+    if (!isHistoryMove && !checkIsAppUrl(args?.url)) {
+      return refuse(
+        'foreign-url',
+        'Opening an address outside this app is switched off. The ' +
+          "app's windows can read the computer's files, so a page " +
+          'loaded into one is not a normal web page. Use ' +
+          'owa_goto_page to move between the presenter and the ' +
+          'reader.',
+      );
+    }
+  }
+  // Reaching out to the internet. The address rules live in
+  // `webUrlPolicy.mjs` because the main process enforces the same ones
+  // again, asynchronously and with DNS, at the moment it opens the socket
+  // -- this is the cheap synchronous half, made here so that a refusal is
+  // logged where every other refusal is logged and costs no round trip to
+  // the app.
+  if (checkIsNetworkCall(name, args)) {
+    const verdict = checkWebUrl(args?.url);
+    if (!verdict.isAllowed) {
+      return refuse('foreign-url', verdict.reason);
+    }
+  }
+  // The interlock, in its two halves: the words a call carries, read here;
+  // the control itself, read in the page (`genPressGuard`).
+  const interlock = findInterlockLabel(name, args, lookupUidLabel);
+  if (interlock !== null) {
+    return refuse(interlock.rule, genDestructiveReason(interlock.label));
+  }
+  // Both budgets are looked at before either is spent, so a call refused
+  // by one does not use up a slot of the other.
+  const isActing = checkIsActingCall(name, args);
+  // Putting back this session's own change takes nothing of the user's
+  // away (`genOwnChangeMemory`): an acting call, not a removal.
+  const isRemoving =
+    checkIsRemovingCall(name, args) &&
+    !checkIsOwnChangeUndo(name, args, checkIsOwnChange);
+  if (isActing && !checkHasRoom('acting', now)) {
+    return refuse(
+      'rate-limit',
+      'Too many actions in the app in the last minute. Something is ' +
+        'looping. Stop acting, tell the user in plain words what you ' +
+        'were trying to do and what you would need from them, and ' +
+        'let them act.',
+    );
+  }
+  if (isRemoving && !checkHasRoom('removing', now)) {
+    return refuse(
+      'rate-limit',
+      'Too many things removed in the last few minutes. Each one went ' +
+        'to the trash and can be put back with owa_undo, but no ' +
+        'honest request removes this many this fast. Stop, tell the ' +
+        'user what was removed, and ask what they want.',
+    );
+  }
+  if (isActing) {
+    useRoom('acting', now);
+  }
+  if (isRemoving) {
+    useRoom('removing', now);
+  }
+  if (checkIsNetworkCall(name, args) && !checkRate('network', now)) {
+    return refuse(
+      'rate-limit',
+      'Too many pages read off the internet in the last few minutes. ' +
+        'Stop reading and answer from what you already have, or tell ' +
+        'the user which page you would need them to look at. Reading ' +
+        'the same site again will not answer it.',
+    );
+  }
+  return ALLOWED;
 }
 
 /** The tool list with the outright-denied ones taken out. */
 export function filterToolList(toolList) {
-    if (!Array.isArray(toolList) || readFirewallMode() === 'off') {
-        return toolList;
-    }
-    return toolList.filter((tool) => {
-        return DENIED_TOOL_MAP[tool?.name] === undefined;
-    });
+  if (!Array.isArray(toolList) || readFirewallMode() === 'off') {
+    return toolList;
+  }
+  return toolList.filter((tool) => {
+    return DENIED_TOOL_MAP[tool?.name] === undefined;
+  });
 }
 
 // Secrets that must not leave the machine inside a tool result. This is not
@@ -962,47 +969,47 @@ export function filterToolList(toolList) {
 // through, which is why the tools that dump memory wholesale are denied
 // outright above rather than being trusted to this.
 const SECRET_PATTERNS = [
-    // Provider keys, hyphens and underscores included. Every current format
-    // has them -- OpenAI's `sk-proj-` / `sk-svcacct-` / `sk-admin-`,
-    // Anthropic's `sk-ant-api03-`, OpenRouter's `sk-or-v1-` -- and a body of
-    // letters and digits only stopped at the second hyphen, so the key OpenAI
-    // hands out today went through whole. Twenty characters is past any word:
-    // `sk-SK`, the Slovak locale tag, is left alone.
-    /\bsk-[A-Za-z0-9_-]{20,}/g,
-    // Amazon Bedrock API keys: a long-term one is `ABSK` and a base64 body,
-    // `+` and `/` included, which the rule above would stop at; a short-term
-    // one is a base64 presigned URL behind `bedrock-api-key-`, with a
-    // `&Version=1` on the end.
-    /\bABSK[A-Za-z0-9+/]{40,}={0,2}/g,
-    /\bbedrock-api-key-[A-Za-z0-9+/%_=&-]{20,}/g,
-    // JSON Web Tokens -- SongSelect's OAuth pair, among others.
-    /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g,
-    /\bBearer\s+[A-Za-z0-9._~+/-]{16,}=*/gi,
-    // A named credential and whatever it was set to, in a header, a JSON blob
-    // or a DOM attribute: `"apiKey": "..."`, `x-api-key: ...`, `value="..."`
-    // on a field called password. Not a value an earlier rule already
-    // replaced: `[redacted` is eight characters too, and was being redacted
-    // again into a second marker.
-    /((?:api[_-]?key|apikey|x-api-key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passwd|secret)["']?\s*[:=]\s*["']?)(?!\[redacted )[^"'\s,;}]{8,}/gi,
+  // Provider keys, hyphens and underscores included. Every current format
+  // has them -- OpenAI's `sk-proj-` / `sk-svcacct-` / `sk-admin-`,
+  // Anthropic's `sk-ant-api03-`, OpenRouter's `sk-or-v1-` -- and a body of
+  // letters and digits only stopped at the second hyphen, so the key OpenAI
+  // hands out today went through whole. Twenty characters is past any word:
+  // `sk-SK`, the Slovak locale tag, is left alone.
+  /\bsk-[A-Za-z0-9_-]{20,}/g,
+  // Amazon Bedrock API keys: a long-term one is `ABSK` and a base64 body,
+  // `+` and `/` included, which the rule above would stop at; a short-term
+  // one is a base64 presigned URL behind `bedrock-api-key-`, with a
+  // `&Version=1` on the end.
+  /\bABSK[A-Za-z0-9+/]{40,}={0,2}/g,
+  /\bbedrock-api-key-[A-Za-z0-9+/%_=&-]{20,}/g,
+  // JSON Web Tokens -- SongSelect's OAuth pair, among others.
+  /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g,
+  /\bBearer\s+[A-Za-z0-9._~+/-]{16,}=*/gi,
+  // A named credential and whatever it was set to, in a header, a JSON blob
+  // or a DOM attribute: `"apiKey": "..."`, `x-api-key: ...`, `value="..."`
+  // on a field called password. Not a value an earlier rule already
+  // replaced: `[redacted` is eight characters too, and was being redacted
+  // again into a second marker.
+  /((?:api[_-]?key|apikey|x-api-key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password|passwd|secret)["']?\s*[:=]\s*["']?)(?!\[redacted )[^"'\s,;}]{8,}/gi,
 ];
 
 const REDACTED = '[redacted by the app firewall]';
 
 export function redactSecrets(text) {
-    if (typeof text !== 'string' || text === '') {
-        return text;
-    }
-    let out = text;
-    for (const pattern of SECRET_PATTERNS) {
-        // A capture group means "keep the name, drop the value"; without one
-        // the whole match goes. Asked by TYPE: with no group, the second
-        // argument `replace` passes is the match's OFFSET -- a number, never
-        // `undefined` -- and it was being written in front of the marker.
-        out = out.replace(pattern, (match, keep) => {
-            return typeof keep === 'string' ? `${keep}${REDACTED}` : REDACTED;
-        });
-    }
-    return out;
+  if (typeof text !== 'string' || text === '') {
+    return text;
+  }
+  let out = text;
+  for (const pattern of SECRET_PATTERNS) {
+    // A capture group means "keep the name, drop the value"; without one
+    // the whole match goes. Asked by TYPE: with no group, the second
+    // argument `replace` passes is the match's OFFSET -- a number, never
+    // `undefined` -- and it was being written in front of the marker.
+    out = out.replace(pattern, (match, keep) => {
+      return typeof keep === 'string' ? `${keep}${REDACTED}` : REDACTED;
+    });
+  }
+  return out;
 }
 
 /**
@@ -1013,17 +1020,50 @@ export function redactSecrets(text) {
  * interlock.
  */
 function redactContentList(contentList, uidMemory = null) {
-    if (!Array.isArray(contentList)) {
-        return contentList;
+  if (!Array.isArray(contentList)) {
+    return contentList;
+  }
+  return contentList.map((item) => {
+    if (item?.type !== 'text' || typeof item.text !== 'string') {
+      return item;
     }
-    return contentList.map((item) => {
-        if (item?.type !== 'text' || typeof item.text !== 'string') {
-            return item;
-        }
-        uidMemory?.remember(item.text);
-        const text = redactSecrets(item.text);
-        return text === item.text ? item : { ...item, text };
-    });
+    uidMemory?.remember(item.text);
+    const text = redactSecrets(item.text);
+    return text === item.text ? item : { ...item, text };
+  });
+}
+
+const ROOTS_REFUSAL_PATTERN =
+  /is not within any of the configured workspace roots/;
+export const ROOTS_REFUSAL_HINT =
+  'Write it inside a folder the client shares with this server -- its ' +
+  "working directory, e.g. a project's git-ignored test-results/ folder -- " +
+  "or in the operating system's temp folder. A session scratch folder " +
+  'elsewhere, such as one under /private/tmp, is outside both.';
+
+/**
+ * chrome-devtools-mcp 1.12 keeps a `filePath` (`take_snapshot`,
+ * `take_screenshot`, `screencast_start`) inside the roots the client
+ * negotiated plus the OS temp folder, and its refusal names neither: 9 calls
+ * in 7 sessions by 2026-11-19 wrote into a session's scratch folder and were
+ * refused, the way out found by trial (`AD-39`). Said once, at the end of the
+ * refusal's own text; any other result is left as it came.
+ */
+export function explainRootsRefusal(contentList) {
+  if (!Array.isArray(contentList)) {
+    return contentList;
+  }
+  return contentList.map((item) => {
+    if (
+      item?.type !== 'text' ||
+      typeof item.text !== 'string' ||
+      !ROOTS_REFUSAL_PATTERN.test(item.text) ||
+      item.text.includes(ROOTS_REFUSAL_HINT)
+    ) {
+      return item;
+    }
+    return { ...item, text: `${item.text} ${ROOTS_REFUSAL_HINT}` };
+  });
 }
 
 /**
@@ -1037,24 +1077,24 @@ function redactContentList(contentList, uidMemory = null) {
  * readable answer is still in `content`.
  */
 function redactStructuredContent(structured) {
-    let json;
-    try {
-        json = JSON.stringify(structured);
-    } catch {
-        return { redacted: REDACTED };
-    }
-    if (typeof json !== 'string') {
-        return structured;
-    }
-    const text = redactSecrets(json);
-    if (text === json) {
-        return structured;
-    }
-    try {
-        return JSON.parse(text);
-    } catch {
-        return { redacted: REDACTED };
-    }
+  let json;
+  try {
+    json = JSON.stringify(structured);
+  } catch {
+    return { redacted: REDACTED };
+  }
+  if (typeof json !== 'string') {
+    return structured;
+  }
+  const text = redactSecrets(json);
+  if (text === json) {
+    return structured;
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { redacted: REDACTED };
+  }
 }
 
 /**
@@ -1065,41 +1105,38 @@ function redactStructuredContent(structured) {
  * `structuredContent`. Anything else (`initialize`, a ping) is left alone.
  */
 function toAskedByShape(message) {
-    const result = message?.result;
-    if (result === null || typeof result !== 'object') {
-        return undefined;
-    }
-    if (Array.isArray(result.tools)) {
-        return 'tools/list';
-    }
-    if (
-        Array.isArray(result.content) ||
-        result.structuredContent !== undefined
-    ) {
-        return 'tools/call';
-    }
+  const result = message?.result;
+  if (result === null || typeof result !== 'object') {
     return undefined;
+  }
+  if (Array.isArray(result.tools)) {
+    return 'tools/list';
+  }
+  if (Array.isArray(result.content) || result.structuredContent !== undefined) {
+    return 'tools/call';
+  }
+  return undefined;
 }
 
 const CHECK_FAILED_REASON =
-    'This call was not run: the safety check could not read its arguments. ' +
-    'Call the tool again with the arguments its schema describes -- text ' +
-    'where it asks for text -- or tell the user in plain words what you ' +
-    'were trying to do.';
+  'This call was not run: the safety check could not read its arguments. ' +
+  'Call the tool again with the arguments its schema describes -- text ' +
+  'where it asks for text -- or tell the user in plain words what you ' +
+  'were trying to do.';
 
 function genRefusalMessage(id, reason) {
-    // An `isError` RESULT, not a JSON-RPC error. A protocol error is a
-    // failure the client reports and gives up on; a result the model can read
-    // is an instruction it can follow, which is the entire point of writing
-    // the reasons the way they are written above.
-    return {
-        jsonrpc: '2.0',
-        id,
-        result: {
-            content: [{ type: 'text', text: reason }],
-            isError: true,
-        },
-    };
+  // An `isError` RESULT, not a JSON-RPC error. A protocol error is a
+  // failure the client reports and gives up on; a result the model can read
+  // is an instruction it can follow, which is the entire point of writing
+  // the reasons the way they are written above.
+  return {
+    jsonrpc: '2.0',
+    id,
+    result: {
+      content: [{ type: 'text', text: reason }],
+      isError: true,
+    },
+  };
 }
 
 /**
@@ -1133,221 +1170,210 @@ const SNAPSHOT_FILE_BYTE_LIMIT = 8 * 1024 * 1024;
  * moment the result lands must not race the read.
  */
 function defaultReadSnapshotFile(filePath) {
-    try {
-        const resolved = path.resolve(filePath);
-        if (fs.statSync(resolved).size > SNAPSHOT_FILE_BYTE_LIMIT) {
-            return null;
-        }
-        return fs.readFileSync(resolved, 'utf8');
-    } catch {
-        return null;
+  try {
+    const resolved = path.resolve(filePath);
+    if (fs.statSync(resolved).size > SNAPSHOT_FILE_BYTE_LIMIT) {
+      return null;
     }
+    return fs.readFileSync(resolved, 'utf8');
+  } catch {
+    return null;
+  }
 }
 
 export function guardToolCalls(
-    transport,
-    { log = defaultLog, readSnapshotFile = defaultReadSnapshotFile } = {},
+  transport,
+  { log = defaultLog, readSnapshotFile = defaultReadSnapshotFile } = {},
 ) {
-    if (transport === null || typeof transport !== 'object') {
-        return transport;
-    }
-    if (transport.__owaFirewallWrapped === true) {
-        return transport;
-    }
-    transport.__owaFirewallWrapped = true;
-    // Which request id asked what, so the outbound side knows whether it is
-    // looking at a tool list or a tool result. Bounded and drained on the way
-    // out; a client that abandons requests must not grow this for ever.
-    const pendingMethodMap = new Map();
-    const PENDING_LIMIT = 64;
-    // Per-transport, so it dies with the session rather than living in the
-    // module: uids are only meaningful to the client that was shown them.
-    const uidMemory = genUidLabelMemory();
-    const lookupUidLabel = (uid) => {
-        return uidMemory.lookup(uid);
-    };
-    // The changes this session made (`genOwnChangeMemory`), and the request
-    // ids of the calls whose answers may name one -- per transport too: an
-    // undo id is this session's own only.
-    const ownChangeMemory = genOwnChangeMemory();
-    const checkIsOwnChange = (undoId) => {
-        return ownChangeMemory.has(undoId);
-    };
-    const changeCallIdSet = new Set();
-    // Request id -> the file a `take_snapshot` was told to write, read back
-    // when its result goes out (see `defaultReadSnapshotFile`).
-    const snapshotFileMap = new Map();
-
-    const innerOnMessage = transport.onmessage;
-    transport.onmessage = (message, extra) => {
-        try {
-            const { method, id } = message ?? {};
-            if (
-                id !== undefined &&
-                (method === 'tools/list' || method === 'tools/call')
-            ) {
-                if (pendingMethodMap.size >= PENDING_LIMIT) {
-                    pendingMethodMap.delete(
-                        pendingMethodMap.keys().next().value,
-                    );
-                }
-                pendingMethodMap.set(id, method);
-            }
-            if (method === 'tools/call') {
-                const name = message.params?.name;
-                const verdict = checkToolCall(name, message.params?.arguments, {
-                    lookupUidLabel,
-                    checkIsOwnChange,
-                });
-                if (!verdict.isAllowed) {
-                    pendingMethodMap.delete(id);
-                    recordDecision({
-                        name,
-                        rule: verdict.rule,
-                        isAllowed: false,
-                    });
-                    log(`refused ${name} (${verdict.rule})`);
-                    // Answered here and never forwarded: the server below
-                    // never learns the call happened, which is what makes
-                    // this a firewall rather than a warning.
-                    transport.send?.(genRefusalMessage(id, verdict.reason));
-                    return undefined;
-                }
-                const snapshotFilePath = message.params?.arguments?.filePath;
-                if (
-                    name === 'take_snapshot' &&
-                    typeof snapshotFilePath === 'string' &&
-                    snapshotFilePath.length > 0 &&
-                    id !== undefined
-                ) {
-                    if (snapshotFileMap.size >= PENDING_LIMIT) {
-                        snapshotFileMap.delete(
-                            snapshotFileMap.keys().next().value,
-                        );
-                    }
-                    snapshotFileMap.set(id, snapshotFilePath);
-                }
-                // Logged with the address: an operator asking what was done
-                // needs to see where it went, not just that it went. Asked of
-                // the CALL, not the tool: the song drafter and the Bible
-                // importer go out only when they carry a url.
-                const args = message.params?.arguments;
-                // A change that takes nothing away: its answer's `undoId`
-                // is remembered on the way out.
-                if (
-                    id !== undefined &&
-                    checkIsActingCall(name, args) &&
-                    !checkIsRemovingCall(name, args)
-                ) {
-                    if (changeCallIdSet.size >= PENDING_LIMIT) {
-                        changeCallIdSet.delete(
-                            changeCallIdSet.values().next().value,
-                        );
-                    }
-                    changeCallIdSet.add(id);
-                }
-                const urlEntry = checkIsNetworkCall(name, args)
-                    ? { url: args?.url }
-                    : null;
-                if (checkIsActingCall(name, args)) {
-                    recordDecision({
-                        name,
-                        rule: 'acted',
-                        isAllowed: true,
-                        ...urlEntry,
-                    });
-                } else if (urlEntry !== null) {
-                    recordDecision({
-                        name,
-                        rule: 'fetched',
-                        isAllowed: true,
-                        ...urlEntry,
-                    });
-                }
-            }
-        } catch (error) {
-            // A broken check fails CLOSED for the call it was judging -- it is
-            // answered here like any refusal and never reaches the server
-            // below -- but it must not take down the session. Nothing here
-            // throws for a well-formed call; one whose arguments cannot even
-            // be read as text (`keys: {toString: 1}`) is not one to run
-            // unjudged. It used to be logged and forwarded (2026-11-03).
-            log(`firewall check failed: ${String(error?.message ?? error)}`);
-            if (message?.method === 'tools/call') {
-                pendingMethodMap.delete(message.id);
-                recordDecision({
-                    name: message.params?.name,
-                    rule: 'check-failed',
-                    isAllowed: false,
-                });
-                transport.send?.(
-                    genRefusalMessage(message.id, CHECK_FAILED_REASON),
-                );
-                return undefined;
-            }
-        }
-        return innerOnMessage?.call(transport, message, extra);
-    };
-
-    const innerSend = transport.send?.bind(transport);
-    if (innerSend !== undefined) {
-        transport.send = (message, options) => {
-            try {
-                const asked =
-                    pendingMethodMap.get(message?.id) ??
-                    toAskedByShape(message);
-                if (asked !== undefined) {
-                    pendingMethodMap.delete(message.id);
-                    if (asked === 'tools/list' && message.result?.tools) {
-                        message.result.tools = filterToolList(
-                            message.result.tools,
-                        );
-                    } else if (asked === 'tools/call' && message.result) {
-                        if (changeCallIdSet.delete(message.id)) {
-                            if (
-                                message.result.isError !== true &&
-                                Array.isArray(message.result.content)
-                            ) {
-                                for (const part of message.result.content) {
-                                    ownChangeMemory.remember(part?.text);
-                                }
-                            }
-                        }
-                        message.result.content = redactContentList(
-                            message.result.content,
-                            uidMemory,
-                        );
-                        if (message.result.structuredContent !== undefined) {
-                            message.result.structuredContent =
-                                redactStructuredContent(
-                                    message.result.structuredContent,
-                                );
-                        }
-                        const snapshotFilePath = snapshotFileMap.get(
-                            message.id,
-                        );
-                        if (snapshotFilePath !== undefined) {
-                            snapshotFileMap.delete(message.id);
-                            const text = readSnapshotFile(snapshotFilePath);
-                            if (typeof text === 'string') {
-                                uidMemory.remember(text);
-                            }
-                        }
-                    }
-                }
-            } catch (error) {
-                log(
-                    `firewall scrub failed: ${String(error?.message ?? error)}`,
-                );
-            }
-            return innerSend(message, options);
-        };
-    }
+  if (transport === null || typeof transport !== 'object') {
     return transport;
+  }
+  if (transport.__owaFirewallWrapped === true) {
+    return transport;
+  }
+  transport.__owaFirewallWrapped = true;
+  // Which request id asked what, so the outbound side knows whether it is
+  // looking at a tool list or a tool result. Bounded and drained on the way
+  // out; a client that abandons requests must not grow this for ever.
+  const pendingMethodMap = new Map();
+  const PENDING_LIMIT = 64;
+  // Per-transport, so it dies with the session rather than living in the
+  // module: uids are only meaningful to the client that was shown them.
+  const uidMemory = genUidLabelMemory();
+  const lookupUidLabel = (uid) => {
+    return uidMemory.lookup(uid);
+  };
+  // The changes this session made (`genOwnChangeMemory`), and the request
+  // ids of the calls whose answers may name one -- per transport too: an
+  // undo id is this session's own only.
+  const ownChangeMemory = genOwnChangeMemory();
+  const checkIsOwnChange = (undoId) => {
+    return ownChangeMemory.has(undoId);
+  };
+  const changeCallIdSet = new Set();
+  // Request id -> the file a `take_snapshot` was told to write, read back
+  // when its result goes out (see `defaultReadSnapshotFile`).
+  const snapshotFileMap = new Map();
+
+  const innerOnMessage = transport.onmessage;
+  transport.onmessage = (message, extra) => {
+    try {
+      const { method, id } = message ?? {};
+      if (
+        id !== undefined &&
+        (method === 'tools/list' || method === 'tools/call')
+      ) {
+        if (pendingMethodMap.size >= PENDING_LIMIT) {
+          pendingMethodMap.delete(pendingMethodMap.keys().next().value);
+        }
+        pendingMethodMap.set(id, method);
+      }
+      if (method === 'tools/call') {
+        const name = message.params?.name;
+        const verdict = checkToolCall(name, message.params?.arguments, {
+          lookupUidLabel,
+          checkIsOwnChange,
+        });
+        if (!verdict.isAllowed) {
+          pendingMethodMap.delete(id);
+          recordDecision({
+            name,
+            rule: verdict.rule,
+            isAllowed: false,
+          });
+          log(`refused ${name} (${verdict.rule})`);
+          // Answered here and never forwarded: the server below
+          // never learns the call happened, which is what makes
+          // this a firewall rather than a warning.
+          transport.send?.(genRefusalMessage(id, verdict.reason));
+          return undefined;
+        }
+        const snapshotFilePath = message.params?.arguments?.filePath;
+        if (
+          name === 'take_snapshot' &&
+          typeof snapshotFilePath === 'string' &&
+          snapshotFilePath.length > 0 &&
+          id !== undefined
+        ) {
+          if (snapshotFileMap.size >= PENDING_LIMIT) {
+            snapshotFileMap.delete(snapshotFileMap.keys().next().value);
+          }
+          snapshotFileMap.set(id, snapshotFilePath);
+        }
+        // Logged with the address: an operator asking what was done
+        // needs to see where it went, not just that it went. Asked of
+        // the CALL, not the tool: the song drafter and the Bible
+        // importer go out only when they carry a url.
+        const args = message.params?.arguments;
+        // A change that takes nothing away: its answer's `undoId`
+        // is remembered on the way out.
+        if (
+          id !== undefined &&
+          checkIsActingCall(name, args) &&
+          !checkIsRemovingCall(name, args)
+        ) {
+          if (changeCallIdSet.size >= PENDING_LIMIT) {
+            changeCallIdSet.delete(changeCallIdSet.values().next().value);
+          }
+          changeCallIdSet.add(id);
+        }
+        const urlEntry = checkIsNetworkCall(name, args)
+          ? { url: args?.url }
+          : null;
+        if (checkIsActingCall(name, args)) {
+          recordDecision({
+            name,
+            rule: 'acted',
+            isAllowed: true,
+            ...urlEntry,
+          });
+        } else if (urlEntry !== null) {
+          recordDecision({
+            name,
+            rule: 'fetched',
+            isAllowed: true,
+            ...urlEntry,
+          });
+        }
+      }
+    } catch (error) {
+      // A broken check fails CLOSED for the call it was judging -- it is
+      // answered here like any refusal and never reaches the server
+      // below -- but it must not take down the session. Nothing here
+      // throws for a well-formed call; one whose arguments cannot even
+      // be read as text (`keys: {toString: 1}`) is not one to run
+      // unjudged. It used to be logged and forwarded (2026-11-03).
+      log(`firewall check failed: ${String(error?.message ?? error)}`);
+      if (message?.method === 'tools/call') {
+        pendingMethodMap.delete(message.id);
+        recordDecision({
+          name: message.params?.name,
+          rule: 'check-failed',
+          isAllowed: false,
+        });
+        transport.send?.(genRefusalMessage(message.id, CHECK_FAILED_REASON));
+        return undefined;
+      }
+    }
+    return innerOnMessage?.call(transport, message, extra);
+  };
+
+  const innerSend = transport.send?.bind(transport);
+  if (innerSend !== undefined) {
+    transport.send = (message, options) => {
+      try {
+        const asked =
+          pendingMethodMap.get(message?.id) ?? toAskedByShape(message);
+        if (asked !== undefined) {
+          pendingMethodMap.delete(message.id);
+          if (asked === 'tools/list' && message.result?.tools) {
+            message.result.tools = filterToolList(message.result.tools);
+          } else if (asked === 'tools/call' && message.result) {
+            if (changeCallIdSet.delete(message.id)) {
+              if (
+                message.result.isError !== true &&
+                Array.isArray(message.result.content)
+              ) {
+                for (const part of message.result.content) {
+                  ownChangeMemory.remember(part?.text);
+                }
+              }
+            }
+            message.result.content = redactContentList(
+              message.result.content,
+              uidMemory,
+            );
+            if (message.result.isError === true) {
+              message.result.content = explainRootsRefusal(
+                message.result.content,
+              );
+            }
+            if (message.result.structuredContent !== undefined) {
+              message.result.structuredContent = redactStructuredContent(
+                message.result.structuredContent,
+              );
+            }
+            const snapshotFilePath = snapshotFileMap.get(message.id);
+            if (snapshotFilePath !== undefined) {
+              snapshotFileMap.delete(message.id);
+              const text = readSnapshotFile(snapshotFilePath);
+              if (typeof text === 'string') {
+                uidMemory.remember(text);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        log(`firewall scrub failed: ${String(error?.message ?? error)}`);
+      }
+      return innerSend(message, options);
+    };
+  }
+  return transport;
 }
 
 // stderr, not stdout: for the stdio door stdout IS the protocol channel, and
 // for the app this lands in the same terminal as everything else it says.
 function defaultLog(text) {
-    console.error('[owa-devtools-mcp firewall]', text);
+  console.error('[owa-devtools-mcp firewall]', text);
 }

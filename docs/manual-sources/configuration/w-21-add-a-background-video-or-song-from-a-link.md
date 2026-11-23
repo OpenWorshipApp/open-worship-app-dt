@@ -5,7 +5,7 @@ section: "Configuration"
 verify: [MD-01, MD-02, MD-03, MD-06, MD-07, MD-08, CM-24, PM-102, ST-90]
 screenshots: 2
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-21 — Add a background video or song from a link
 
@@ -31,8 +31,9 @@ downloads with the ones you have. They are also kept up to date in **[en:tran:Se
    a new thumbnail in the Videos tab, the audio as a new row under **[en:tran:Audios]**. 📸 From there
    it behaves like any other background (W-08) or track (W-09).
 
-> Notes: audio is always converted to **MP3**, video keeps the site's best quality
-> (`.webm`/`.mp4`). If a file with that name is already in the folder, the new one is
+> Notes: audio is always converted to **MP3**. Video is saved at up to 1080p, in the kind
+> an older computer plays most easily: an H.264 `.mp4` where the site has one, otherwise
+> usually `.webm`. If a file with that name is already in the folder, the new one is
 > saved as `name (1)`. Pasting something that is not a web link gets you an
 > **[en:tran:Invalid URL]** message and nothing is downloaded. Downloads need an internet connection — and
 > a busy site can cut a large download off partway, in which case just try again.
@@ -66,5 +67,5 @@ This page maps 1:1 to a workflow the QA robot drives live. It proves these `cove
 
 `MD-01` · `MD-02` · `MD-03` · `MD-06` · `MD-07` · `MD-08` · `CM-24` · `PM-102` · `ST-90`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

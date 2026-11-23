@@ -3,7 +3,7 @@ id: W-45
 title: "Enregistrer un document de diapositives en fichier PowerPoint (Exporter en PPTX)"
 section: "Configuration"
 lang: fr
-translatedFrom: 141db5a352120554
+translatedFrom: ba073856db1037c1
 ---
 # W-45 — Enregistrer un document de diapositives en fichier PowerPoint (Exporter en PPTX)
 
@@ -25,5 +25,7 @@ Pour quand un document de diapositives doit être montré ou modifié là où ce
 > fichier est une copie : le modifier ne change rien dans l'application. Une zone YouTube devient l'image de la
 > vidéo quand l'ordinateur est en ligne ; une zone caméra, un arrière-plan caméra et une
 > page web en direct utilisée comme arrière-plan ne peuvent pas être exportés, de même que l'impression les laisse de côté.
+> Un dégradé, un motif ou une animation derrière une diapositive sort en une seule couleur unie, celle
+> qu'on y voit de l'autre bout de la salle.
 > PowerPoint sur un autre ordinateur utilise les polices de CET ordinateur-là ; pour le même rendu, installez-y
 > les mêmes polices (les lignes se coupent aux mêmes endroits dans tous les cas).

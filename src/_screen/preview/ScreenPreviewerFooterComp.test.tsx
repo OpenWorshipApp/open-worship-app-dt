@@ -373,6 +373,55 @@ describe('ScreenPreviewerFooterComp drawing switch', () => {
         );
     });
 
+    test('turning off while Focusing shows closes the panel and leaves no drawing stranded', async () => {
+        const { screenManager } = createManagers();
+        const { screenDrawManager, screenFocusManager } = screenManager;
+        // The managers keep the state the footer writes, so the test reads
+        // what is left behind, not only which calls were made.
+        screenDrawManager.enableDraw.mockImplementation(() => {
+            screenDrawManager.isDrawEnabled = true;
+        });
+        screenDrawManager.disableDraw.mockImplementation(() => {
+            screenDrawManager.isDrawEnabled = false;
+        });
+        screenFocusManager.setIsPanelOpen.mockImplementation(
+            (isOpen: boolean) => {
+                screenFocusManager.isPanelOpen = isOpen;
+            },
+        );
+        await renderFooter();
+
+        // Draw first, then switch to Focusing while on: the strokes stay
+        // armed under the focus panel, which has no Clear of its own.
+        await click(getByLabel('Enable Drawing'));
+        await click(getByLabel('Choose Drawing or Focusing'));
+        await act(async () => {
+            h.menuCalls.at(-1)!.items[1].onSelect();
+        });
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+        expect(screenDrawManager.isDrawEnabled).toBe(true);
+        expect(screenFocusManager.isPanelOpen).toBe(true);
+        expect(screenDrawManager.disableDraw).not.toHaveBeenCalled();
+        expect(container.querySelector('[data-stub="focus-panel"]')).not.toBe(
+            null,
+        );
+
+        await click(getByLabel('Disable Focusing'));
+        // The Focusing manager's panel is closed...
+        expect(screenFocusManager.setIsPanelOpen).toHaveBeenLastCalledWith(
+            false,
+        );
+        expect(screenFocusManager.isPanelOpen).toBe(false);
+        // ...AND the drawing layer is off, though Drawing is not showing.
+        expect(screenDrawManager.disableDraw).toHaveBeenCalledTimes(1);
+        expect(screenDrawManager.isDrawEnabled).toBe(false);
+        const toggle = getByLabel('Enable Focusing');
+        expect(toggle.getAttribute('aria-pressed')).toBe('false');
+        expect(container.querySelector('[data-stub="focus-panel"]')).toBe(null);
+    });
+
     test('switching mode keeps the on/off state and moves where it is kept', async () => {
         const { screenManager } = createManagers();
         await renderFooter();

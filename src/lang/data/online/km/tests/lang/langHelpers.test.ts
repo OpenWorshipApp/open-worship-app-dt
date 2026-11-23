@@ -186,9 +186,7 @@ describe('Khmer numbers and text', () => {
     });
     test('cleans preview and finding text with the Khmer rules', async () => {
         expect(await sanitizePreviewText('km-KH', `ក ខ${ZWSP}`)).toBe('កខ');
-        expect(await sanitizeFindingText('km-KH', 'ព្រះ, យេស៊ូ!')).toBe(
-            'ព្រះ យេស៊ូ',
-        );
+        expect(await sanitizeFindingText('km-KH', 'ព្រះ, យេស៊ូ!')).toBe('ព្រះ យេស៊ូ');
     });
     test('trims and ends Khmer words with the zero-width space', () => {
         expect(quickTrimText('km-KH', ` ${ZWSP}សួស្តី${ZWSP} `)).toBe('សួស្តី');

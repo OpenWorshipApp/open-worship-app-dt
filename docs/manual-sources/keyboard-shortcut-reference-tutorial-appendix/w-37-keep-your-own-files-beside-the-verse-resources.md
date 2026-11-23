@@ -2,10 +2,10 @@
 id: W-37
 title: "Keep your own files beside the verse (Resources)"
 section: "Keyboard shortcut reference (tutorial appendix)"
-verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-129, RD-130, RD-131, RD-132, RD-133, RD-134, RD-135, CM-93]
+verify: [RD-81, RD-82, RD-83, RD-84, RD-85, RD-86, RD-87, RD-88, RD-89, RD-90, RD-114, RD-115, RD-116, RD-117, RD-118, RD-119, RD-120, RD-122, RD-127, RD-128, RD-129, RD-130, RD-131, RD-132, RD-133, RD-134, RD-135, RD-137, CM-93]
 screenshots: 17
 generatedFrom: user-workflows.md
-workflowsVersion: "2026-11-15"
+workflowsVersion: "2026-11-22"
 ---
 # W-37 — Keep your own files beside the verse (Resources)
 
@@ -129,6 +129,11 @@ all count as book-level too.
      are taken out. If a file shows `#` and `**` instead of a heading and bold, the file itself
      was saved with them escaped (`\#`, `\*\*`), which some editors' formatted view does
      when text is pasted into it; the preview shows what is written.
+     A Bible passage quoted the way the app quotes one into a study — a quote that opens on
+     its bold reference and its Bible, `> **John 3:1-21** (KJV)`, with the verses under it —
+     has a chevron before the reference, **[en:tran:Collapse]**: press it and the passage
+     folds to that line; press it again (**[en:tran:Expand]**) to open it. The fold is on
+     screen only.
      **People, places, verses and other files named in the page are links too**, drawn in
      the link colour with a dotted underline, as the names in a Bible Reader verse are: a
      person or place of the chapter the file is named after (a `JHN.3.…` file links Nicodemus
@@ -164,7 +169,7 @@ all count as book-level too.
      with how many verses, names and places it found. **[en:tran:Add and Print]** adds them
      after the page's last line: the words of each passage, from the Bible named in
      brackets right after its reference when that Bible is installed (`John 3:1-36
-     (Amplified)` from the Amplified), else from the Bible whose book names it is written
+(Amplified)` from the Amplified), else from the Bible whose book names it is written
      in (a Khmer reference from a Khmer Bible), else the KJV. A passage already printed as
      part of a longer one is not printed again, and one that begins within it goes on from
      that one's Bible: a longer one from any Bible of its language holds it, or from its
@@ -299,7 +304,7 @@ all count as book-level too.
 ::: details 🤖 Robot-verified — coverage traceability
 This page maps 1:1 to a workflow the QA robot drives live. It proves these `coverage-matrix.md` rows:
 
-`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `RD-127` · `RD-128` · `RD-129` · `RD-130` · `RD-131` · `RD-132` · `RD-133` · `RD-134` · `RD-135` · `CM-93`
+`RD-81` · `RD-82` · `RD-83` · `RD-84` · `RD-85` · `RD-86` · `RD-87` · `RD-88` · `RD-89` · `RD-90` · `RD-114` · `RD-115` · `RD-116` · `RD-117` · `RD-118` · `RD-119` · `RD-120` · `RD-122` · `RD-127` · `RD-128` · `RD-129` · `RD-130` · `RD-131` · `RD-132` · `RD-133` · `RD-134` · `RD-135` · `RD-137` · `CM-93`
 
-Regenerated from `user-workflows.md` (workflowsVersion 2026-11-15).
+Regenerated from `user-workflows.md` (workflowsVersion 2026-11-22).
 :::

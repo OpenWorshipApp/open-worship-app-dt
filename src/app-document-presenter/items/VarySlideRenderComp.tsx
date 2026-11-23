@@ -38,6 +38,7 @@ import ShadowingFillParentWidthComp, {
 import VaryAppDocumentScaleContainerComp from './VaryAppDocumentScaleContainerComp';
 import { useThemeSource } from '../../others/themeHelpers';
 import { tran } from '../../lang/langHelpers';
+import { toSlideViewIndex } from '../../app-document-list/slideViewIndexHelpers';
 import { useAppCurrentRef } from '../../helper/appHooks';
 import { toKeyByFilePath } from '../../app-document-list/appDocumentHelpers';
 import { toSlideAccessibleName } from './slideAccessibleNameHelpers';
@@ -406,7 +407,10 @@ export default function VarySlideRenderComp({
             // The card's one accessible name -- number and slide name, as
             // the header shows them. Also what the presenter state hands an
             // agent as the words to press this slide with; see the helper.
-            aria-label={toSlideAccessibleName(index + 1, varySlide.name)}
+            aria-label={toSlideAccessibleName(
+                toSlideViewIndex(index),
+                varySlide.name,
+            )}
             style={{
                 width: `${width}px`,
                 ...(varySlide.isDisabled
@@ -421,11 +425,16 @@ export default function VarySlideRenderComp({
                     : {}),
             }}
             data-vary-app-document-item-id={varySlide.id}
+            // Its document too: ids restart at 0 in every document (see
+            // varySlideDomAttrs.ts, VARY_SLIDE_FILE_PATH_ATTR).
+            data-vary-app-document-file-path={varySlide.filePath}
             data-scroll-container-selector={
                 slidesPreviewerScope?.containerSelector ??
                 `.${SLIDE_ITEMS_CONTAINER_CLASS_NAME}`
             }
-            data-touch-drag-label={varySlide.name || `#${index + 1}`}
+            data-touch-drag-label={
+                varySlide.name || `#${toSlideViewIndex(index)}`
+            }
             draggable={!varySlide.isDisabled}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -446,7 +455,7 @@ export default function VarySlideRenderComp({
         >
             <VarySlideHeaderComp
                 varySlide={varySlide}
-                viewIndex={index + 1}
+                viewIndex={toSlideViewIndex(index)}
                 name={varySlide.name}
                 onScreenList={onScreenList}
                 ownTransition={slideTransition.own}

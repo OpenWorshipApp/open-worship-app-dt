@@ -78,15 +78,24 @@ beforeEach(() => {
 
 describe('presenting-flow origin reveal helpers', () => {
     test('highlights a slide card with the shared scroll behavior', () => {
-        notifyVarySlideOrigin({ id: 8 } as any);
+        notifyVarySlideOrigin({ id: 8, filePath: '/doc.ows' } as any);
         expect(mocks.notify).toHaveBeenCalledWith(expect.any(Function), {
             moveToView: mocks.bringTop,
         });
         const getter = mocks.notify.mock.calls[0][0];
+        // Same id, another document: not this slide's card.
+        const otherDocument = document.createElement('div');
+        otherDocument.dataset.varyAppDocumentFilePath = 'escaped-/other.ows';
+        otherDocument.dataset.varyAppDocumentItemId = '8';
+        document.body.append(otherDocument);
+        expect(getter()).toBe(null);
         const slide = document.createElement('div');
+        slide.dataset.varyAppDocumentFilePath = 'escaped-/doc.ows';
         slide.dataset.varyAppDocumentItemId = '8';
         document.body.append(slide);
         expect(getter()).toBe(slide);
+        otherDocument.remove();
+        slide.remove();
     });
 
     test('reveals file, document, slide, bible, foreground, and audio origins', () => {
@@ -112,7 +121,9 @@ describe('presenting-flow origin reveal helpers', () => {
             ),
         ).toBe(true);
         expect(
-            notifyPresentingFlowItemOrigin(item({ isSlide: true, id: 9 })),
+            notifyPresentingFlowItemOrigin(
+                item({ isSlide: true, id: 9, itemFilePath: '/doc' }),
+            ),
         ).toBe(true);
         expect(
             notifyPresentingFlowItemOrigin(
@@ -138,6 +149,39 @@ describe('presenting-flow origin reveal helpers', () => {
         ).toBe(true);
         expect(mocks.openAudio).toHaveBeenCalled();
         expect(mocks.notify).toHaveBeenCalledTimes(7);
+    });
+
+    test('finds a slide by its document AND its id (F-21)', () => {
+        // Slide ids restart at 0 in every document: another document's card
+        // with the same id must never be the one that flashes.
+        const other = document.createElement('div');
+        other.setAttribute(
+            'data-vary-app-document-file-path',
+            'escaped-/b.ows',
+        );
+        other.setAttribute('data-vary-app-document-item-id', '3');
+        const own = document.createElement('div');
+        own.setAttribute('data-vary-app-document-file-path', 'escaped-/a.ows');
+        own.setAttribute('data-vary-app-document-item-id', '3');
+        document.body.append(other, own);
+        try {
+            expect(
+                notifyPresentingFlowItemOrigin(
+                    item({ isSlide: true, id: 3, itemFilePath: '/a.ows' }),
+                ),
+            ).toBe(true);
+            const getElement = mocks.notify.mock.calls.at(-1)?.[0];
+            expect(getElement()).toBe(own);
+            // A slide entry with no document cannot be pointed at.
+            expect(
+                notifyPresentingFlowItemOrigin(
+                    item({ isSlide: true, id: 3, itemFilePath: '' }),
+                ),
+            ).toBe(false);
+        } finally {
+            other.remove();
+            own.remove();
+        }
     });
 
     test('refuses origins without a meaningful selector', () => {

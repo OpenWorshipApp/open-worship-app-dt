@@ -30,9 +30,7 @@ describe('langScriptHelpers in Khmer', () => {
     test('a coeng at the end is a joiner and is trimmed away', () => {
         expect(checkEndsWithInvisibleStacker(`ក${KHMER_COENG}`)).toBe(true);
         expect(checkEndsWithInvisibleStacker('ក្ស')).toBe(false);
-        expect(trimTrailingInvisibleStackers(`ក្សត${KHMER_COENG}`)).toBe(
-            'ក្សត',
-        );
+        expect(trimTrailingInvisibleStackers(`ក្សត${KHMER_COENG}`)).toBe('ក្សត');
         expect(
             trimTrailingInvisibleStackers(`ក${KHMER_COENG}${KHMER_COENG}`),
         ).toBe('ក');

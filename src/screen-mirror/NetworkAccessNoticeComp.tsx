@@ -20,7 +20,9 @@ function RenderWindowsStepsComp({
                 {tran(
                     'Find this app in the list and tick Private. Tick Public too if this network is public.',
                 )}{' '}
-                <span className="app-data fw-bold">{names.join(', ')}</span>
+                <span className="app-data fw-bold app-selectable-text">
+                    {names.join(', ')}
+                </span>
             </li>
             <li>{tran('Click OK, then Check again.')}</li>
         </ol>
@@ -38,7 +40,9 @@ function RenderMacStepsComp({
                 {tran(
                     'Find this app and set it to allow incoming connections, and turn off blocking all incoming connections.',
                 )}{' '}
-                <span className="app-data fw-bold">{status.appName}</span>
+                <span className="app-data fw-bold app-selectable-text">
+                    {status.appName}
+                </span>
             </li>
             <li>{tran('Click OK, then Check again.')}</li>
         </ol>
@@ -55,7 +59,7 @@ function RenderLinuxHintComp({ port }: Readonly<{ port: number }>) {
                 )}
             </span>
             <span className="d-flex align-items-center gap-1">
-                <code className="app-data">{command}</code>
+                <code className="app-data app-selectable-text">{command}</code>
                 <button
                     type="button"
                     className="btn btn-sm btn-outline-secondary"

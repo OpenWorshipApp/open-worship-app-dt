@@ -48,14 +48,17 @@ export function genPresentingFlowItemContextMenuItems(
     itemCount: number,
 ): ContextMenuItemType[] {
     // An action has no original anywhere in the app to be pointed at — it is
-    // authored in the presenting flow itself.
-    const menuItems: ContextMenuItemType[] = presentingFlowItem.isAction
-        ? []
-        : [
-              genRevealOriginal(() => {
-                  notifyPresentingFlowItemOrigin(presentingFlowItem);
-              }),
-          ];
+    // authored in the presenting flow itself. Nor has a damaged entry: what it
+    // pointed at could not be read, so Reveal Original did nothing (F-31 of
+    // robot run 20261120-2021).
+    const menuItems: ContextMenuItemType[] =
+        presentingFlowItem.isAction || presentingFlowItem.isError
+            ? []
+            : [
+                  genRevealOriginal(() => {
+                      notifyPresentingFlowItemOrigin(presentingFlowItem);
+                  }),
+              ];
     // Not offered while the element is parked: it is the one entry that would
     // put it on a screen anyway, and an entry that quietly does nothing is
     // worse than one that is not there.

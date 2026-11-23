@@ -120,9 +120,7 @@ describe('a line typed under it', () => {
             true,
         );
         expect(
-            checkIsLookupAppAsk(
-                'តើខ្ញុំអាចដាក់បទគម្ពីរនេះនៅលើអេក្រង់ដោយរបៀបណា?',
-            ),
+            checkIsLookupAppAsk('តើខ្ញុំអាចដាក់បទគម្ពីរនេះនៅលើអេក្រង់ដោយរបៀបណា?'),
         ).toBe(true);
         expect(checkIsLookupAppAsk('What does verse 10 mean?')).toBe(false);
         expect(checkIsLookupAppAsk('តើខ ១០ មានន័យអ្វី?')).toBe(false);
@@ -233,10 +231,7 @@ describe('what the card itself can do', () => {
                 readLookupVerseAsk('សូមបង្ហាញបទគម្ពីរនេះជាភាសាខ្មែរ', VERSE),
             ).toEqual({ kind: 'sameBible' });
             expect(
-                readLookupVerseAsk(
-                    'សូមបង្ហាញបទគម្ពីរនេះក្នុងភាសាអង់គ្លេស',
-                    VERSE,
-                ),
+                readLookupVerseAsk('សូមបង្ហាញបទគម្ពីរនេះក្នុងភាសាអង់គ្លេស', VERSE),
             ).toEqual({ kind: 'anotherBible', language: 'en' });
             expect(
                 readLookupVerseAsk(
@@ -302,16 +297,14 @@ describe('what a line asks of a passage’s surroundings', () => {
 
     it('reads before, after, and a length of time as both', () => {
         expect(
-            readLookupAskContext('តើមានអ្វីកើតឡើងមុនបទគម្ពីរនេះ?', GEN_8)
-                ?.sides,
+            readLookupAskContext('តើមានអ្វីកើតឡើងមុនបទគម្ពីរនេះ?', GEN_8)?.sides,
         ).toEqual(['before']);
         expect(
             readLookupAskContext('What did Jesus teach after this?', GEN_8)
                 ?.sides,
         ).toEqual(['after']);
         expect(
-            readLookupAskContext('តើណូអេនៅក្នុងទូកធំប៉ុន្មានថ្ងៃ?', GEN_8)
-                ?.sides,
+            readLookupAskContext('តើណូអេនៅក្នុងទូកធំប៉ុន្មានថ្ងៃ?', GEN_8)?.sides,
         ).toEqual(['before', 'after']);
     });
 
@@ -559,10 +552,7 @@ describe('the family line to Jesus', () => {
     it('is asked for by naming Jesus, or a family word beside the person', () => {
         // The question measured live, asked under David's card.
         expect(
-            checkIsLookupLineageAsk(
-                'ឈ្មោះតាមលំដាប់ពីដាវីឌដល់ព្រះយ៉េស៊ូវ',
-                DAVID,
-            ),
+            checkIsLookupLineageAsk('ឈ្មោះតាមលំដាប់ពីដាវីឌដល់ព្រះយ៉េស៊ូវ', DAVID),
         ).toBe(true);
         expect(
             checkIsLookupLineageAsk(
@@ -607,10 +597,7 @@ describe('the family line to Jesus', () => {
             checkIsLookupLineageAsk('Did Jesus speak about Noah?', NOAH_EN),
         ).toBe(false);
         expect(
-            checkIsLookupLineageAsk(
-                'តើព្រះយេស៊ូវបាននិយាយអំពីណូអេដែរឬទេ?',
-                NOAH_KM,
-            ),
+            checkIsLookupLineageAsk('តើព្រះយេស៊ូវបាននិយាយអំពីណូអេដែរឬទេ?', NOAH_KM),
         ).toBe(false);
         expect(checkIsLookupLineageAsk('genealogy of Noah', NOAH_EN)).toBe(
             true,
@@ -667,9 +654,7 @@ describe('how many, counted from the record', () => {
     };
 
     it('is asked in the words a language uses', () => {
-        expect(readLookupCountAsk('តើលោកមានកូនប៉ុន្មាន?', DAVID)).toBe(
-            'children',
-        );
+        expect(readLookupCountAsk('តើលោកមានកូនប៉ុន្មាន?', DAVID)).toBe('children');
         expect(
             readLookupCountAsk('How many children did David have?', DAVID_EN),
         ).toBe('children');
@@ -833,9 +818,9 @@ describe('a line that asks to study the words', () => {
     };
 
     it('reads the study, and the verse when one is named', () => {
-        expect(
-            readLookupWordStudyAsk('ពន្យល់ពាក្យនីមួយៗក្នុងខ ១', GEN_8),
-        ).toEqual({ verseKey: 'GEN 8:1' });
+        expect(readLookupWordStudyAsk('ពន្យល់ពាក្យនីមួយៗក្នុងខ ១', GEN_8)).toEqual({
+            verseKey: 'GEN 8:1',
+        });
         expect(
             readLookupWordStudyAsk('Teach me the vocabulary of this', GEN_8),
         ).toEqual({ verseKey: null });

@@ -9,6 +9,7 @@ import {
 } from '../_screen/glslAnimationRuntime';
 import {
     ANIMATION_SPEED_FACTOR_MAP,
+    ANIMATION_STILL_TIME_SECONDS,
     type GlslAnimationType,
 } from './animationValueHelpers';
 import { genGlslAnimationCode } from './glslAnimationSources';
@@ -24,16 +25,15 @@ import { genGlslAnimationCode } from './glslAnimationSources';
  *
  * Drawn one per task, so opening the tab with a dozen shaders to compile
  * never holds the presenter for all of them at once. A compiled shader is
- * kept beside the shared context and goes with it: the samples recolour a
- * dozen effects, so two dozen tiles compile a dozen programs, not two dozen
- * -- and a few, never more than `MAX_KEPT_PROGRAM_COUNT`.
+ * kept beside the shared context and goes with it: a category's samples
+ * recolour the same twenty effects (the colours are uniforms), so switching
+ * category compiles nothing again -- which is why the cap is above twenty,
+ * a few more for a person's own; never more than `MAX_KEPT_PROGRAM_COUNT`.
  */
 
 const RELEASE_AFTER_MS = 10000;
-// A moment into the animation, where every built-in has something to show.
-const STILL_TIME_SECONDS = 6;
 
-const MAX_KEPT_PROGRAM_COUNT = 16;
+const MAX_KEPT_PROGRAM_COUNT = 24;
 
 type SharedType = {
     canvas: HTMLCanvasElement;
@@ -115,7 +115,9 @@ export function drawGlslStill(
         return false;
     }
     drawGlslFrame(gl, glslProgram, {
-        time: STILL_TIME_SECONDS * ANIMATION_SPEED_FACTOR_MAP[animation.speed],
+        time:
+            ANIMATION_STILL_TIME_SECONDS *
+            ANIMATION_SPEED_FACTOR_MAP[animation.speed],
         colors: toGlslColorArray(animation.colors),
         colorCount: animation.colors.length,
     });

@@ -44,5 +44,7 @@ Prove it with an idle `performance_start_trace` (`reload: false`): count
 live check is `document.getAnimations().filter(a => a.playState === 'running')`,
 which is empty at rest when the rule holds. OS CPU-seconds from `app-vitals.mjs`
 are noisy while DevTools is open in dev (its Performance Monitor shares the GPU
-process), so judge on the trace. Related: [[chatbot-cdp-driver-gotchas]] for why
+process), so judge on the trace. Since 2026-11-19 (`AD-36`)
+`src/test-setup/infinitePaintAnimation.test.ts` fails the gate on an infinite
+paint animation in any stylesheet or page. Related: [[chatbot-cdp-driver-gotchas]] for why
 tools can end up on a packaged app instead of the dev one.

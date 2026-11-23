@@ -36,9 +36,7 @@ describe('the languages are the files beside the language packages', () => {
 
 describe('detectTypedLanguage', () => {
     test('a Khmer sentence is Khmer whatever else is in it', () => {
-        expect(detectTypedLanguage('តើខ្ញុំបង្ហាញខគម្ពីរដោយរបៀបណា?')).toBe(
-            'km',
-        );
+        expect(detectTypedLanguage('តើខ្ញុំបង្ហាញខគម្ពីរដោយរបៀបណា?')).toBe('km');
         expect(detectTypedLanguage('ចុច F5 ដើម្បីបង្ហាញអេក្រង់')).toBe('km');
     });
 
